@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: General Turboism discussion
+    url: https://github.com/turboism/turboism-docs/discussions
+    about: Ask non-sensitive product questions or discuss documentation direction.
