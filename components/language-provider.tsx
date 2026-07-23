@@ -8,6 +8,8 @@ type Copy = {
   product: string;
   docs: string;
   plugins: string;
+  learn: string;
+  chat: string;
   github: string;
   search: string;
   language: string;
@@ -19,6 +21,8 @@ const copy: Record<Language, Copy> = {
     product: "Product",
     docs: "Docs",
     plugins: "Plugins",
+    learn: "Learn",
+    chat: "Chat",
     github: "GitHub",
     search: "Search docs",
     language: "中文",
@@ -28,6 +32,8 @@ const copy: Record<Language, Copy> = {
     product: "产品",
     docs: "文档",
     plugins: "插件",
+    learn: "学习",
+    chat: "聊天",
     github: "GitHub",
     search: "搜索文档",
     language: "EN",

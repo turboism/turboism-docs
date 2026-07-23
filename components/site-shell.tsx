@@ -9,6 +9,8 @@ const networks = [
   { key: "product", href: "https://www.turboism.dev" },
   { key: "docs", href: "https://docs.turboism.dev" },
   { key: "plugins", href: "https://plugin.turboism.dev" },
+  { key: "learn", href: "https://learn.turboism.dev" },
+  { key: "chat", href: "https://chat.turboism.dev" },
   { key: "github", href: "https://github.com/turboism" },
 ] as const;
 
@@ -29,8 +31,8 @@ export function SiteHeader() {
               className={network.key === "docs" ? "is-active" : undefined}
               href={network.href}
               key={network.key}
-              target={network.key === "docs" ? undefined : "_blank"}
-              rel={network.key === "docs" ? undefined : "noreferrer"}
+              target={network.key === "github" ? "_blank" : undefined}
+              rel={network.key === "github" ? "noreferrer" : undefined}
             >
               {copy[network.key]}
             </a>
@@ -48,7 +50,7 @@ export function SiteHeader() {
       {open && (
         <nav className="mobile-network-nav" aria-label="Turboism network">
           {networks.map((network) => (
-            <a href={network.href} key={network.key} target={network.key === "docs" ? undefined : "_blank"} rel="noreferrer">
+            <a href={network.href} key={network.key} target={network.key === "github" ? "_blank" : undefined} rel={network.key === "github" ? "noreferrer" : undefined}>
               {copy[network.key]}
             </a>
           ))}
