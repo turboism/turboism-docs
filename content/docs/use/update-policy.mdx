@@ -1,0 +1,46 @@
+---
+title: Update Policy
+description: How updates are delivered and how to update safely.
+---
+
+Turboism update behavior is expected to follow explicit release notes and compatibility windows.
+Until a public release line exists, this page describes the intended process.
+
+## Why updates exist
+
+- Fixing runtime and protocol issues.
+- Improving stability in plugin loading and host integration.
+- Tightening security boundaries and diagnostics.
+- Expanding extension surfaces with versioned contracts.
+
+## Safe update workflow (preview)
+
+1. **Read release notes first**
+   - Confirm the minimum compatible Java/Cubism floor for the target release.
+2. **Backup and isolate**
+   - Keep a copy of current projects and plugin artifacts.
+3. **Update in a staging environment**
+   - Apply updates to a non-production test project before your production work.
+4. **Run startup checks**
+   - Validate plugin discovery, no-op commands, and workspace health.
+5. **Roll forward if clean**
+   - Move all projects only after one full cycle completes.
+
+## Backwards compatibility expectations
+
+- Major-version changes may change extension contracts.
+- Minor and patch updates are expected to be mostly compatible, but not yet guaranteed in
+  this preview phase.
+- Plugin authors should monitor compatibility guidance before adopting new versions.
+
+## Rollback guidance
+
+If an update causes regression:
+
+- Keep the previous release artifact available.
+- Downgrade to the last known-good release.
+- Report observed behavior with project/host versions in the repository issues.
+
+> **Current status**
+> Public versioning policy, artifact channels, and exact compatibility guarantees are not yet
+> published. This page is a process draft; replace with the release matrix once it is finalized.

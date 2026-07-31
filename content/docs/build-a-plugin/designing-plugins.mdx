@@ -1,0 +1,54 @@
+---
+title: Designing Plugins
+description: The preferred design approach for durable Turboism extensions.
+---
+
+This guide is intentionally architectural because no complete public API contract is
+published yet.
+
+## Core design principles
+
+- **Small first**: start with one purpose and one action.
+- **State isolation**: avoid global mutable state whenever possible.
+- **Host-resilient behavior**: tolerate unavailable host features gracefully.
+- **Observable behavior**: expose clear diagnostics in startup and failure paths.
+- **Reversible changes**: every write path should have a clear undo or exit strategy.
+
+## Plugin lifecycle planning
+
+A plugin should model four phases:
+
+1. **Discover**
+   - Register entry points and capability expectations.
+2. **Activate**
+   - Build any temporary resources.
+3. **Operate**
+   - React to editor events and expose command surfaces.
+4. **Shutdown**
+   - Dispose resources and unregister listeners.
+
+## Data and capability boundaries
+
+Keep plugin code partitioned by boundary:
+
+- **Runtime boundary**: interaction with host runtime services.
+- **Command boundary**: user-visible actions.
+- **Persistence boundary**: where plugin data is saved.
+- **UI boundary**: editor-facing views and controls.
+
+## Versioning strategy (for plugin authors)
+
+- Treat host version changes as a compatibility event.
+- Gate risky behavior with feature detection.
+- Avoid relying on private host internals.
+
+## Design checklist before development
+
+- [ ] Define required host services.
+- [ ] Define plugin capabilities and permissions.
+- [ ] Decide failure behavior and fallback UX.
+- [ ] Add a smoke test that loads the plugin in minimal mode.
+- [ ] Define update and migration steps for saved plugin data.
+
+> **Preview status**
+> Specific manifest keys, event names, and versioning semantics are not yet finalized.

@@ -1,0 +1,43 @@
+---
+title: Plugin Interfaces (Preview)
+description: Draft interface families currently expected for plugin development.
+---
+
+The API surface below is a **preview inventory**. It is intended to describe what kinds
+of extension touchpoints are planned, not a finalized contract.
+
+## Core runtime interfaces
+
+| Family | Purpose | Typical use |
+| --- | --- | --- |
+| `Agent Context` | Shared runtime metadata and host identity | Read host/version info and plugin-local settings |
+| `Project Context` | Read/write operations scoped to the active project | Inspect current state and save metadata |
+| `Command Registry` | Register editor-facing commands | Expose actions in host menus/toolbars |
+| `Event Hooks` | React to lifecycle and editor events | Run logic on load/unload, save, or selection changes |
+| `Diagnostics` | Structured logs and trace channels | Emit validation warnings and recovery hints |
+
+## Design-time / build interfaces
+
+- `Manifest schema` for capability declaration and version constraints.
+- `Loader integration` for plugin discovery and startup order.
+- `Compatibility metadata` for host/engine/SDK requirements.
+
+## Compatibility and release notes
+
+Because this project is still in public preview, none of these entries are contract-backed
+yet. Before shipping external plugins:
+
+- Track release notes for the current interface edition.
+- Validate behavior on your target host build.
+- Test fallback behavior when an interface entry is unavailable.
+
+## Suggested extension structure
+
+A minimal plugin module should map to at least two logical modules:
+
+1. **Bootstrap module**
+   - Initialize, inspect context, register hooks.
+2. **Feature module(s)**
+   - Implement command handlers, transformations, and UI actions.
+
+Use this structure to keep your code testable and easier to migrate when contracts settle.

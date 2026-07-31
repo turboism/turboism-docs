@@ -1,0 +1,48 @@
+---
+title: Developer Quick Start
+description: Build your first Turboism plugin from a minimal scaffold.
+---
+
+This page captures the intended plugin onboarding sequence in the current preview.
+
+## Project scaffold (planned)
+
+A published starter template and plugin generator are not available yet. In the meantime:
+
+1. Create a workspace folder for your plugin.
+2. Define a `plugin` descriptor that names the plugin and entrypoint.
+3. Add an isolated build output target.
+4. Keep plugin registration idempotent.
+
+## Minimum plugin structure (conceptual)
+
+- `plugin-id` and display name
+- Version metadata
+- Entry module that exports a lifecycle hook
+- Optional capabilities:
+  - command registration
+  - event subscriptions
+  - diagnostics hooks
+
+## First run in preview
+
+- Load only one test plugin.
+- Perform a no-op action.
+- Confirm it does not alter project state.
+- Verify the host still starts and can unload the plugin cleanly.
+
+## Local verification checklist
+
+- Lifecycle callbacks are exercised at load/unload.
+- No unexpected writes happen during idle mode.
+- Diagnostics output is readable and scoped.
+
+## Next documentation to read
+
+- [Designing plugins](./designing-plugins)
+- [Available plugin interfaces](./plugin-interfaces)
+- [Update and maintenance](../use/update-policy)
+
+> **Preview status**
+> The concrete starter template and package coordinates are pending public release. This
+> section will be replaced by a template-first workflow when the SDK is published.
