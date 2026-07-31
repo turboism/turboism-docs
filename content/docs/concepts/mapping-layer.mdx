@@ -1,0 +1,11 @@
+---
+title: Mapping layer
+description: Why host adaptation needs an explicit boundary.
+---
+
+Host applications can change symbols and implementation details between versions.
+A mapping layer is the conceptual boundary where host-specific knowledge can be
+isolated from the extension experience.
+
+Plugin developers should be able to target published extension points, rather than
+implement their own reflection against Cubism internals.

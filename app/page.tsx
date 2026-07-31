@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Boxes, TerminalSquare } from "lucide-react";
-import { DocumentationShell } from "@/components/docs-browser";
 
 export default function HomePage() {
   return (
-    <DocumentationShell>
+    <div className="docs-main">
       <article className="doc-article home-article">
         <p className="eyebrow">Turboism / Documentation</p>
         <h1>Build with a clearer boundary.</h1>
@@ -21,7 +20,7 @@ export default function HomePage() {
           </p>
         </div>
         <section className="path-grid" aria-label="Documentation paths">
-          <Link href="/use/overview" className="path-card">
+          <Link href="/docs/use/overview" className="path-card">
             <TerminalSquare size={22} />
             <div>
               <h2>Use Turboism</h2>
@@ -29,7 +28,7 @@ export default function HomePage() {
             </div>
             <ArrowRight size={18} />
           </Link>
-          <Link href="/build-a-plugin/overview" className="path-card">
+          <Link href="/docs/build-a-plugin/overview" className="path-card">
             <Boxes size={22} />
             <div>
               <h2>Build a Plugin</h2>
@@ -44,12 +43,12 @@ export default function HomePage() {
             <h2>Concepts that travel with the product.</h2>
           </div>
           <div className="link-list">
-            <Link href="/introduction"><BookOpen size={16} /> Introduction <ArrowRight size={15} /></Link>
-            <Link href="/concepts/architecture"><BookOpen size={16} /> Architecture <ArrowRight size={15} /></Link>
-            <Link href="/documentation-preview"><BookOpen size={16} /> Documentation preview <ArrowRight size={15} /></Link>
+            <Link href="/docs/introduction"><BookOpen size={16} /> Introduction <ArrowRight size={15} /></Link>
+            <Link href="/docs/concepts/architecture"><BookOpen size={16} /> Architecture <ArrowRight size={15} /></Link>
+            <Link href="/docs/documentation-preview"><BookOpen size={16} /> Documentation preview <ArrowRight size={15} /></Link>
           </div>
         </section>
       </article>
-    </DocumentationShell>
+    </div>
   );
 }

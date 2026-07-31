@@ -1,0 +1,20 @@
+---
+title: Architecture
+description: A conceptual map of Turboism’s role between plugins and Cubism.
+---
+
+Turboism is conceived as an adaptation layer between Live2D Cubism Editor internals
+and extension code.
+
+Its purpose is to give plugin authors a higher-level integration surface without
+requiring direct dependence on host implementation details.
+
+## Conceptual layers
+
+1. Live2D Cubism Editor as the host application.
+2. Adaptation work for host-specific symbols and version differences.
+3. Turboism framework services and extension boundaries.
+4. Official and third-party plugins built on those boundaries.
+
+Layer names describe the intended architecture, not a promise that named classes,
+services, or features are available in a released SDK.

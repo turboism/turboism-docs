@@ -6,5 +6,6 @@
 .env*
 *.tsbuildinfo
 next-env.d.ts
+/.source
 .DS_Store
 .vercel
