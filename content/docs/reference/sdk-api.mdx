@@ -1,0 +1,261 @@
+---
+title: SDK API Guide
+description: The current Turboism plugin SDK entrypoints, services, object model, lifecycle, and capability boundaries.
+---
+
+The Turboism SDK is the only public dependency for plugins. New APIs are Preview by default. Availability depends on four separate facts:
+
+1. the API exists in the SDK;
+2. the plugin declares the required permission;
+3. Runtime has a matching capability Provider;
+4. the active Cubism version and object generation are supported.
+
+For the generated type and method index, open the [SDK HTML API reference](/api/sdk/index.html).
+
+## Plugin lifecycle
+
+Every entrypoint implements `TurboismPlugin` or a subinterface such as `CubismPlugin`.
+
+```java
+public interface TurboismPlugin {
+    default void init(PluginContext context) throws Exception {}
+    default void enable() throws Exception {}
+    default void disable() throws Exception {}
+    default void shutdown() throws Exception {}
+}
+```
+
+- `init`: retain the context, register configuration schemas, and create plugin-private state.
+- `enable`: contribute actions, events, UI, tasks, and other active behavior.
+- `disable`: stop active behavior before Runtime closes the plugin scope.
+- `shutdown`: release plugin-private resources not owned by the scope.
+
+One JAR may contain multiple ordered entrypoints. Construction, initialization, and enablement follow manifest order. Disablement and shutdown run in reverse order. Startup is atomic for the whole JAR.
+
+## `PluginContext`
+
+| Entry | Purpose |
+| --- | --- |
+| `descriptor()` | Current JAR-level `PluginDescriptor` |
+| `logger()` | Plugin-scoped logging |
+| `paths()` | Configuration, data, cache, state, and log namespaces |
+| `localization()` | Locale, text lookup, and formatting |
+| `tasks()` | Bounded one-shot and fixed-delay tasks |
+| `hostReads()` | Bounded asynchronous host reads |
+| `storage()` | Plugin-owned DATA, STATE, and CACHE storage |
+| `userFiles()` | User-granted file handles |
+| `cubism()` | Snapshots, unified object access, and transaction compatibility entrypoints |
+| `parameterQuery()` | Narrow parameter queries |
+| `selectionQuery()` | Selection reads and change subscription |
+| `modelHierarchyQuery()` | Model-tree queries |
+| `cubismRead()` | Aggregated read capability families |
+| `eventBus()` | Typed event publish and subscribe |
+| `actions()` and `menus()` | Action registration and menu contribution |
+| `mainToolbar()`, `paletteToolbar()`, `contextMenu()` | Typed UI contribution registries |
+| `uiHost()` and `uiScheduler()` | Toolkit-neutral UI capabilities and UI-thread scheduling |
+| `config()` | Typed plugin configuration |
+| `diagnostics()` | Current structured diagnostics |
+| `disposableScope()` | Reverse-order lifecycle cleanup |
+
+Some default services throw `UnsupportedOperationException`; others return an explicit unavailable implementation. Plugins must handle unavailable capability families rather than bypassing them.
+
+## Registration and cleanup
+
+Most registries return `Registration`, which is an `AutoCloseable` handle.
+
+```java
+Registration registration = context.actions().register("example.refresh", action);
+context.disposableScope().register(registration);
+```
+
+The scope closes registrations in reverse order. Put actions, menus, UI contributions, subscriptions, task handles, and other closeable resources in the scope so Runtime can release the plugin ClassLoader safely.
+
+Cubism lifecycle hooks are discovered from entrypoint interfaces instead of a callback registration bus.
+
+## Actions, menus, and events
+
+An `ActionRegistry.Action` provides an ID, label, and handler. `ActionContext` can carry a typed UI action event or a generation-bound context-menu selection.
+
+A `MenuRegistry.MenuContribution` binds a slash-delimited menu path to a registered action ID and order.
+
+The generic event bus is typed:
+
+```java
+Registration subscription = context.eventBus().subscribe(
+    MyEvent.class,
+    event -> context.logger().info(event.value())
+);
+context.disposableScope().register(subscription);
+context.eventBus().publish(new MyEvent("changed"));
+
+record MyEvent(String value) implements EventBus.TurboismEvent {}
+```
+
+Events should be immutable plugin- or SDK-owned values. Do not put raw host objects, Swing widgets, native handles, or host ClassLoaders in events.
+
+## Snapshot and query APIs
+
+`CubismFacade` still provides immutable runtime snapshots:
+
+```java
+CubismRuntimeSnapshot runtime = context.cubism().runtime();
+Optional<ProjectSnapshot> project = context.cubism().activeProject();
+Optional<DocumentSnapshot> document = context.cubism().activeDocument();
+Optional<ModelSnapshot> model = context.cubism().activeModel();
+boolean hostPresent = context.cubism().isHostPresent();
+```
+
+Narrow query services include:
+
+- `ParameterQueryService` for parameter lookup and enumeration;
+- `SelectionQueryService` for current selection and selection-change subscription;
+- `ModelHierarchyQueryService` for model-tree traversal;
+- `CubismReadCapabilityService` for project, document, model, selection, parameter, model-object, mesh, deformer, PSD, clip-mask, texture-atlas, render-status, workspace, and theme-status read families.
+
+Snapshot and query values are immutable DTOs, not host object references.
+
+## Unified Cubism object graph
+
+New plugin code should prefer the unified object API:
+
+```java
+CubismModel model = context.cubism().model().active();
+Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
+
+float value = parameter.getValue();
+parameter.setValue(value + 1.0f);
+```
+
+`CubismModel` exposes Parameters, Parameter Groups, Parts, Drawables, Deformers, Warp and Rotation Deformers, Glue, Canvas, model update, default-keyform lock, and parameter-binding operations.
+
+Strong IDs include `ProjectId`, `DocumentId`, `ModelId`, `ModelObjectId`, `ParameterId`, `ParameterGroupId`, `PartId`, `ArtMeshId`, `DeformerId`, `GlueId`, and `ParameterBindingPointId`.
+
+The model and its children are generation-bound. References fail closed after document switches, reloads, deletion, plugin disablement, Provider replacement, or other invalidating lifecycle events.
+
+## Operation lifecycle hooks
+
+`CubismPlugin` combines Parameter, Part, Drawable, Deformer, and Model hook families.
+
+```java
+public final class ClampPlugin implements CubismPlugin {
+    @Override
+    public float beforeSetParameterValue(Parameter parameter, float value) {
+        return Math.min(value, parameter.getMaximumValue());
+    }
+
+    @Override
+    public void onParameterValueChanged(
+        Parameter parameter,
+        float oldValue,
+        float newValue
+    ) {
+        // Runs only after authoritative state changed.
+    }
+
+    @Override
+    public void afterSetParameterValue(Parameter parameter, float value) {
+        // Observe normal completion; do not perform a second mutation.
+    }
+}
+```
+
+```text
+before -> canonical operation -> authoritative state probe -> on(changed only) -> after(normal completion)
+```
+
+- `before` is synchronous, ordered, and may rewrite the argument.
+- `on` is emitted only for an observable change.
+- `after` observes normal completion.
+- observe and intercept permissions are separate.
+- plugins cannot register bytecode transformers directly.
+
+## Configuration
+
+Typed configuration supports schemas, codecs, sequential migrations, asynchronous reads, and revision-based compare-and-set writes.
+
+```java
+ConfigKey<Boolean> enabled = new ConfigKey<>(
+    "example.settings",
+    "enabled",
+    true,
+    ConfigCodecs.booleanValue()
+);
+
+ConfigSchema schema = new ConfigSchema(
+    "example.settings",
+    "settings.json",
+    1,
+    List.of(enabled)
+);
+
+context.config().registerSchema(schema, List.of());
+context.config().read(enabled);
+context.config().write(enabled, true, expectedRevision);
+```
+
+Runtime stores plugin settings under `config/<pluginId>/`. Plugins must not construct paths under `turboism.home` themselves.
+
+## Plugin storage and user files
+
+`PluginStorage` provides atomic reads, writes, copy, move, list, and delete operations under three roots:
+
+- DATA for persistent business data;
+- STATE for rebuildable runtime state;
+- CACHE for rebuildable cached data.
+
+```java
+StoragePath path = new StoragePath(StorageRoot.STATE, "manual-order.txt");
+context.storage().writeUtf8Atomic(path, "a\nb\n");
+context.storage().readUtf8(path, 256 * 1024);
+```
+
+Paths must be normalized relative paths. User-selected external files use `UserFileAccessService` and scoped `UserFileHandle` objects; user files are not an unrestricted filesystem capability.
+
+## Tasks and asynchronous reads
+
+Use `PluginTaskScheduler` instead of owning unmanaged threads, executors, or timers.
+
+```java
+TaskSubmission submission = context.tasks().submit(
+    new PluginTaskRequest(
+        new TaskId("refresh"),
+        PluginTaskKind.COMPUTE,
+        PluginTaskPriority.NORMAL,
+        token -> token.checkCanceled()
+    )
+);
+```
+
+Tasks expose typed submission, cancellation, completion, timeout, rejection, backpressure, and circuit-open outcomes.
+
+`AsyncHostReadService` has a deliberately small intent set. Use only intents present in the current SDK; do not assume future parameter, mesh, or PSD intents.
+
+## UI API
+
+UI APIs use SDK DTOs, not Swing/AWT or host widgets. Current families include:
+
+- actions and menus;
+- main and palette toolbars;
+- typed context menus and context selections;
+- overlays, dialogs, status notifications, and file selection;
+- toolkit-neutral `PanelView` embedded panels;
+- UI-thread scheduling;
+- scene-table, appearance, control-appearance, and selected Editor contributions.
+
+Each UI family has independent capability and Provider evidence. One available family does not activate every other family.
+
+## Permissions, capabilities, and operations
+
+- A **permission** authorizes crossing a risk boundary.
+- A **capability** says the current Provider and host version support a feature family.
+- An **operation** is one concrete invocation and diagnostic identity.
+
+A permission does not bypass operation validation and does not create a missing Provider.
+
+## Version and readiness notes
+
+- Parameter authoring writes have a verified Cubism 5.3.02 path, but callers must still handle unavailability and stale targets.
+- Part display-name writes have real-host evidence on 5.2.03 and 5.3.02.
+- Part opacity authoring writes must not be claimed on 5.2.03.
+- Fake and static tests prove their named layer only.
+- Snapshot/query/transaction compatibility surfaces currently coexist with the unified object graph.

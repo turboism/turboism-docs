@@ -1,12 +1,20 @@
 ---
 title: Reference
-description: Where versioned public contracts will be published.
+description: Guided and generated references for the current Turboism Preview SDK.
 ---
 
-Reference will contain the public Plugin SDK, Host API, and other supported extension
-points. The default view will represent the current supported release; older reference
-will be archived only when needed.
+The Reference section documents the current plugin-facing SDK boundary.
 
-Reference pages will be imported from versioned API-reference artifacts after a release
-establishes an explicit public contract. Internal implementation and uncommitted
-interfaces will not be documented as extension APIs.
+## Start here
+
+- [SDK API Guide](./sdk-api) — lifecycle, `PluginContext`, object APIs, hooks, configuration, storage, tasks, UI, permissions, and readiness constraints.
+- [Generated API Reference](./generated-api) — source-generated JDK 17 Javadoc for `dev.turboism.sdk.*`.
+- [Open the HTML type index](/api/sdk/index.html) — browse packages, classes, records, interfaces, and methods directly.
+
+## Contract status
+
+The current reference is generated from development source and describes Preview APIs unless an API is explicitly documented as Stable.
+
+The source repository's reviewed binary API baseline remains the compatibility gate. Generated Javadoc is a documentation artifact, not an independent stability promise.
+
+Internal Runtime, Bootstrap, test-framework, mapping, Provider, and first-party plugin implementation packages are intentionally excluded from the public reference.

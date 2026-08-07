@@ -1,48 +1,150 @@
 ---
 title: Developer Quick Start
-description: Build your first Turboism plugin from a minimal scaffold.
+description: Build a minimal Java 17 Turboism plugin against the current Preview SDK.
 ---
 
-This page captures the intended plugin onboarding sequence in the current preview.
+The current source-backed development path is to add a plugin module to the Turboism repository. A standalone starter template and stable Maven coordinates are not published yet.
 
-## Project scaffold (planned)
+## 1. Create the module
 
-A published starter template and plugin generator are not available yet. In the meantime:
+```text
+plugins/hello/
+├── build.gradle.kts
+├── src/main/java/dev/example/plugin/HelloPlugin.java
+├── src/main/resources/META-INF/turboism/plugin.json
+└── src/test/java/dev/example/plugin/HelloPluginTest.java
+```
 
-1. Create a workspace folder for your plugin.
-2. Define a `plugin` descriptor that names the plugin and entrypoint.
-3. Add an isolated build output target.
-4. Keep plugin registration idempotent.
+Add it to the source repository's `settings.gradle.kts`:
 
-## Minimum plugin structure (conceptual)
+```kotlin
+include("plugins:hello")
+```
 
-- `plugin-id` and display name
-- Version metadata
-- Entry module that exports a lifecycle hook
-- Optional capabilities:
-  - command registration
-  - event subscriptions
-  - diagnostics hooks
+## 2. Depend on the SDK only
 
-## First run in preview
+```kotlin
+plugins {
+    `java-library`
+}
 
-- Load only one test plugin.
-- Perform a no-op action.
-- Confirm it does not alter project state.
-- Verify the host still starts and can unload the plugin cleanly.
+dependencies {
+    compileOnly(project(":sdk"))
+    testImplementation(project(":sdk"))
+}
+```
 
-## Local verification checklist
+`compileOnly` is intentional: Runtime provides the SDK. The plugin JAR must not copy `dev/turboism/sdk/**` classes.
 
-- Lifecycle callbacks are exercised at load/unload.
-- No unexpected writes happen during idle mode.
-- Diagnostics output is readable and scoped.
+Do not depend on Runtime, Bootstrap, `com.live2d.*`, another plugin's private implementation package, reflection bridges, host widgets, native handles, or the host ClassLoader.
 
-## Next documentation to read
+## 3. Implement the entrypoint
 
-- [Designing plugins](./designing-plugins)
-- [Available plugin interfaces](./plugin-interfaces)
-- [Update and maintenance](../use/update-policy)
+```java
+package dev.example.plugin;
 
-> **Preview status**
-> The concrete starter template and package coordinates are pending public release. This
-> section will be replaced by a template-first workflow when the SDK is published.
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.TurboismPlugin;
+
+public final class HelloPlugin implements TurboismPlugin {
+    private PluginContext context;
+
+    @Override
+    public void init(final PluginContext context) {
+        this.context = java.util.Objects.requireNonNull(context, "context");
+        context.logger().info("HelloPlugin initialized");
+    }
+
+    @Override
+    public void enable() {
+        context.logger().info("HelloPlugin enabled");
+    }
+
+    @Override
+    public void disable() {
+        context.logger().info("HelloPlugin disabled");
+    }
+
+    @Override
+    public void shutdown() {
+        context.logger().info("HelloPlugin shutdown");
+        context = null;
+    }
+}
+```
+
+The class must be public, implement `TurboismPlugin` or a subinterface, and expose a public no-argument constructor.
+
+## 4. Add manifest v2
+
+Create `src/main/resources/META-INF/turboism/plugin.json`:
+
+```json
+{
+  "format": "turboism.plugin.meta",
+  "schemaVersion": 2,
+  "id": "dev.example.plugin.hello",
+  "name": "Hello Plugin",
+  "version": "0.1.0",
+  "description": "Minimal Turboism plugin lifecycle example.",
+  "entrypoints": [
+    "dev.example.plugin.HelloPlugin"
+  ],
+  "turboismApi": "[0.1.0,0.2.0)",
+  "authors": [
+    { "name": "Example Author" }
+  ],
+  "license": "MIT",
+  "website": "https://example.org/hello-plugin",
+  "resources": [],
+  "i18n": {
+    "baseName": "META-INF/turboism/i18n/messages",
+    "locales": []
+  },
+  "dependencies": [],
+  "permissions": [],
+  "capabilities": [],
+  "environment": {
+    "requiresCubism": false,
+    "ui": "none"
+  }
+}
+```
+
+Read [Plugin Manifest and Packaging](./manifest) before adding permissions, resources, localization, dependencies, or multiple entrypoints.
+
+## 5. Build and validate
+
+```bash
+./gradlew :plugins:hello:test :plugins:hello:jar validatePluginMeta \
+  --no-daemon --console=plain
+```
+
+Artifacts are written under:
+
+```text
+build/worktree/<worktreeId>/hello/libs/
+```
+
+A constructor-only test is sufficient for this lifecycle-only example. Once the plugin registers actions, UI, events, configuration, or tasks, use a recording/fake `PluginContext` to verify registrations, failure handling, disable/shutdown behavior, and scope cleanup.
+
+## 6. Package it
+
+```bash
+python3 scripts/release/package-plugin.py \
+  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
+  build/packages/hello.tplugin
+```
+
+## 7. Install it
+
+Use Turboism plugin management to select the `.tplugin`. The change is staged and applies after Cubism restarts.
+
+For isolated local development only, you may place the plugin JAR directly in a disposable Turboism home's `plugins/` directory and restart Runtime. Loose-JAR mode is not the recommended user distribution path.
+
+## Next steps
+
+- [Plugin Interfaces](./plugin-interfaces)
+- [Plugin Manifest and Packaging](./manifest)
+- [SDK API Guide](../reference/sdk-api)
+- [Plugin Management](../use/plugin-management)

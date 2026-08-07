@@ -1,0 +1,86 @@
+---
+title: 开发状态
+description: 当前 Turboism 代码库已实现的内容、仍处于 Preview 的内容，以及尚未成为产品承诺的内容。
+---
+
+Turboism 是面向 Live2D Cubism Editor 的 Java 17 Runtime 增强工具和插件框架。开发围绕可用的框架与产品能力组织，而非已废弃的 M1–M16 迁移序列。
+
+本页面是当前开发分支中由源代码支持的快照，并非发布公告。
+
+## 当前架构
+
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
+
+插件仅依赖 Turboism SDK。Runtime 负责主机访问、生命周期、安全、线程、事务、诊断、兼容性和版本路由。
+
+## 已实现的框架基础
+
+- Java Agent bootstrap、Runtime、SDK、第一方插件、测试框架和集成测试模块。
+- 本地插件 JAR 发现、manifest 和 API 范围验证、依赖解析、每个插件一个 ClassLoader、生命周期执行、逆序关闭以及 scope/ClassLoader 清理。
+- 支持有序多个入口点和整个 JAR 启动回滚的插件 manifest v2。
+- `PluginContext` 服务涵盖日志、路径、本地化、任务、配置、存储、用户文件、事件、操作、UI 贡献项、Cubism 访问和诊断。
+- 面向本地 `.tplugin` 安装、启用、禁用和卸载操作的 Preview 插件管理。变更会暂存并在 Cubism 重启后应用；核心插件受保护。
+
+## Cubism 和 Editor API 进展
+
+- 统一的 Preview 对象图覆盖 Canvas、Parameters、Parameter Groups、Parts、Drawables、Deformers、Glue 和 parameter bindings。
+- Cubism 5.2 和 5.3.02 的 Core 支持读取使用不可变复制数据、版本规范化、绑定 generation 的过期引用拒绝和固定 digest 的 resolver 证据。
+- Cubism 5.3.02 parameter 创作路径将 `Parameter.setValue` 连接到 Editor 操作、权限检查、Undo、脏状态处理、刷新和过期目标拒绝。
+- Part 显示名称写入在 5.2.03 和 5.3.02 上具有真实主机证据。
+- Part opacity 创作写入在 5.3.02 上具有证据。由于观察到的求值 setter 未参与原生 Part Undo，5.2.03 上此功能有意不可用。
+- Parameter 生命周期 hooks 支持有序的同步 `before` 重写、仅变更时的 `on`、正常完成后的 `after`、递归拒绝、有界的观察工作和卸载清理。
+- 第一方 Parameter CSV 工作流现在使用统一的 `CubismModel` 和 `Parameter` API。
+
+## 共享插件服务和 UI
+
+SDK 包含以下契约：
+
+- 操作和菜单；
+- 主工具栏和调色板工具栏；
+- 类型化上下文菜单；
+- 与工具包无关的嵌入式面板；
+- 覆盖层、状态通知、对话框和文件选择；
+- 类型化插件配置和迁移；
+- 插件自有的数据、状态和缓存存储；
+- 有界任务和取消；
+- 异步主机读取；
+- 本地化和诊断；
+- 外观、场景表以及选定的 Editor 功能系列。
+
+当匹配的 Provider 或已验证的主机能力不可用时，主机和 UI 系列会安全地失败关闭。伪造或静态测试不会自动证明已为真实主机做好准备。
+
+## 进行中或受版本限制
+
+- 许多统一对象写入方法仍取决于特定版本的 Provider。接口中存在方法并不意味着每个受支持的 Cubism 版本都能执行它。
+- 完整的 Cubism 5.2 Editor 创作矩阵在多个操作系列中仍不完整。
+- 项目、选择、模型树和额外的语义 Editor API 仍在演进。
+- Drawable、Deformer、Glue、mesh、PSD 和 texture-atlas 的写入与工作流需要由消费者驱动的实现和精确验证。
+- 主机 UI 附加、高频 hooks 和真实主机就绪度仍是具有精确版本门槛的高风险边界。
+- 可生成 SDK HTML Javadoc 并在此托管，但许多公开声明仍需要更好的说明性注释。
+
+## 当前未作承诺
+
+Turboism 当前不承诺：
+
+- 生产环境系统安装程序；
+- 自动在线更新或市场；
+- 发布者签名或撤销；
+- 完整的不可变 generation 安装、修复、回滚、恢复和清除生命周期；
+- 对 Cubism launcher 的全局修改；
+- 在每个 Cubism 版本上具有一致的就绪度；
+- 仅基于 Preview、伪造、静态或单版本证据的生产就绪度。
+
+## 近期顺序
+
+1. 完成统一对象和引用模型。
+2. 完成 Core 读取和按版本路由的 Providers。
+3. 从已验证的消费者扩展具有 Undo 的 Editor 自有写入。
+4. 统一操作生命周期语义。
+5. 完成项目、选择和模型树 API。
+6. 通过仅依赖 SDK 的插件恢复第一方工作流。
+7. 仅当显式 API、刷新、轮询或回调不足时才添加 hooks。
+8. 强化第三方 SDK、打包和发布证据。
+
+如需源代码层面的背景，请参阅 [Turboism repository](https://github.com/Turboism/Turboism) 及其中的 `ARCHITECTURE.md` 和 `ROADMAP.md` 文件。

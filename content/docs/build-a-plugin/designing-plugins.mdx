@@ -1,54 +1,101 @@
 ---
 title: Designing Plugins
-description: The preferred design approach for durable Turboism extensions.
+description: Design lifecycle-safe, SDK-only Turboism plugins that fail closed on unavailable capabilities.
 ---
 
-This guide is intentionally architectural because no complete public API contract is
-published yet.
+A durable Turboism plugin has one user-visible purpose, depends on the SDK only, and lets Runtime own host integration, scheduling, safety, and cleanup.
 
-## Core design principles
+## Keep the boundary small
 
-- **Small first**: start with one purpose and one action.
-- **State isolation**: avoid global mutable state whenever possible.
-- **Host-resilient behavior**: tolerate unavailable host features gracefully.
-- **Observable behavior**: expose clear diagnostics in startup and failure paths.
-- **Reversible changes**: every write path should have a clear undo or exit strategy.
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
 
-## Plugin lifecycle planning
+Do not add plugin-local abstractions for Runtime concerns. Reuse `PluginContext` services for configuration, storage, tasks, events, UI, user files, and Cubism access.
 
-A plugin should model four phases:
+Avoid:
 
-1. **Discover**
-   - Register entry points and capability expectations.
-2. **Activate**
-   - Build any temporary resources.
-3. **Operate**
-   - React to editor events and expose command surfaces.
-4. **Shutdown**
-   - Dispose resources and unregister listeners.
+- direct Runtime or `com.live2d.*` dependencies;
+- reflection and raw host objects;
+- unmanaged executors, threads, and timers;
+- Swing/AWT host-widget traversal;
+- global mutable registries;
+- speculative factories and extension layers.
 
-## Data and capability boundaries
+## Plan the lifecycle
 
-Keep plugin code partitioned by boundary:
+Use the four actual lifecycle methods:
 
-- **Runtime boundary**: interaction with host runtime services.
-- **Command boundary**: user-visible actions.
-- **Persistence boundary**: where plugin data is saved.
-- **UI boundary**: editor-facing views and controls.
+1. `init` — retain the context, register schemas, and build plugin-private state.
+2. `enable` — register actions, events, UI, and tasks.
+3. `disable` — stop active behavior without assuming hot unload.
+4. `shutdown` — release plugin-private state after Runtime lifecycle settlement.
 
-## Versioning strategy (for plugin authors)
+Put every closeable registration or handle in `DisposableScope` unless it is intentionally closed earlier.
 
-- Treat host version changes as a compatibility event.
-- Gate risky behavior with feature detection.
-- Avoid relying on private host internals.
+## Separate permission from availability
 
-## Design checklist before development
+A permission answers whether the plugin may cross a risk boundary. A capability answers whether Runtime and the active host version can perform the operation.
 
-- [ ] Define required host services.
-- [ ] Define plugin capabilities and permissions.
-- [ ] Decide failure behavior and fallback UX.
-- [ ] Add a smoke test that loads the plugin in minimal mode.
-- [ ] Define update and migration steps for saved plugin data.
+Design both paths:
 
-> **Preview status**
-> Specific manifest keys, event names, and versioning semantics are not yet finalized.
+- success through the supported Provider;
+- explicit unavailable, unsupported, stale, denied, timeout, backpressure, or rejected outcomes.
+
+Never treat a permission as proof that a Provider exists.
+
+## Design writes around Editor ownership
+
+For an Editor-attached model, Editor authoring state is the write source of truth. A safe write may require:
+
+- validation;
+- host-thread dispatch;
+- transaction and Undo;
+- dirty-state and refresh handling;
+- rollback or explicit partial failure;
+- generation/stale-target rejection;
+- save/reopen verification when persistence is claimed.
+
+Do not mutate Cubism Core as a second independent authoring state or synthesize an Undo entry around an evaluation-only mutation.
+
+## Use immutable values at boundaries
+
+Events, UI descriptors, snapshots, selections, configuration values, and task requests should be immutable SDK- or plugin-owned values.
+
+Do not leak:
+
+- host objects;
+- host UI controls;
+- native handles;
+- host ClassLoaders;
+- mutable Cubism-owned arrays;
+- unrestricted filesystem paths.
+
+## Prefer one action, one contribution
+
+Register user behavior as an Action, then bind menu, toolbar, panel, or context-menu contributions to its action ID. This keeps behavior testable without requiring the host UI.
+
+## Test the smallest real contract
+
+A plugin with only lifecycle logging needs a constructor/lifecycle test. A plugin with registrations should use a recording/fake `PluginContext` and verify:
+
+- requested permissions and unavailable paths;
+- registration and scope cleanup;
+- disable/shutdown behavior;
+- immutable event and DTO behavior;
+- configuration migrations and revision conflicts;
+- task cancellation or rejection where applicable.
+
+Host-version claims require the project's higher-risk validation workflow; fake tests do not establish real-host readiness.
+
+## Design checklist
+
+- [ ] The plugin has one clear purpose.
+- [ ] Production code depends only on the SDK.
+- [ ] Manifest v2 declares exact entrypoints, resources, dependencies, and minimum permissions.
+- [ ] Registrations and handles are closeable and scoped.
+- [ ] Unavailable Providers fail closed with useful diagnostics.
+- [ ] Configuration, storage, and user files use the correct service.
+- [ ] No unmanaged thread, executor, timer, host object, or reflection bridge exists.
+- [ ] Writes preserve Editor ownership and Undo semantics.
+- [ ] The smallest focused test exercises the actual contract.

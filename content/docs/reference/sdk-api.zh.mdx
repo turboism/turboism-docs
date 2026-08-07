@@ -1,0 +1,261 @@
+---
+title: SDK API 指南
+description: 当前 Turboism 插件 SDK 的入口点、服务、对象模型、生命周期与能力边界。
+---
+
+Turboism SDK 是插件唯一的公开依赖项。新 API 默认处于 Preview 状态。其可用性取决于四项彼此独立的事实：
+
+1. API 存在于 SDK 中；
+2. 插件声明了所需权限；
+3. Runtime 具有匹配的能力 Provider；
+4. 支持当前启用的 Cubism 版本和对象世代。
+
+如需查看生成的类型和方法索引，请打开 [SDK HTML API reference](/api/sdk/index.html)。
+
+## 插件生命周期
+
+每个入口点都实现 `TurboismPlugin` 或其子接口，例如 `CubismPlugin`。
+
+```java
+public interface TurboismPlugin {
+    default void init(PluginContext context) throws Exception {}
+    default void enable() throws Exception {}
+    default void disable() throws Exception {}
+    default void shutdown() throws Exception {}
+}
+```
+
+- `init`：保留上下文、注册配置架构，并创建插件私有状态。
+- `enable`：提供操作、事件、UI、任务和其他活动行为。
+- `disable`：在 Runtime 关闭插件作用域前停止活动行为。
+- `shutdown`：释放不归该作用域所有的插件私有资源。
+
+一个 JAR 可以包含多个有序入口点。构造、初始化和启用遵循清单顺序；禁用和关闭则按相反顺序执行。整个 JAR 的启动是原子的。
+
+## `PluginContext`
+
+| 条目 | 用途 |
+| --- | --- |
+| `descriptor()` | 当前 JAR 级别的 `PluginDescriptor` |
+| `logger()` | 插件作用域内的日志记录 |
+| `paths()` | 配置、数据、缓存、状态和日志命名空间 |
+| `localization()` | 区域设置、文本查找和格式化 |
+| `tasks()` | 有界的一次性和固定延迟任务 |
+| `hostReads()` | 有界的异步主机读取 |
+| `storage()` | 插件拥有的 DATA、STATE 和 CACHE 存储 |
+| `userFiles()` | 用户授予的文件句柄 |
+| `cubism()` | 快照、统一对象访问和事务兼容入口点 |
+| `parameterQuery()` | 范围受限的参数查询 |
+| `selectionQuery()` | 选区读取和变更订阅 |
+| `modelHierarchyQuery()` | 模型树查询 |
+| `cubismRead()` | 聚合的读取能力族 |
+| `eventBus()` | 类型化事件的发布和订阅 |
+| `actions()` 和 `menus()` | 操作注册和菜单贡献 |
+| `mainToolbar()`、`paletteToolbar()`、`contextMenu()` | 类型化 UI 贡献注册表 |
+| `uiHost()` 和 `uiScheduler()` | 工具包无关的 UI 能力和 UI 线程调度 |
+| `config()` | 类型化插件配置 |
+| `diagnostics()` | 当前结构化诊断信息 |
+| `disposableScope()` | 逆序生命周期清理 |
+
+部分默认服务会抛出 `UnsupportedOperationException`；另一些则返回显式的不可用实现。插件必须处理不可用的能力族，而不是绕过它们。
+
+## 注册与清理
+
+大多数注册表返回 `Registration`，这是一个 `AutoCloseable` 句柄。
+
+```java
+Registration registration = context.actions().register("example.refresh", action);
+context.disposableScope().register(registration);
+```
+
+该作用域按相反顺序关闭注册项。应将操作、菜单、UI 贡献、订阅、任务句柄和其他可关闭资源放入作用域中，以便 Runtime 能够安全地释放插件 ClassLoader。
+
+Cubism 生命周期钩子通过入口点接口发现，而非通过回调注册总线。
+
+## 操作、菜单与事件
+
+`ActionRegistry.Action` 提供 ID、标签和处理程序。`ActionContext` 可以携带类型化 UI 操作事件，或绑定到世代的上下文菜单选区。
+
+`MenuRegistry.MenuContribution` 将斜杠分隔的菜单路径与已注册的操作 ID 及顺序绑定。
+
+通用事件总线是类型化的：
+
+```java
+Registration subscription = context.eventBus().subscribe(
+    MyEvent.class,
+    event -> context.logger().info(event.value())
+);
+context.disposableScope().register(subscription);
+context.eventBus().publish(new MyEvent("changed"));
+
+record MyEvent(String value) implements EventBus.TurboismEvent {}
+```
+
+事件应为不可变的、由插件或 SDK 拥有的值。请勿在事件中放入原始主机对象、Swing 小部件、原生句柄或主机 ClassLoader。
+
+## 快照与查询 API
+
+`CubismFacade` 仍提供不可变的运行时快照：
+
+```java
+CubismRuntimeSnapshot runtime = context.cubism().runtime();
+Optional<ProjectSnapshot> project = context.cubism().activeProject();
+Optional<DocumentSnapshot> document = context.cubism().activeDocument();
+Optional<ModelSnapshot> model = context.cubism().activeModel();
+boolean hostPresent = context.cubism().isHostPresent();
+```
+
+范围受限的查询服务包括：
+
+- `ParameterQueryService`：用于参数查找和枚举；
+- `SelectionQueryService`：用于当前选区和选区变更订阅；
+- `ModelHierarchyQueryService`：用于模型树遍历；
+- `CubismReadCapabilityService`：用于项目、文档、模型、选区、参数、模型对象、网格、变形器、PSD、剪裁蒙版、纹理图集、渲染状态、工作区和主题状态读取族。
+
+快照和查询值是不可变 DTO，而非主机对象引用。
+
+## 统一的 Cubism 对象图
+
+新的插件代码应优先使用统一对象 API：
+
+```java
+CubismModel model = context.cubism().model().active();
+Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
+
+float value = parameter.getValue();
+parameter.setValue(value + 1.0f);
+```
+
+`CubismModel` 公开参数、参数组、部件、可绘制对象、变形器、Warp 和 Rotation Deformers、Glue、画布、模型更新、默认关键帧锁定和参数绑定操作。
+
+强类型 ID 包括 `ProjectId`、`DocumentId`、`ModelId`、`ModelObjectId`、`ParameterId`、`ParameterGroupId`、`PartId`、`ArtMeshId`、`DeformerId`、`GlueId` 和 `ParameterBindingPointId`。
+
+模型及其子对象绑定到世代。在文档切换、重新加载、删除、插件禁用、Provider 替换或其他使其失效的生命周期事件之后，引用会以安全失败方式失效。
+
+## 操作生命周期钩子
+
+`CubismPlugin` 组合了 Parameter、Part、Drawable、Deformer 和 Model 钩子族。
+
+```java
+public final class ClampPlugin implements CubismPlugin {
+    @Override
+    public float beforeSetParameterValue(Parameter parameter, float value) {
+        return Math.min(value, parameter.getMaximumValue());
+    }
+
+    @Override
+    public void onParameterValueChanged(
+        Parameter parameter,
+        float oldValue,
+        float newValue
+    ) {
+        // Runs only after authoritative state changed.
+    }
+
+    @Override
+    public void afterSetParameterValue(Parameter parameter, float value) {
+        // Observe normal completion; do not perform a second mutation.
+    }
+}
+```
+
+```text
+before -> canonical operation -> authoritative state probe -> on(changed only) -> after(normal completion)
+```
+
+- `before` 同步、有序，并且可以改写参数。
+- `on` 仅在发生可观察到的变更时发出。
+- `after` 观察正常完成。
+- observe 和 intercept 权限彼此独立。
+- 插件无法直接注册字节码转换器。
+
+## 配置
+
+类型化配置支持架构、编解码器、顺序迁移、异步读取，以及基于修订版本的 compare-and-set 写入。
+
+```java
+ConfigKey<Boolean> enabled = new ConfigKey<>(
+    "example.settings",
+    "enabled",
+    true,
+    ConfigCodecs.booleanValue()
+);
+
+ConfigSchema schema = new ConfigSchema(
+    "example.settings",
+    "settings.json",
+    1,
+    List.of(enabled)
+);
+
+context.config().registerSchema(schema, List.of());
+context.config().read(enabled);
+context.config().write(enabled, true, expectedRevision);
+```
+
+Runtime 将插件设置存储在 `config/<pluginId>/` 下。插件不得自行构建 `turboism.home` 下的路径。
+
+## 插件存储和用户文件
+
+`PluginStorage` 在三个根目录下提供原子读取、写入、复制、移动、列出和删除操作：
+
+- DATA：用于持久化业务数据；
+- STATE：用于可重建的运行时状态；
+- CACHE：用于可重建的缓存数据。
+
+```java
+StoragePath path = new StoragePath(StorageRoot.STATE, "manual-order.txt");
+context.storage().writeUtf8Atomic(path, "a\nb\n");
+context.storage().readUtf8(path, 256 * 1024);
+```
+
+路径必须是规范化的相对路径。用户选择的外部文件使用 `UserFileAccessService` 和有作用域的 `UserFileHandle` 对象；用户文件并非不受限制的文件系统能力。
+
+## 任务与异步读取
+
+应使用 `PluginTaskScheduler`，而不是持有不受管理的线程、执行器或计时器。
+
+```java
+TaskSubmission submission = context.tasks().submit(
+    new PluginTaskRequest(
+        new TaskId("refresh"),
+        PluginTaskKind.COMPUTE,
+        PluginTaskPriority.NORMAL,
+        token -> token.checkCanceled()
+    )
+);
+```
+
+任务公开类型化的提交、取消、完成、超时、拒绝、背压和断路器打开结果。
+
+`AsyncHostReadService` 的意图集经过刻意收窄。仅使用当前 SDK 中存在的意图；不要假定未来会提供 parameter、mesh 或 PSD 意图。
+
+## UI API
+
+UI API 使用 SDK DTO，而不是 Swing/AWT 或主机小部件。当前族包括：
+
+- 操作和菜单；
+- 主工具栏和调色板工具栏；
+- 类型化上下文菜单和上下文选区；
+- 覆盖层、对话框、状态通知和文件选择；
+- 工具包无关的 `PanelView` 嵌入式面板；
+- UI 线程调度；
+- 场景表、外观、控件外观和部分选定的 Editor 贡献。
+
+每个 UI 族都有独立的能力和 Provider 依据。一个可用的族不会启用所有其他族。
+
+## 权限、能力和操作
+
+- **权限**：授权跨越风险边界。
+- **能力**：表示当前 Provider 和主机版本支持某个功能族。
+- **操作**：一次具体调用及其诊断身份。
+
+权限不会绕过操作验证，也不会创建缺失的 Provider。
+
+## 版本与就绪状态说明
+
+- 参数创作写入具有已验证的 Cubism 5.3.02 路径，但调用方仍必须处理不可用性和过时目标。
+- 部件显示名称写入在 5.2.03 和 5.3.02 上具有真实主机证据。
+- 不得声称部件不透明度创作写入支持 5.2.03。
+- Fake 和静态测试仅证明其所命名的层。
+- 快照/查询/事务兼容接口当前与统一对象图并存。

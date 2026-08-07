@@ -1,0 +1,99 @@
+---
+title: プラグイン管理
+description: ローカル Turboism plugin package を安全にインストール、置換、有効化、無効化、アンインストールする。
+---
+
+Turboism は現在、ローカル `.tplugin` package 向けに Preview runtime plugin-management 経路を提供しています。これは system-level Turboism installer や online marketplace ではありません。
+
+すべての plugin-management 変更はステージングされ、Cubism の再起動後に適用されます。現在ロードされている plugin instance を hot-swap することはありません。
+
+## プラグインをインストールする
+
+1. 信頼できる source から `.tplugin` を入手または build します。
+2. Turboism plugin management を開きます。
+3. **Install plugin** を選択します。
+4. ローカル `.tplugin` file を選択します。
+5. operation が pending として表示されることを確認します。
+6. Cubism を通常どおり閉じます。
+7. 同じ Turboism home を通じて Cubism を再起動します。
+8. plugin list と Runtime logs で有効な state を確認します。
+
+operation をステージングする前に、Runtime は package を検証し、private snapshot を作成します。次の discovery cycle で pending change を適用し、通常の manifest、dependency、permission、ClassLoader、lifecycle check を行います。
+
+## プラグインを置換または更新する
+
+現在、production update service は別に存在しません。同じ plugin ID を持つ新しい package をインストールすると、replacement intent がステージングされます。
+
+推奨手順:
+
+1. 現在の package と plugin の persistent configuration/data を backup します。
+2. plugin management を通じて新しい `.tplugin` をインストールします。
+3. Cubism を再起動します。
+4. 表示された version、lifecycle state、configuration migration、logs を確認します。
+5. 失敗した場合は Turboism を停止し、known-good package を復元または再インストールします。
+
+これは automatic update、retained-version、または完全な rollback transaction system ではありません。
+
+## プラグインを無効化または有効化する
+
+desired state は Turboism home configuration に永続化され、再起動後に適用されます。
+
+- Runtime 所有の `turboism.core` plugin は無効化できません。
+- 無効化された plugin は、次の startup discovery で skip されます。
+- toggle の変更によって active instance が直ちに unload されることはありません。
+- 通常の shutdown では、plugin が scope と ClassLoader reference を閉じる機会が引き続き与えられます。
+
+## プラグインをアンインストールする
+
+1. plugin management で plugin を選択します。
+2. **Uninstall** を選択します。
+3. pending operation を確認します。
+4. Cubism を閉じて再起動します。
+5. plugin がロードされなくなったことを確認します。
+6. data を保持するか削除するか決めます。
+
+core plugin はアンインストールできません。
+
+plugin JAR を削除しても、plugin 所有の全ファイルが自動的に消去されるわけではありません。
+
+- 再インストール後に設定または business data が必要になる可能性がある場合は、`config/<pluginId>/` と `data/<pluginId>/` を保持します。
+- `cache/<pluginId>/`、`state/<pluginId>/`、`logs/<pluginId>/` は通常再構築可能または診断用ですが、Turboism を停止しているときだけ削除します。
+- configuration または persistent data の削除は backup なしでは取り消せません。
+
+## Loose-JAR 開発モード
+
+分離された使い捨ての development home では、developer は build 済み plugin JAR を直接次に置くことができます。
+
+```text
+<turboism.home>/plugins/
+```
+
+その後 Runtime を再起動します。
+
+この経路は local development には便利ですが、`.tplugin` transport staging と package-level check を迂回します。end-user distribution flow としては推奨されません。
+
+## パッケージの拒否
+
+package は、次のような理由で拒否されることがあります。
+
+- invalid hash または size。
+- malformed または ambiguous ZIP path。
+- duplicate entry または special file。
+- copied SDK、Runtime、test、または Live2D class。
+- native または installer payload。
+- accepted package profile 外の nested JAR content。
+- package と plugin の ID または version の不一致。
+- entrypoint class の欠落または undeclared resource。
+
+現在の plugin JAR から package を再生成してください。archive を手動で編集したり inspection を無効化したりしないでください。
+
+## 現在の制限
+
+Plugin management は現在、次を提供していません。
+
+- online discovery または download。
+- publisher signing または revocation。
+- marketplace。
+- retained historical version。
+- 完全な repair、rollback、recovery、purge lifecycle。
+- Cubism installation または launcher の system-level modification。

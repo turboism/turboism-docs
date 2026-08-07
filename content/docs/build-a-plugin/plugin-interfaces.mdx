@@ -1,43 +1,116 @@
 ---
-title: Plugin Interfaces (Preview)
-description: Draft interface families currently expected for plugin development.
+title: Plugin Interfaces
+description: Current Preview SDK interface families available through PluginContext.
 ---
 
-The API surface below is a **preview inventory**. It is intended to describe what kinds
-of extension touchpoints are planned, not a finalized contract.
+The current Turboism plugin boundary is Java-based and source-backed. Plugins implement `TurboismPlugin` or a subinterface and receive a `PluginContext` from Runtime.
 
-## Core runtime interfaces
+For signatures and detailed semantics, use the [SDK API Guide](../reference/sdk-api) and [generated HTML reference](/api/sdk/index.html).
 
-| Family | Purpose | Typical use |
+## Lifecycle
+
+```java
+public interface TurboismPlugin {
+    default void init(PluginContext context) throws Exception {}
+    default void enable() throws Exception {}
+    default void disable() throws Exception {}
+    default void shutdown() throws Exception {}
+}
+```
+
+Use `init` for context and configuration setup, `enable` for active registrations, `disable` for stopping behavior, and `shutdown` for plugin-private cleanup.
+
+## Context service families
+
+| Family | Current entrypoint | Typical use |
 | --- | --- | --- |
-| `Agent Context` | Shared runtime metadata and host identity | Read host/version info and plugin-local settings |
-| `Project Context` | Read/write operations scoped to the active project | Inspect current state and save metadata |
-| `Command Registry` | Register editor-facing commands | Expose actions in host menus/toolbars |
-| `Event Hooks` | React to lifecycle and editor events | Run logic on load/unload, save, or selection changes |
-| `Diagnostics` | Structured logs and trace channels | Emit validation warnings and recovery hints |
+| Metadata | `descriptor()` | Inspect the current JAR-level descriptor |
+| Logging | `logger()` | Emit plugin-scoped diagnostics |
+| Paths | `paths()` | Access plugin-owned config/data/cache/state/log namespaces |
+| Localization | `localization()` | Read localized text declared in the manifest |
+| Tasks | `tasks()` | Submit bounded cancellable work |
+| Host reads | `hostReads()` | Request bounded asynchronous host snapshots |
+| Storage | `storage()` | Read and atomically write plugin-owned data |
+| User files | `userFiles()` | Use user-granted external-file handles |
+| Cubism | `cubism()` | Read snapshots and use the unified object graph |
+| Queries | `parameterQuery()`, `selectionQuery()`, `modelHierarchyQuery()` | Narrow typed queries |
+| Events | `eventBus()` | Publish and subscribe to immutable typed events |
+| Actions | `actions()` | Register reusable plugin actions |
+| Menus and UI | `menus()`, toolbar/context-menu registries, `uiHost()` | Contribute toolkit-neutral UI descriptors |
+| Configuration | `config()` | Register typed schemas, read values, and compare-and-set writes |
+| Diagnostics | `diagnostics()` | Inspect structured Runtime diagnostics |
+| Cleanup | `disposableScope()` | Register closeable lifecycle resources |
 
-## Design-time / build interfaces
+A service may be unavailable on a particular Runtime/host combination. Handle explicit unavailable results or exceptions rather than bypassing Runtime.
 
-- `Manifest schema` for capability declaration and version constraints.
-- `Loader integration` for plugin discovery and startup order.
-- `Compatibility metadata` for host/engine/SDK requirements.
+## Actions and menus
 
-## Compatibility and release notes
+Register behavior once as an action and bind UI contributions to its ID.
 
-Because this project is still in public preview, none of these entries are contract-backed
-yet. Before shipping external plugins:
+```java
+var action = context.actions().register("hello.show", new ActionRegistry.Action() {
+    @Override public String id() { return "hello.show"; }
+    @Override public String label() { return "Hello"; }
+    @Override public Consumer<ActionRegistry.ActionContext> handler() {
+        return ignored -> context.logger().info("Hello from Turboism");
+    }
+});
+context.disposableScope().register(action);
+```
 
-- Track release notes for the current interface edition.
-- Validate behavior on your target host build.
-- Test fallback behavior when an interface entry is unavailable.
+Menu, toolbar, panel, and context-menu contributions use SDK descriptors. They do not expose host widgets.
 
-## Suggested extension structure
+## Events
 
-A minimal plugin module should map to at least two logical modules:
+```java
+record HelloEvent(String message) implements EventBus.TurboismEvent {}
 
-1. **Bootstrap module**
-   - Initialize, inspect context, register hooks.
-2. **Feature module(s)**
-   - Implement command handlers, transformations, and UI actions.
+var subscription = context.eventBus().subscribe(
+    HelloEvent.class,
+    event -> context.logger().info(event.message())
+);
+context.disposableScope().register(subscription);
+context.eventBus().publish(new HelloEvent("enabled"));
+```
 
-Use this structure to keep your code testable and easier to migrate when contracts settle.
+Subscribe and publish permissions are separate. Events must not contain raw host state.
+
+## Cubism object API
+
+```java
+CubismModel model = context.cubism().model().active();
+Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
+float current = parameter.getValue();
+```
+
+Writes require a matching permission and Provider. An interface method does not imply support on every Cubism version.
+
+## Hooks
+
+Implement `CubismPlugin` or a specific hook interface for operation lifecycle observation or interception.
+
+```java
+public final class HelloHooks implements CubismPlugin {
+    @Override
+    public void onParameterValueChanged(
+        Parameter parameter,
+        float oldValue,
+        float newValue
+    ) {
+        // Bounded observation only.
+    }
+}
+```
+
+Hooks follow `before -> operation -> changed-only on -> after`. Plugins cannot register bytecode transformers.
+
+## Configuration, storage, and tasks
+
+- Use typed `PluginConfigRegistry` for settings.
+- Use `PluginStorage` for DATA, STATE, and CACHE.
+- Use `UserFileAccessService` for user-selected external files.
+- Use `PluginTaskScheduler` instead of unmanaged threads, executors, or timers.
+
+## Cleanup rule
+
+Every returned registration or handle that can outlive the current method must either be closed explicitly or enrolled in `context.disposableScope()`.

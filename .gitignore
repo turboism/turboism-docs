@@ -9,3 +9,7 @@ next-env.d.ts
 /.source
 .DS_Store
 .vercel
+
+# tooling artifacts
+/.omo
+/.research-artifacts

@@ -1,0 +1,17 @@
+---
+title: アーキテクチャ
+description: Plugin と Cubism の間で Turboism が担う役割の概念マップ。
+---
+
+Turboism は、Live2D Cubism Editor の内部実装と extension code の間にある adaptation layer として構想されています。
+
+その目的は、host implementation detail に直接依存せずに、plugin author に高レベルな integration surface を提供することです。
+
+## 概念上の layer
+
+1. Host application としての Live2D Cubism Editor。
+2. Host 固有の symbol と version 差分への adaptation work。
+3. Turboism framework service と extension boundary。
+4. それらの boundary 上に構築される official および third-party plugin。
+
+Layer 名は意図された architecture を説明するものであり、名前が挙げられた class、service、feature が released SDK で利用できることを約束するものではありません。

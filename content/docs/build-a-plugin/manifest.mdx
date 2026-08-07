@@ -1,0 +1,163 @@
+---
+title: Plugin Manifest and Packaging
+description: Define a manifest v2 plugin JAR and package it as a strict local .tplugin archive.
+---
+
+Every Turboism plugin JAR contains exactly one descriptor at:
+
+```text
+META-INF/turboism/plugin.json
+```
+
+Runtime accepts schema version 2 only. Version 1 is not loaded or upgraded automatically.
+
+## Minimal manifest
+
+```json
+{
+  "format": "turboism.plugin.meta",
+  "schemaVersion": 2,
+  "id": "dev.example.plugin.hello",
+  "name": "Hello Plugin",
+  "version": "0.1.0",
+  "description": "Minimal Turboism plugin lifecycle example.",
+  "entrypoints": [
+    "dev.example.plugin.HelloPlugin"
+  ],
+  "turboismApi": "[0.1.0,0.2.0)",
+  "authors": [
+    { "name": "Example Author" }
+  ],
+  "license": "MIT",
+  "website": "https://example.org/hello-plugin",
+  "resources": [],
+  "i18n": {
+    "baseName": "META-INF/turboism/i18n/messages",
+    "locales": []
+  },
+  "dependencies": [],
+  "permissions": [],
+  "capabilities": [],
+  "environment": {
+    "requiresCubism": false,
+    "ui": "none"
+  }
+}
+```
+
+## Entrypoint rules
+
+Each entrypoint must:
+
+- exist in the same plugin JAR;
+- be public;
+- implement `TurboismPlugin` or a subinterface;
+- expose a public no-argument constructor.
+
+Multiple entrypoints share one plugin identity, descriptor, ClassLoader, `PluginContext`, `DisposableScope`, permission set, configuration namespace, storage namespace, resources, and localization declaration.
+
+```text
+construct/init/enable: manifest order
+disable/shutdown:       reverse manifest order
+```
+
+A failure during construction, initialization, or enablement rolls back the entire JAR.
+
+## Dependencies
+
+```json
+{
+  "id": "dev.example.plugin.base",
+  "version": "[1.0.0,2.0.0)",
+  "type": "required",
+  "ordering": "after",
+  "reason": "Uses the base plugin contract."
+}
+```
+
+- `type` is `required` or `optional`.
+- `ordering` is `none`, `before`, or `after`.
+- dependency IDs use reverse-domain syntax.
+- version ranges use the current Turboism version-range grammar.
+
+A dependency record controls resolution and ordering. It does not make another plugin's private implementation package a public Java dependency.
+
+## Permissions
+
+Each permission record contains a known ID, `application` or `user` scope, and a non-empty reason.
+
+```json
+{
+  "id": "turboism.action.register",
+  "scope": "application",
+  "reason": "Registers the Hello action."
+}
+```
+
+Declare only permissions required by the SDK services the plugin calls. Permission does not guarantee Provider availability or bypass operation validation.
+
+## Resources and localization
+
+Resource roots are normalized relative prefixes ending in `/`:
+
+```json
+"resources": ["icons/"],
+"i18n": {
+  "baseName": "META-INF/turboism/i18n/messages",
+  "locales": ["base", "en", "zh_Hans"]
+}
+```
+
+The JAR must then contain:
+
+```text
+icons/hello.png
+META-INF/turboism/i18n/messages.properties
+META-INF/turboism/i18n/messages_en.properties
+META-INF/turboism/i18n/messages_zh_Hans.properties
+```
+
+Declared roots and catalogs must exist. Ordinary non-class resources must belong to a declared root. Path traversal, absolute paths, backslashes, empty segments, and undeclared resources are rejected.
+
+## Build and validate
+
+For an in-repository plugin module:
+
+```bash
+./gradlew :plugins:hello:test :plugins:hello:jar validatePluginMeta \
+  --no-daemon --console=plain
+```
+
+The repository uses Java 17 and writes module artifacts under:
+
+```text
+build/worktree/<worktreeId>/<module>/libs/
+```
+
+## Build a `.tplugin`
+
+```bash
+python3 scripts/release/package-plugin.py \
+  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
+  build/packages/hello.tplugin
+```
+
+The current minimal package contains:
+
+```text
+META-INF/turboism/package.json
+plugin/plugin.jar
+```
+
+Runtime treats `.tplugin` as untrusted input and validates ZIP/JAR structure, paths, sizes, hashes, descriptor consistency, entrypoints, resources, and forbidden content.
+
+A plugin package must not contain:
+
+- copied Turboism SDK classes;
+- Runtime, Bootstrap, test, or test-framework classes;
+- `com/live2d/**` classes or Cubism resources;
+- native binaries or host payloads;
+- installer scripts;
+- nested JARs in the current minimal builder output.
+
+Do not create a package by renaming an arbitrary ZIP. Always generate it from the current plugin JAR.

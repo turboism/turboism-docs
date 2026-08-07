@@ -1,0 +1,34 @@
+---
+title: 生成済み API リファレンス
+description: 現在の Turboism SDK のソースから生成された HTML Javadoc。
+---
+
+現在の SDK HTML reference は、JDK 17 Javadoc tool によって Java source から生成されています。
+
+- [SDK HTML API reference を開く](/api/sdk/index.html)
+- [SDK のガイド付き概要を読む](./sdk-api)
+- [プラグインを作る](../build-a-plugin/quick-start)
+
+## 対象範囲
+
+公開されている reference は、plugin にとって唯一の public dependency である `dev.turboism.sdk.*` を対象とします。
+
+Runtime、Bootstrap、test-framework、first-party plugin の implementation package は public reference にまとめられていません。分離しておくことで、plugin contract と host implementation の architecture boundary を維持しています。
+
+## Preview status
+
+HTML page は現在の development source から生成されています。versioned release contract の代替ではありません。
+
+一部の public declaration には説明コメントがまだ不完全なため、Javadoc build は valid HTML を生成しながら missing-comment、`@param`、`@return` warning を報告することがあります。source project では、無効な markup や link を隠すのではなく、JDK doclint を有効にしたままにしています。
+
+## Maintainer sync
+
+documentation repository から、次のコマンドで SDK reference を再生成して copy します。
+
+```bash
+npm run sync:sdk-api -- /path/to/Turboism
+```
+
+sync command は source repository の `sdkApiDocs` Gradle task を実行し、`public/api/sdk/` を生成済み output に置き換えます。
+
+source repository の binary API baseline と module-boundary check が、compatibility に関する authoritative な情報です。Javadoc generation はそれらを置き換えません。

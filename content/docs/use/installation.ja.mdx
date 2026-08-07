@@ -1,0 +1,93 @@
+---
+title: インストール
+description: Cubism のインストールを変更せずに、現在の分離された Turboism Developer Preview を実行する。
+---
+
+Turboism は現在、本番用システムインストーラーを提供していません。利用できる製品経路は、Windows と Live2D Cubism Editor 5.3.02 向けの分離された Developer Preview bundle です。
+
+bundle は Cubism JAR、DLL、公式 launcher file、licensing state、既存 project を変更しません。
+
+## Preview bundle を構築する
+
+Turboism source repository から実行します。
+
+```bash
+./gradlew previewBundle checkPreviewBundleLayout \
+  --no-daemon --console=plain
+```
+
+出力先は次のとおりです。
+
+```text
+build/preview/<worktreeId>/
+├── turboism-agent.jar
+├── run-preview.bat
+├── launch-cubism-turboism.bat
+├── launch-cubism-turboism.ps1
+├── plugins/
+├── plugin-data/
+├── state/
+└── logs/
+```
+
+## Preview を実行する
+
+1. Preview directory 全体を、対応する Cubism installation がある Windows machine にコピーします。
+2. directory の構成を保ちます。
+3. `run-preview.bat` をダブルクリックするか、bundle の launcher script と README を使います。
+4. Turboism が起動し、Preview が所有する directory に診断情報を書き込むことを確認します。
+
+現在の Preview launcher は、対応する 5.3.02 の場所と `CUBISM_ROOT` を検索し、Cubism installation を恒久的に書き換えずに Turboism Java Agent とともに Cubism を起動します。
+
+## Turboism home を選択する
+
+Runtime は、Java system property または agent option によって選択された分離 home を使用します。
+
+```text
+-Dturboism.home=/absolute/path/to/turboism-home
+```
+
+```text
+-javaagent:turboism-agent.jar=home=/absolute/path/to/turboism-home
+```
+
+home には次が含まれます。
+
+```text
+<turboism.home>/
+├── config.json
+├── plugins/
+├── config/<pluginId>/
+├── data/<pluginId>/
+├── cache/<pluginId>/
+├── state/<pluginId>/
+└── logs/<pluginId>/
+```
+
+Turboism の実行中に home を編集または消去しないでください。
+
+## Preview を削除する
+
+1. Cubism を閉じます。
+2. Preview が所有する process が終了したことを確認します。
+3. Preview directory を削除します。
+
+Preview 経路は Cubism を変更しないため、Cubism installation file を復元する必要はありません。
+
+## プラグインのインストール
+
+Turboism plugin package は framework Preview とは別に管理されます。`.tplugin` の install、replacement、enable、disable、uninstall の挙動については、[プラグイン管理](./plugin-management) を参照してください。
+
+## 安全性と互換性
+
+- Preview のテストには backup または使い捨ての Cubism project を使用します。
+- Cubism JAR、DLL、公式 BAT file、licensing component を置き換えないでください。
+- host artifact が不一致または未検証の場合、安全でない fallback を使わず host adapter を利用不可にします。
+- 公開されている Preview workflow は、プロジェクトの厳格な実ホスト検証手順と同じではありません。
+
+## 現在の制限
+
+- Windows Preview wrapper のみ。
+- Cubism Editor 5.3.02 Preview envelope。
+- 本番用の automatic install、update、rollback、recovery、marketplace、signing、global launcher integration はありません。
+- feature readiness は capability と version に依存します。

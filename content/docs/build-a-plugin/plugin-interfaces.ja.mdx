@@ -1,0 +1,116 @@
+---
+title: プラグインインターフェース
+description: PluginContext を通じて利用できる、現在の Preview SDK interface family。
+---
+
+現在の Turboism plugin boundary は Java ベースで、source-backed です。plugin は `TurboismPlugin` または subinterface を実装し、Runtime から `PluginContext` を受け取ります。
+
+signature と詳細な semantics については、[SDK API ガイド](../reference/sdk-api) と [生成済み HTML reference](/api/sdk/index.html) を使用してください。
+
+## lifecycle
+
+```java
+public interface TurboismPlugin {
+    default void init(PluginContext context) throws Exception {}
+    default void enable() throws Exception {}
+    default void disable() throws Exception {}
+    default void shutdown() throws Exception {}
+}
+```
+
+`init` は context と configuration の setup、`enable` は active registration、`disable` は behavior の停止、`shutdown` は plugin-private cleanup に使います。
+
+## Context service family
+
+| Family | Current entrypoint | Typical use |
+| --- | --- | --- |
+| Metadata | `descriptor()` | 現在の JAR-level descriptor を調べる |
+| Logging | `logger()` | plugin-scoped diagnostic を出力する |
+| Paths | `paths()` | plugin-owned config/data/cache/state/log namespace にアクセスする |
+| Localization | `localization()` | manifest で宣言された localized text を読む |
+| Tasks | `tasks()` | 上限付き cancellable work を submit する |
+| Host reads | `hostReads()` | 上限付き asynchronous host snapshot を要求する |
+| Storage | `storage()` | plugin-owned data を読み、atomic に書き込む |
+| User files | `userFiles()` | user-granted external-file handle を使う |
+| Cubism | `cubism()` | snapshot を読み、unified object graph を使う |
+| Queries | `parameterQuery()`, `selectionQuery()`, `modelHierarchyQuery()` | 狭い型付き query |
+| Events | `eventBus()` | immutable な型付き event を publish/subscribe する |
+| Actions | `actions()` | 再利用可能な plugin action を登録する |
+| Menus and UI | `menus()`, toolbar/context-menu registries, `uiHost()` | toolkit-neutral UI descriptor を提供する |
+| Configuration | `config()` | 型付き schema を登録し、value を読み、compare-and-set write を行う |
+| Diagnostics | `diagnostics()` | 構造化された Runtime diagnostic を調べる |
+| Cleanup | `disposableScope()` | closeable な lifecycle resource を登録する |
+
+特定の Runtime/host combination では service が利用できないことがあります。Runtime を迂回せず、明示的な unavailable result または exception を処理してください。
+
+## Action と menu
+
+behavior は action として 1 度登録し、UI contribution をその ID に結び付けます。
+
+```java
+var action = context.actions().register("hello.show", new ActionRegistry.Action() {
+    @Override public String id() { return "hello.show"; }
+    @Override public String label() { return "Hello"; }
+    @Override public Consumer<ActionRegistry.ActionContext> handler() {
+        return ignored -> context.logger().info("Hello from Turboism");
+    }
+});
+context.disposableScope().register(action);
+```
+
+Menu、toolbar、panel、context-menu contribution は SDK descriptor を使います。host widget は公開しません。
+
+## Event
+
+```java
+record HelloEvent(String message) implements EventBus.TurboismEvent {}
+
+var subscription = context.eventBus().subscribe(
+    HelloEvent.class,
+    event -> context.logger().info(event.message())
+);
+context.disposableScope().register(subscription);
+context.eventBus().publish(new HelloEvent("enabled"));
+```
+
+subscribe と publish の permission は別々です。event に raw host state を含めてはいけません。
+
+## Cubism object API
+
+```java
+CubismModel model = context.cubism().model().active();
+Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
+float current = parameter.getValue();
+```
+
+write には matching permission と Provider が必要です。interface method があることは、すべての Cubism version でサポートされることを意味しません。
+
+## Hook
+
+operation lifecycle の observation または interception には、`CubismPlugin` または特定の hook interface を実装します。
+
+```java
+public final class HelloHooks implements CubismPlugin {
+    @Override
+    public void onParameterValueChanged(
+        Parameter parameter,
+        float oldValue,
+        float newValue
+    ) {
+        // Bounded observation only.
+    }
+}
+```
+
+Hook は `before -> operation -> changed-only on -> after` に従います。plugin は bytecode transformer を登録できません。
+
+## Configuration、storage、task
+
+- 設定には型付き `PluginConfigRegistry` を使います。
+- DATA、STATE、CACHE には `PluginStorage` を使います。
+- user-selected external file には `UserFileAccessService` を使います。
+- 管理されていない thread、executor、timer の代わりに `PluginTaskScheduler` を使います。
+
+## Cleanup のルール
+
+現在の method の終了後も存続し得る、返されたすべての registration または handle は、明示的に close するか、`context.disposableScope()` に登録しなければなりません。

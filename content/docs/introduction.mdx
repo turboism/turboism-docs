@@ -1,15 +1,32 @@
 ---
 title: Introduction
-description: What Turboism is and how this documentation is organized.
+description: What Turboism is, how its plugin boundary works, and how to read the Preview documentation.
 ---
 
-Turboism is a Java Agent and plugin framework intended for Live2D Cubism Editor workflows.
+Turboism is a runtime enhancement tool and plugin framework for Live2D Cubism Editor.
 
-This site is the authoritative home for Turboism product and developer documentation.
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
 
-Documentation is organized around two equal paths: using Turboism and building a plugin.
-Shared platform ideas live under **Concepts** and **Reference**.
+Plugins depend on the Turboism SDK only. Runtime owns host access, lifecycle, safety, threading, transactions, diagnostics, compatibility, and version differences.
 
-> Preview boundary: This website is being established before public release facts, support
-> commitments, and SDK contracts are finalized. Treat the material here as a preview,
-> not a download, compatibility, or API guarantee.
+## What this means for plugin authors
+
+- use Turboism-owned Java types instead of `com.live2d.*` classes;
+- use `PluginContext` for configuration, storage, user files, tasks, UI, events, and Cubism access;
+- register closeable resources in `DisposableScope`;
+- declare permissions in manifest v2;
+- handle Provider or host-version unavailability explicitly;
+- never bypass Runtime with reflection, raw host widgets, native handles, or bytecode transformers.
+
+## Preview documentation
+
+The current SDK and plugin loader are implemented, and generated API pages are hosted on this site. However, Preview API presence is not the same as Stable compatibility or real-host readiness on every Cubism version.
+
+Continue with:
+
+- [Use Turboism](./use/overview)
+- [Build a Plugin](./build-a-plugin/overview)
+- [SDK API Guide](./reference/sdk-api)
+- [Development Status](./development-status)

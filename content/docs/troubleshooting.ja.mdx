@@ -1,0 +1,52 @@
+---
+title: トラブルシューティングとフィードバック
+description: Preview の起動、プラグインパッケージ、ライフサイクル、権限、Provider の失敗を診断する。
+---
+
+## Turboism が起動しない
+
+- 意図した Preview directory と Turboism home を使用していることを確認します。
+- Preview が所有する、または home が所有する log directory にある Java Agent と Runtime のログを確認します。
+- 有効な Cubism artifact がサポート対象の Preview envelope と一致することを確認します。
+- identity failure を回避するために Cubism JAR、DLL、BAT ファイル、ライセンスコンポーネントを置き換えないでください。
+
+## プラグインが表示されない
+
+次を確認してください。
+
+- loose JAR が設定済みの相対 `pluginDirs` entry の下にある、または `.tplugin` のインストールが再起動後に完了している。
+- JAR に `META-INF/turboism/plugin.json` が正確に 1 つある。
+- マニフェストが schema version 2 を使用している。
+- entrypoint class が存在し、public で、`TurboismPlugin` を実装し、public no-argument constructor を持つ。
+- Turboism API range と required dependencies が解決される。
+- plugin ID が disabled または重複していない。
+- `environment.requiresCubism` が現在の environment と一致する。
+
+## パッケージが拒否される
+
+`.tplugin` は、無効な hash、壊れた path、重複した entry、special file、コピーされた SDK/Runtime/Live2D class、native または installer payload、受け入れられた profile 外の nested JAR、descriptor mismatch、missing entrypoint、undeclared resource などを理由に拒否されることがあります。
+
+現在の plugin JAR からパッケージを再生成してください。アーカイブを手動で編集したり、package inspection を無効にしたりしないでください。
+
+## 操作が pending のままになる
+
+プラグインの install、replacement、enable、disable、uninstall 操作は Cubism の再起動後に適用されます。
+
+- Cubism が完全に終了し、再起動されたことを確認します。
+- 両方の起動で同じ `turboism.home` が使われていることを確認します。
+- Runtime state とログを確認します。
+- Turboism の実行中に plugin、config、pending-state ファイルを編集しないでください。
+
+## ホスト capability が利用できない
+
+これは多くの場合、host version、artifact identity、mapping verification、Provider availability、safe mode、stale object generation が原因で意図的に fail-closed になった結果です。
+
+正確な Cubism version、artifact identity、operation、diagnostic code を記録してください。リフレクションやホストへの直接アクセスで失敗を迂回しないでください。
+
+## フィードバック
+
+ドキュメントの修正と、機密情報を含まない製品に関する議論は、公開ドキュメントリポジトリで扱います。
+
+- https://github.com/turboism/turboism-docs
+
+機能や Runtime の不具合には、関連する Turboism source revision、Cubism version、サニタイズ済みログ、再現手順を含めてください。プロプライエタリな Cubism binary、private resource、ライセンス資料、ユーザープロジェクトは添付しないでください。

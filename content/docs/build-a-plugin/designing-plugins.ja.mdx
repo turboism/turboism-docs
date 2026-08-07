@@ -1,0 +1,101 @@
+---
+title: プラグインの設計
+description: 利用できない capability では fail closed する、lifecycle-safe な SDK-only Turboism plugin を設計する。
+---
+
+堅牢な Turboism plugin は、ユーザーに見える目的を 1 つ持ち、SDK のみに依存し、host integration、scheduling、安全性、cleanup を Runtime に任せます。
+
+## 境界を小さく保つ
+
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
+
+Runtime に関する plugin 独自の abstraction を追加しないでください。configuration、storage、task、event、UI、user file、Cubism access には `PluginContext` service を再利用します。
+
+避けるもの:
+
+- Runtime または `com.live2d.*` への直接依存。
+- reflection と raw host object。
+- 管理されていない executor、thread、timer。
+- Swing/AWT による host-widget traversal。
+- global mutable registry。
+- speculative factory と extension layer。
+
+## lifecycle を計画する
+
+実際に存在する 4 つの lifecycle method を使います。
+
+1. `init` — context を保持し、schema を登録し、plugin-private state を構築する。
+2. `enable` — action、event、UI、task を登録する。
+3. `disable` — hot unload を前提とせず active behavior を停止する。
+4. `shutdown` — Runtime lifecycle が settle した後に plugin-private state を解放する。
+
+意図的に早く閉じる場合を除き、すべての closeable registration または handle を `DisposableScope` に入れてください。
+
+## permission と availability を分離する
+
+permission は plugin が risk boundary を越えてよいかを答えます。capability は Runtime と active host version が operation を実行できるかを答えます。
+
+両方の経路を設計します。
+
+- supported Provider による成功。
+- explicit な unavailable、unsupported、stale、denied、timeout、backpressure、rejected の結果。
+
+permission が Provider の存在を証明すると考えてはいけません。
+
+## Editor の所有権を中心に write を設計する
+
+Editor-attached model では、Editor authoring state が write の source of truth です。安全な write には次が必要になる場合があります。
+
+- validation。
+- host-thread dispatch。
+- transaction と Undo。
+- dirty-state と refresh 処理。
+- rollback または明示的な partial failure。
+- generation/stale-target 拒否。
+- persistence を主張する場合の save/reopen 検証。
+
+Cubism Core を第 2 の独立した authoring state として変更したり、evaluation-only mutation の周囲に Undo entry を合成したりしないでください。
+
+## 境界では immutable value を使う
+
+Event、UI descriptor、snapshot、selection、configuration value、task request は、immutable な SDK- または plugin-owned value にしてください。
+
+次のものを漏らしてはいけません。
+
+- host object。
+- host UI control。
+- native handle。
+- host ClassLoader。
+- mutable な Cubism-owned array。
+- 制限のない filesystem path。
+
+## 1 つの action、1 つの contribution を優先する
+
+ユーザーの挙動はまず Action として登録し、その action ID に menu、toolbar、panel、context-menu contribution を結び付けます。これにより host UI を必要とせずに挙動をテストできます。
+
+## 最小の実際の契約をテストする
+
+lifecycle logging だけを行う plugin には constructor/lifecycle test が必要です。registration を持つ plugin では recording/fake `PluginContext` を使い、次を検証してください。
+
+- 要求した permission と unavailable path。
+- registration と scope cleanup。
+- disable/shutdown behavior。
+- immutable な event と DTO の挙動。
+- configuration migration と revision conflict。
+- 該当する場合の task cancellation または rejection。
+
+host-version に関する主張には、プロジェクトのより高リスクな validation workflow が必要です。fake test だけでは実ホスト対応を確立できません。
+
+## 設計チェックリスト
+
+- [ ] plugin に明確な目的が 1 つある。
+- [ ] production code が SDK のみに依存している。
+- [ ] Manifest v2 が正確な entrypoint、resource、dependency、minimum permission を宣言している。
+- [ ] registration と handle が closeable で scope 管理されている。
+- [ ] 利用できない Provider が有用な診断情報とともに fail closed する。
+- [ ] configuration、storage、user file が正しい service を使っている。
+- [ ] 管理されていない thread、executor、timer、host object、reflection bridge が存在しない。
+- [ ] write が Editor の所有権と Undo semantics を維持している。
+- [ ] 最小の focused test が実際の契約を検証している。

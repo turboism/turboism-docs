@@ -1,0 +1,261 @@
+---
+title: SDK API ガイド
+description: 現在の Turboism plugin SDK の entrypoint、service、object model、lifecycle、capability boundary。
+---
+
+Turboism SDK は plugin にとって唯一の public dependency です。新しい API はデフォルトで Preview です。利用可能性は、次の 4 つの事実に分かれます。
+
+1. SDK に API が存在する。
+2. plugin が必要な permission を宣言している。
+3. Runtime に対応する capability Provider がある。
+4. active Cubism version と object generation がサポートされている。
+
+生成済み type と method の index については、[SDK HTML API reference](/api/sdk/index.html) を開いてください。
+
+## Plugin lifecycle
+
+すべての entrypoint は `TurboismPlugin` または `CubismPlugin` などの subinterface を実装します。
+
+```java
+public interface TurboismPlugin {
+    default void init(PluginContext context) throws Exception {}
+    default void enable() throws Exception {}
+    default void disable() throws Exception {}
+    default void shutdown() throws Exception {}
+}
+```
+
+- `init`: context を保持し、configuration schema を登録し、plugin-private state を作成する。
+- `enable`: action、event、UI、task、その他の active behavior を提供する。
+- `disable`: Runtime が plugin scope を閉じる前に active behavior を停止する。
+- `shutdown`: scope が所有していない plugin-private resource を解放する。
+
+1 つの JAR に順序付きの複数 entrypoint を含めることができます。construct、initialization、enablement は manifest order に従います。disablement と shutdown は reverse order で実行されます。startup は JAR 全体で atomic です。
+
+## `PluginContext`
+
+| Entry | Purpose |
+| --- | --- |
+| `descriptor()` | 現在の JAR-level `PluginDescriptor` |
+| `logger()` | plugin-scoped logging |
+| `paths()` | configuration、data、cache、state、log namespace |
+| `localization()` | locale、text lookup、formatting |
+| `tasks()` | bounded one-shot と fixed-delay task |
+| `hostReads()` | bounded asynchronous host read |
+| `storage()` | plugin-owned DATA、STATE、CACHE storage |
+| `userFiles()` | user-granted file handle |
+| `cubism()` | snapshot、unified object access、transaction compatibility entrypoint |
+| `parameterQuery()` | narrow parameter query |
+| `selectionQuery()` | selection read と change subscription |
+| `modelHierarchyQuery()` | model-tree query |
+| `cubismRead()` | aggregated read capability family |
+| `eventBus()` | typed event の publish と subscribe |
+| `actions()` と `menus()` | action registration と menu contribution |
+| `mainToolbar()`、`paletteToolbar()`、`contextMenu()` | typed UI contribution registry |
+| `uiHost()` と `uiScheduler()` | toolkit-neutral UI capability と UI-thread scheduling |
+| `config()` | typed plugin configuration |
+| `diagnostics()` | 現在の structured diagnostic |
+| `disposableScope()` | reverse-order lifecycle cleanup |
+
+一部の default service は `UnsupportedOperationException` を throw し、他は explicit unavailable implementation を返します。plugin は unavailable capability family を処理し、迂回してはいけません。
+
+## Registration と cleanup
+
+多くの registry は `Registration` を返します。これは `AutoCloseable` handle です。
+
+```java
+Registration registration = context.actions().register("example.refresh", action);
+context.disposableScope().register(registration);
+```
+
+scope は registration を reverse order で閉じます。Runtime が plugin ClassLoader を安全に解放できるよう、action、menu、UI contribution、subscription、task handle、その他の closeable resource を scope に入れてください。
+
+Cubism lifecycle hook は callback registration bus ではなく、entrypoint interface から検出されます。
+
+## Action、menu、event
+
+`ActionRegistry.Action` は ID、label、handler を提供します。`ActionContext` は typed UI action event または generation-bound context-menu selection を運べます。
+
+`MenuRegistry.MenuContribution` は slash-delimited menu path を登録済み action ID と order に結び付けます。
+
+汎用 event bus は型付きです。
+
+```java
+Registration subscription = context.eventBus().subscribe(
+    MyEvent.class,
+    event -> context.logger().info(event.value())
+);
+context.disposableScope().register(subscription);
+context.eventBus().publish(new MyEvent("changed"));
+
+record MyEvent(String value) implements EventBus.TurboismEvent {}
+```
+
+Event は immutable な plugin- または SDK-owned value にしてください。raw host object、Swing widget、native handle、host ClassLoader を event に入れないでください。
+
+## Snapshot と query API
+
+`CubismFacade` は引き続き immutable runtime snapshot を提供します。
+
+```java
+CubismRuntimeSnapshot runtime = context.cubism().runtime();
+Optional<ProjectSnapshot> project = context.cubism().activeProject();
+Optional<DocumentSnapshot> document = context.cubism().activeDocument();
+Optional<ModelSnapshot> model = context.cubism().activeModel();
+boolean hostPresent = context.cubism().isHostPresent();
+```
+
+狭い query service には次が含まれます。
+
+- parameter lookup と enumeration 用の `ParameterQueryService`。
+- current selection と selection-change subscription 用の `SelectionQueryService`。
+- model-tree traversal 用の `ModelHierarchyQueryService`。
+- project、document、model、selection、parameter、model-object、mesh、deformer、PSD、clip-mask、texture-atlas、render-status、workspace、theme-status の read family 用の `CubismReadCapabilityService`。
+
+Snapshot と query value は immutable DTO であり、host object reference ではありません。
+
+## 統合 Cubism object graph
+
+新しい plugin code では unified object API を優先してください。
+
+```java
+CubismModel model = context.cubism().model().active();
+Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
+
+float value = parameter.getValue();
+parameter.setValue(value + 1.0f);
+```
+
+`CubismModel` は Parameters、Parameter Groups、Parts、Drawables、Deformers、Warp and Rotation Deformers、Glue、Canvas、model update、default-keyform lock、parameter-binding operation を公開します。
+
+Strong ID には `ProjectId`、`DocumentId`、`ModelId`、`ModelObjectId`、`ParameterId`、`ParameterGroupId`、`PartId`、`ArtMeshId`、`DeformerId`、`GlueId`、`ParameterBindingPointId` が含まれます。
+
+model とその child は generation-bound です。document switch、reload、deletion、plugin disablement、Provider replacement、その他の invalidating lifecycle event の後は、reference が fail closed します。
+
+## Operation lifecycle hook
+
+`CubismPlugin` は Parameter、Part、Drawable、Deformer、Model hook family をまとめます。
+
+```java
+public final class ClampPlugin implements CubismPlugin {
+    @Override
+    public float beforeSetParameterValue(Parameter parameter, float value) {
+        return Math.min(value, parameter.getMaximumValue());
+    }
+
+    @Override
+    public void onParameterValueChanged(
+        Parameter parameter,
+        float oldValue,
+        float newValue
+    ) {
+        // Runs only after authoritative state changed.
+    }
+
+    @Override
+    public void afterSetParameterValue(Parameter parameter, float value) {
+        // Observe normal completion; do not perform a second mutation.
+    }
+}
+```
+
+```text
+before -> canonical operation -> authoritative state probe -> on(changed only) -> after(normal completion)
+```
+
+- `before` は同期的かつ順序付きで、argument を書き換えられます。
+- `on` は observable change の場合だけ発行されます。
+- `after` は normal completion を観測します。
+- observe と intercept の permission は別々です。
+- plugin が bytecode transformer を直接登録することはできません。
+
+## Configuration
+
+Typed configuration は schema、codec、sequential migration、asynchronous read、revision-based compare-and-set write をサポートします。
+
+```java
+ConfigKey<Boolean> enabled = new ConfigKey<>(
+    "example.settings",
+    "enabled",
+    true,
+    ConfigCodecs.booleanValue()
+);
+
+ConfigSchema schema = new ConfigSchema(
+    "example.settings",
+    "settings.json",
+    1,
+    List.of(enabled)
+);
+
+context.config().registerSchema(schema, List.of());
+context.config().read(enabled);
+context.config().write(enabled, true, expectedRevision);
+```
+
+Runtime は plugin settings を `config/<pluginId>/` に保存します。plugin は `turboism.home` の下に自分で path を構築してはいけません。
+
+## Plugin storage と user file
+
+`PluginStorage` は 3 つの root の下で atomic read、write、copy、move、list、delete operation を提供します。
+
+- DATA は persistent business data 用。
+- STATE は rebuildable runtime state 用。
+- CACHE は rebuildable cached data 用。
+
+```java
+StoragePath path = new StoragePath(StorageRoot.STATE, "manual-order.txt");
+context.storage().writeUtf8Atomic(path, "a\nb\n");
+context.storage().readUtf8(path, 256 * 1024);
+```
+
+path は normalized relative path でなければなりません。user-selected external file には `UserFileAccessService` と scoped `UserFileHandle` object を使います。user file は unrestricted filesystem capability ではありません。
+
+## Task と asynchronous read
+
+管理されていない thread、executor、timer を所有する代わりに `PluginTaskScheduler` を使います。
+
+```java
+TaskSubmission submission = context.tasks().submit(
+    new PluginTaskRequest(
+        new TaskId("refresh"),
+        PluginTaskKind.COMPUTE,
+        PluginTaskPriority.NORMAL,
+        token -> token.checkCanceled()
+    )
+);
+```
+
+Task は typed な submission、cancellation、completion、timeout、rejection、backpressure、circuit-open outcome を公開します。
+
+`AsyncHostReadService` は意図的に小さな intent set を持ちます。現在の SDK に存在する intent だけを使い、将来の parameter、mesh、PSD intent を仮定しないでください。
+
+## UI API
+
+UI API は Swing/AWT や host widget ではなく SDK DTO を使います。現在の family には次が含まれます。
+
+- action と menu。
+- main と palette toolbar。
+- typed context menu と context selection。
+- overlay、dialog、status notification、file selection。
+- toolkit-neutral `PanelView` embedded panel。
+- UI-thread scheduling。
+- scene-table、appearance、control-appearance、selected Editor contribution。
+
+各 UI family には独立した capability と Provider evidence があります。ある family が利用可能でも、他の family がすべて有効になるわけではありません。
+
+## Permission、capability、operation
+
+- **permission** は risk boundary を越えることを認可します。
+- **capability** は現在の Provider と host version が feature family をサポートすることを示します。
+- **operation** は 1 つの具体的な invocation と diagnostic identity です。
+
+permission は operation validation を迂回せず、欠けている Provider を作りません。
+
+## Version と readiness の注意
+
+- Parameter authoring write には検証済みの Cubism 5.3.02 path がありますが、caller は引き続き unavailable と stale target を処理しなければなりません。
+- Part display-name write には 5.2.03 と 5.3.02 で実ホストの証拠があります。
+- Part opacity authoring write は 5.2.03 で主張してはいけません。
+- Fake と static test が証明するのは、それぞれが名指しした layer だけです。
+- Snapshot/query/transaction compatibility surface は現在、unified object graph と併存しています。

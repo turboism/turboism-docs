@@ -1,0 +1,49 @@
+---
+title: 更新策略
+description: 安全替换 Preview 插件，并了解目前尚不存在的自动更新能力。
+---
+
+Turboism 当前支持本地软件包替换，而不是生产级自动更新系统。
+
+## 当前的插件替换
+
+安装具有相同 plugin ID 的新版 `.tplugin` 会分阶段提交替换意图，并在 Cubism 重启后生效。
+
+1. 备份当前插件软件包。
+2. 在重要时备份持久化的 `config/<pluginId>/` 和 `data/<pluginId>/` 内容。
+3. 通过插件管理安装新版 `.tplugin`。
+4. 重启 Cubism。
+5. 验证版本、生命周期状态、配置迁移和日志。
+6. 如果替换失败，停止 Turboism，并恢复或重新安装已知可用的软件包。
+
+此工作流不会保留历史 generation，也不提供完整的事务式回滚 UI。
+
+## Framework Preview 更新
+
+隔离的 Developer Preview 目录可以移动和删除。要使用更新的 Preview build：
+
+1. 保留旧 Preview 目录，直到新 build 通过启动检查；
+2. 使用一次性项目副本；
+3. 保留之前的 Turboism home，或在测试迁移行为时创建单独的新 home；
+4. 验证 Java Agent 启动、插件发现、宿主 capability 状态和正常关闭；
+5. 只有在接受新版之后，才删除旧 Preview。
+
+不要把覆盖或重写 Cubism 安装文件作为更新机制。
+
+## 兼容性预期
+
+- 新 SDK API 默认是 Preview。
+- API 存在并不保证每个 Cubism 版本都有 Provider。
+- 不受支持或未经验证的版本上的宿主敏感操作可能仍然不可用。
+- 插件作者应使用已声明的 Turboism API 范围，并测试不可用行为。
+- 生成的 API 参考跟踪当前开发源代码，而不是最终 Stable 发布线。
+
+## 当前不可用
+
+- 在线更新发现和下载；
+- marketplace 渠道；
+- 发布者签名和撤销；
+- 保留不可变的软件包 generation；
+- 自动修复、回滚或恢复；
+- 框架级系统安装器更新；
+- 已发布的 Stable 兼容性矩阵。

@@ -1,0 +1,150 @@
+---
+title: 开发者快速入门
+description: 基于当前 Preview SDK 构建一个最小的 Java 17 Turboism 插件。
+---
+
+当前由源代码支持的开发路径是在 Turboism 仓库中添加插件模块。尚未发布独立入门模板和稳定 Maven 坐标。
+
+## 1. 创建模块
+
+```text
+plugins/hello/
+├── build.gradle.kts
+├── src/main/java/dev/example/plugin/HelloPlugin.java
+├── src/main/resources/META-INF/turboism/plugin.json
+└── src/test/java/dev/example/plugin/HelloPluginTest.java
+```
+
+将其添加到源仓库的 `settings.gradle.kts`：
+
+```kotlin
+include("plugins:hello")
+```
+
+## 2. 仅依赖 SDK
+
+```kotlin
+plugins {
+    `java-library`
+}
+
+dependencies {
+    compileOnly(project(":sdk"))
+    testImplementation(project(":sdk"))
+}
+```
+
+`compileOnly` 是有意为之：Runtime 提供 SDK。插件 JAR 不得复制 `dev/turboism/sdk/**` class。
+
+不要依赖 Runtime、Bootstrap、`com.live2d.*`、另一个插件的私有实现包、反射桥接、主机小部件、原生句柄或主机 ClassLoader。
+
+## 3. 实现入口点
+
+```java
+package dev.example.plugin;
+
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.TurboismPlugin;
+
+public final class HelloPlugin implements TurboismPlugin {
+    private PluginContext context;
+
+    @Override
+    public void init(final PluginContext context) {
+        this.context = java.util.Objects.requireNonNull(context, "context");
+        context.logger().info("HelloPlugin initialized");
+    }
+
+    @Override
+    public void enable() {
+        context.logger().info("HelloPlugin enabled");
+    }
+
+    @Override
+    public void disable() {
+        context.logger().info("HelloPlugin disabled");
+    }
+
+    @Override
+    public void shutdown() {
+        context.logger().info("HelloPlugin shutdown");
+        context = null;
+    }
+}
+```
+
+该 class 必须为 public，实现 `TurboismPlugin` 或其子接口，并提供一个 public 无参数构造函数。
+
+## 4. 添加 manifest v2
+
+创建 `src/main/resources/META-INF/turboism/plugin.json`：
+
+```json
+{
+  "format": "turboism.plugin.meta",
+  "schemaVersion": 2,
+  "id": "dev.example.plugin.hello",
+  "name": "Hello Plugin",
+  "version": "0.1.0",
+  "description": "Minimal Turboism plugin lifecycle example.",
+  "entrypoints": [
+    "dev.example.plugin.HelloPlugin"
+  ],
+  "turboismApi": "[0.1.0,0.2.0)",
+  "authors": [
+    { "name": "Example Author" }
+  ],
+  "license": "MIT",
+  "website": "https://example.org/hello-plugin",
+  "resources": [],
+  "i18n": {
+    "baseName": "META-INF/turboism/i18n/messages",
+    "locales": []
+  },
+  "dependencies": [],
+  "permissions": [],
+  "capabilities": [],
+  "environment": {
+    "requiresCubism": false,
+    "ui": "none"
+  }
+}
+```
+
+在添加权限、资源、本地化、依赖或多个入口点之前，请阅读[插件 Manifest 与打包](./manifest)。
+
+## 5. 构建与验证
+
+```bash
+./gradlew :plugins:hello:test :plugins:hello:jar validatePluginMeta \
+  --no-daemon --console=plain
+```
+
+构建产物会写入：
+
+```text
+build/worktree/<worktreeId>/hello/libs/
+```
+
+对于此仅包含生命周期的示例，只有构造函数的测试已足够。一旦插件注册操作、UI、事件、配置或任务，请使用记录型/伪造的 `PluginContext` 来验证注册、失败处理、disable/shutdown 行为和 scope 清理。
+
+## 6. 打包
+
+```bash
+python3 scripts/release/package-plugin.py \
+  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
+  build/packages/hello.tplugin
+```
+
+## 7. 安装
+
+使用 Turboism 插件管理选择 `.tplugin`。更改会暂存，并在 Cubism 重启后生效。
+
+仅对于隔离的本地开发，您可以将插件 JAR 直接放入一次性 Turboism home 的 `plugins/` 目录，然后重启 Runtime。散装 JAR 模式不是推荐的用户分发路径。
+
+## 后续步骤
+
+- [插件接口](./plugin-interfaces)
+- [插件 Manifest 与打包](./manifest)
+- [SDK API 指南](../reference/sdk-api)
+- [插件管理](../use/plugin-management)

@@ -1,0 +1,49 @@
+---
+title: 更新ポリシー
+description: Preview plugin を安全に置換し、まだ存在しない automatic update capability を理解する。
+---
+
+Turboism に現在あるのは local package replacement であり、本番用の automatic update system ではありません。
+
+## 現在のプラグイン置換
+
+同じ plugin ID を持つ新しい `.tplugin` をインストールすると、replacement intent がステージングされます。Cubism の再起動後に適用されます。
+
+1. 現在の plugin package を backup します。
+2. 重要な場合は、persistent `config/<pluginId>/` と `data/<pluginId>/` の内容を backup します。
+3. plugin management を通じて新しい `.tplugin` をインストールします。
+4. Cubism を再起動します。
+5. version、lifecycle state、configuration migration、logs を確認します。
+6. replacement が失敗した場合は Turboism を停止し、known-good package を復元または再インストールします。
+
+この workflow は historical generation を保持せず、完全な transactional rollback UI も提供しません。
+
+## Framework Preview の更新
+
+分離された Developer Preview directory は移動および削除できます。新しい Preview build では次のようにします。
+
+1. 新しい build が startup check に合格するまで、以前の Preview directory を保持します。
+2. 使い捨ての project copy を使用します。
+3. 以前の Turboism home を保持するか、migration behavior のテスト時には別の新しい home を作成します。
+4. Java Agent startup、plugin discovery、host capability status、clean shutdown を確認します。
+5. 新しいものを受け入れてから古い Preview を削除します。
+
+update の手段として Cubism installation file を上書きまたは書き換えないでください。
+
+## 互換性に関する期待値
+
+- 新しい SDK API はデフォルトで Preview です。
+- API が存在しても、すべての Cubism version に Provider があるとは限りません。
+- host-sensitive operation は、未サポートまたは未検証の version では利用できないままになることがあります。
+- plugin author は宣言された Turboism API range を使用し、unavailable behavior をテストすべきです。
+- generated API reference は現在の development source を追跡するもので、最終的な Stable release line ではありません。
+
+## 現在利用できないもの
+
+- online update discovery と download。
+- marketplace channel。
+- publisher signature と revocation。
+- retained immutable package generation。
+- automatic repair、rollback、または recovery。
+- system-level framework installer update。
+- 公開された Stable compatibility matrix。

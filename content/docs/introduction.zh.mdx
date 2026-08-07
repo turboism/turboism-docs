@@ -1,0 +1,32 @@
+---
+title: 简介
+description: Turboism 是什么、其插件边界如何工作，以及如何阅读 Preview 文档。
+---
+
+Turboism 是面向 Live2D Cubism Editor 的 Runtime 增强工具和插件框架。
+
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
+
+插件只依赖 Turboism SDK。Runtime 负责宿主访问、生命周期、安全性、线程、事务、诊断、兼容性和版本差异。
+
+## 这对插件作者意味着什么
+
+- 使用 Turboism 所有的 Java 类型，而不是 `com.live2d.*` 类；
+- 使用 `PluginContext` 处理配置、存储、用户文件、任务、UI、事件和 Cubism 访问；
+- 在 `DisposableScope` 中注册可关闭资源；
+- 在 manifest v2 中声明权限；
+- 明确处理 Provider 或宿主版本不可用的情况；
+- 永远不要通过反射、原始宿主 widget、native handle 或字节码转换器绕过 Runtime。
+
+## Preview 文档
+
+当前 SDK 和插件加载器已经实现，生成的 API 页面也已托管在本站。不过，Preview API 存在并不等同于 Stable 兼容性，也不意味着它已准备好在每个 Cubism 版本的真实宿主中运行。
+
+继续阅读：
+
+- [使用 Turboism](./use/overview)
+- [构建插件](./build-a-plugin/overview)
+- [SDK API 指南](./reference/sdk-api)
+- [开发状态](./development-status)

@@ -1,0 +1,52 @@
+---
+title: 故障排查与反馈
+description: 诊断 Preview 启动、插件包、生命周期、权限和 Provider 故障。
+---
+
+## Turboism 未启动
+
+- 确认使用的是预期的 Preview 目录和 Turboism home。
+- 检查 Preview 所有或 home 所有日志目录中的 Java Agent 和 Runtime 日志。
+- 确认当前 Cubism artifact 符合受支持的 Preview 范围。
+- 不要替换 Cubism JAR、DLL、BAT 文件或许可组件来绕过身份验证失败。
+
+## 插件未出现
+
+检查以下各项：
+
+- loose JAR 位于已配置的相对 `pluginDirs` 条目下，或者 `.tplugin` 安装已在重启后完成；
+- JAR 中恰好有一个 `META-INF/turboism/plugin.json`；
+- manifest 使用 schema version 2；
+- entrypoint class 存在、是 public、实现 `TurboismPlugin`，并且有 public 无参构造函数；
+- Turboism API 范围和必需依赖可以解析；
+- plugin ID 未被禁用且没有重复；
+- `environment.requiresCubism` 与当前环境匹配。
+
+## 软件包被拒绝
+
+`.tplugin` 可能因哈希无效、路径格式错误、重复条目、特殊文件、复制的 SDK/Runtime/Live2D 类、native 或 installer payload、超出接受 profile 的嵌套 JAR、descriptor 不匹配、缺少 entrypoint 或存在未声明资源而被拒绝。
+
+请从当前插件 JAR 重新生成软件包。不要手动编辑归档，也不要禁用软件包检查。
+
+## 操作一直处于 pending
+
+插件安装、替换、启用、禁用和卸载操作会在 Cubism 重启后生效。
+
+- 确认 Cubism 已完全退出并重新启动。
+- 确认两次启动使用的是同一个 `turboism.home`。
+- 检查 Runtime 状态和日志。
+- Turboism 运行时不要编辑 plugin、config 和 pending-state 文件。
+
+## 宿主 capability 不可用
+
+这通常是有意的 fail-closed 结果，原因可能包括宿主版本、artifact identity、mapping 验证、Provider 可用性、安全模式或过时的对象 generation。
+
+记录确切的 Cubism 版本、artifact identity、操作和 diagnostic code。不要通过反射或直接宿主访问绕过失败。
+
+## 反馈
+
+文档修正和非敏感的产品讨论应提交到公共文档仓库：
+
+- https://github.com/turboism/turboism-docs
+
+功能或 Runtime 缺陷报告应包含相关 Turboism source revision、Cubism 版本、已脱敏的日志和复现步骤。不要附加专有 Cubism 二进制文件、私有资源、许可材料或用户项目。

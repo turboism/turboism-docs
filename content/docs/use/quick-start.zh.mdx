@@ -1,0 +1,46 @@
+---
+title: 快速开始
+description: 启动隔离的 Developer Preview 并验证首次运行。
+---
+
+本快速开始假定你已经构建或收到[安装](./installation)中所述的当前 Developer Preview 目录。
+
+## 1. 安全准备
+
+- 使用符合受支持的 Cubism 5.3.02 Preview 范围的 Windows。
+- 备份要打开的项目，或使用一次性副本。
+- 将 Preview 目录与 Cubism 安装分开。
+- 不要编辑 Cubism JAR、DLL、BAT 文件或许可状态。
+
+## 2. 启动 Turboism
+
+1. 打开 Preview 目录。
+2. 双击 `run-preview.bat`。
+3. 如果自动发现无法找到 Cubism，请根据 bundle README 使用提供的 launcher 并选择匹配的 Cubism root。
+4. 等待 Cubism 和 Turboism diagnostics 初始化。
+
+## 3. 验证首次运行
+
+检查以下各项：
+
+- Cubism 正常启动；
+- Turboism Java Agent 报告启动成功；
+- Runtime 使用预期的 Turboism home；
+- bundle 中的插件出现在 plugin/runtime diagnostics 中；
+- 不可用的宿主 capability 会 fail closed，而不是导致 Cubism 崩溃；
+- 关闭 Cubism 后，插件 scope 和框架所有的 executor 都会释放。
+
+## 4. 添加插件
+
+使用[插件管理](./plugin-management)安装本地 `.tplugin`。插件变更会在 Cubism 重启后生效。
+
+## 5. 查找日志
+
+使用 Preview 所有的日志目录或所选 Turboism home 的 `logs/` 目录。报告启动、软件包、依赖、权限或 Provider 故障时，请保留日志。
+
+## 后续步骤
+
+- [插件管理](./plugin-management)
+- [故障排查](../troubleshooting)
+- [开发状态](../development-status)
+- [构建插件](../build-a-plugin/quick-start)

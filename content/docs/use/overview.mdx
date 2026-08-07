@@ -1,22 +1,26 @@
 ---
 title: Use Turboism
-description: The user path from availability to a verified first run.
+description: Run the Developer Preview and manage local plugins without modifying Cubism installations.
 ---
 
-This section covers the user journey toward onboarding Turboism and getting first-run
-confidence.
+This section documents the currently implemented Developer Preview workflow rather than a future system installer.
 
 ## Learning path
 
-- [Installation](./installation) — release workflow and pre-install requirements.
-- [Quick Start](./quick-start) — minimal steps once release artifacts are available.
-- [Update Policy](./update-policy) — how releases and compatibility are handled.
+1. [Installation](./installation) — build or obtain the isolated Preview directory and understand its safety boundary.
+2. [Quick Start](./quick-start) — launch Turboism and verify the first run.
+3. [Plugin Management](./plugin-management) — install, replace, enable, disable, and uninstall local `.tplugin` packages.
+4. [Update Policy](./update-policy) — understand the difference between package replacement and a future automatic update system.
+5. [Troubleshooting](../troubleshooting) — diagnose manifest, lifecycle, package, and Provider failures.
 
-## Current release boundary
+## Current boundary
 
-> No Java Agent release, download route, or supported-environment matrix is published by this
-> site yet. The public product acquisition entry point will be provided from the main product
-> site when available.
+Turboism currently has:
 
-Until release facts are published, these pages serve as implementation guidance and process
-scaffolding rather than authoritative deployment instructions.
+- an isolated Java Agent Preview bundle;
+- a version-routed Runtime and SDK;
+- local plugin JAR discovery;
+- strict local `.tplugin` inspection and staged plugin management;
+- capability-specific fail-closed host integration.
+
+Turboism does not currently have a production system installer, marketplace, automatic online updater, signing service, or global Cubism launcher integration.

@@ -1,0 +1,116 @@
+---
+title: 插件接口
+description: 可通过 PluginContext 使用的当前 Preview SDK 接口系列。
+---
+
+当前 Turboism 插件边界以 Java 为基础并由源代码支持。插件实现 `TurboismPlugin` 或其子接口，并从 Runtime 接收 `PluginContext`。
+
+有关签名和详细语义，请使用 [SDK API 指南](../reference/sdk-api) 和[生成的 HTML 参考文档](/api/sdk/index.html)。
+
+## 生命周期
+
+```java
+public interface TurboismPlugin {
+    default void init(PluginContext context) throws Exception {}
+    default void enable() throws Exception {}
+    default void disable() throws Exception {}
+    default void shutdown() throws Exception {}
+}
+```
+
+使用 `init` 进行 context 和配置设置，使用 `enable` 进行活动注册，使用 `disable` 停止行为，并使用 `shutdown` 清理插件私有资源。
+
+## Context 服务系列
+
+| 系列 | 当前入口点 | 典型用途 |
+| --- | --- | --- |
+| 元数据 | `descriptor()` | 检查当前 JAR 级别描述符 |
+| 日志 | `logger()` | 输出插件作用域诊断信息 |
+| 路径 | `paths()` | 访问插件自有的 config/data/cache/state/log 命名空间 |
+| 本地化 | `localization()` | 读取 manifest 中声明的本地化文本 |
+| 任务 | `tasks()` | 提交有界且可取消的工作 |
+| 主机读取 | `hostReads()` | 请求有界的异步主机快照 |
+| 存储 | `storage()` | 读取并原子写入插件自有数据 |
+| 用户文件 | `userFiles()` | 使用用户授予的外部文件句柄 |
+| Cubism | `cubism()` | 读取快照并使用统一对象图 |
+| 查询 | `parameterQuery()`、`selectionQuery()`、`modelHierarchyQuery()` | 范围受限的类型化查询 |
+| 事件 | `eventBus()` | 发布和订阅不可变类型化事件 |
+| 操作 | `actions()` | 注册可复用的插件操作 |
+| 菜单和 UI | `menus()`、工具栏/上下文菜单注册表、`uiHost()` | 提供与工具包无关的 UI 描述符 |
+| 配置 | `config()` | 注册类型化 schema、读取值并使用 compare-and-set 写入 |
+| 诊断 | `diagnostics()` | 检查结构化 Runtime 诊断信息 |
+| 清理 | `disposableScope()` | 注册可关闭的生命周期资源 |
+
+某项服务在特定的 Runtime/主机组合中可能不可用。请处理明确的不可用结果或异常，而不是绕过 Runtime。
+
+## 操作和菜单
+
+将行为仅注册一次为一个操作，并将 UI 贡献项绑定到其 ID。
+
+```java
+var action = context.actions().register("hello.show", new ActionRegistry.Action() {
+    @Override public String id() { return "hello.show"; }
+    @Override public String label() { return "Hello"; }
+    @Override public Consumer<ActionRegistry.ActionContext> handler() {
+        return ignored -> context.logger().info("Hello from Turboism");
+    }
+});
+context.disposableScope().register(action);
+```
+
+菜单、工具栏、面板和上下文菜单贡献项使用 SDK 描述符。它们不暴露主机小部件。
+
+## 事件
+
+```java
+record HelloEvent(String message) implements EventBus.TurboismEvent {}
+
+var subscription = context.eventBus().subscribe(
+    HelloEvent.class,
+    event -> context.logger().info(event.message())
+);
+context.disposableScope().register(subscription);
+context.eventBus().publish(new HelloEvent("enabled"));
+```
+
+订阅和发布权限相互独立。事件不得包含原始主机状态。
+
+## Cubism 对象 API
+
+```java
+CubismModel model = context.cubism().model().active();
+Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
+float current = parameter.getValue();
+```
+
+写入需要匹配的权限和 Provider。接口方法并不意味着每个 Cubism 版本都支持它。
+
+## Hooks
+
+实现 `CubismPlugin` 或特定 hook 接口，以观察或拦截操作生命周期。
+
+```java
+public final class HelloHooks implements CubismPlugin {
+    @Override
+    public void onParameterValueChanged(
+        Parameter parameter,
+        float oldValue,
+        float newValue
+    ) {
+        // Bounded observation only.
+    }
+}
+```
+
+Hooks 遵循 `before -> operation -> changed-only on -> after`。插件不能注册字节码转换器。
+
+## 配置、存储和任务
+
+- 对设置使用类型化 `PluginConfigRegistry`。
+- 对 DATA、STATE 和 CACHE 使用 `PluginStorage`。
+- 对用户选择的外部文件使用 `UserFileAccessService`。
+- 使用 `PluginTaskScheduler`，而不是不受管理的线程、executor 或定时器。
+
+## 清理规则
+
+每个可在当前方法之外存活的返回注册项或句柄，都必须显式关闭或登记到 `context.disposableScope()` 中。

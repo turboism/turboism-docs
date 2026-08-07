@@ -1,46 +1,49 @@
 ---
 title: Update Policy
-description: How updates are delivered and how to update safely.
+description: Replace Preview plugins safely and understand which automatic update capabilities do not exist yet.
 ---
 
-Turboism update behavior is expected to follow explicit release notes and compatibility windows.
-Until a public release line exists, this page describes the intended process.
+Turboism currently has local package replacement, not a production automatic update system.
 
-## Why updates exist
+## Plugin replacement today
 
-- Fixing runtime and protocol issues.
-- Improving stability in plugin loading and host integration.
-- Tightening security boundaries and diagnostics.
-- Expanding extension surfaces with versioned contracts.
+Installing a newer `.tplugin` with the same plugin ID stages a replacement intent. It applies after Cubism restarts.
 
-## Safe update workflow (preview)
+1. Back up the current plugin package.
+2. Back up persistent `config/<pluginId>/` and `data/<pluginId>/` content when it matters.
+3. Install the newer `.tplugin` through plugin management.
+4. Restart Cubism.
+5. Verify version, lifecycle state, configuration migration, and logs.
+6. If the replacement fails, stop Turboism and restore or reinstall the known-good package.
 
-1. **Read release notes first**
-   - Confirm the minimum compatible Java/Cubism floor for the target release.
-2. **Backup and isolate**
-   - Keep a copy of current projects and plugin artifacts.
-3. **Update in a staging environment**
-   - Apply updates to a non-production test project before your production work.
-4. **Run startup checks**
-   - Validate plugin discovery, no-op commands, and workspace health.
-5. **Roll forward if clean**
-   - Move all projects only after one full cycle completes.
+This workflow does not retain historical generations or provide a complete transactional rollback UI.
 
-## Backwards compatibility expectations
+## Framework Preview updates
 
-- Major-version changes may change extension contracts.
-- Minor and patch updates are expected to be mostly compatible, but not yet guaranteed in
-  this preview phase.
-- Plugin authors should monitor compatibility guidance before adopting new versions.
+The isolated Developer Preview directory is relocatable and removable. For a newer Preview build:
 
-## Rollback guidance
+1. keep the previous Preview directory until the new build passes startup checks;
+2. use a disposable project copy;
+3. preserve the previous Turboism home or create a separate new home when testing migration behavior;
+4. verify Java Agent startup, plugin discovery, host capability status, and clean shutdown;
+5. remove the old Preview only after the new one is accepted.
 
-If an update causes regression:
+Do not overwrite or rewrite Cubism installation files as an update mechanism.
 
-- Keep the previous release artifact available.
-- Downgrade to the last known-good release.
-- Report observed behavior with project/host versions in the repository issues.
+## Compatibility expectations
 
-> **Current status**
-> Public versioning policy, artifact channels, and exact compatibility guarantees are not yet
-> published. This page is a process draft; replace with the release matrix once it is finalized.
+- New SDK APIs are Preview by default.
+- API presence does not guarantee every Cubism version has a Provider.
+- Host-sensitive operations can remain unavailable on unsupported or unverified versions.
+- Plugin authors should use the declared Turboism API range and test unavailable behavior.
+- The generated API reference tracks current development source, not a final Stable release line.
+
+## Not currently available
+
+- online update discovery and downloads;
+- marketplace channels;
+- publisher signatures and revocation;
+- retained immutable package generations;
+- automatic repair, rollback, or recovery;
+- system-level framework installer updates;
+- a published Stable compatibility matrix.

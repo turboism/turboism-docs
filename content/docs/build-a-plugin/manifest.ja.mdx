@@ -1,0 +1,163 @@
+---
+title: プラグインマニフェストとパッケージング
+description: Manifest v2 の plugin JAR を定義し、厳格なローカル .tplugin archive として package する。
+---
+
+すべての Turboism plugin JAR には、次の場所に descriptor が正確に 1 つあります。
+
+```text
+META-INF/turboism/plugin.json
+```
+
+Runtime が受け入れるのは schema version 2 だけです。Version 1 はロードも自動 upgrade もされません。
+
+## 最小 manifest
+
+```json
+{
+  "format": "turboism.plugin.meta",
+  "schemaVersion": 2,
+  "id": "dev.example.plugin.hello",
+  "name": "Hello Plugin",
+  "version": "0.1.0",
+  "description": "Minimal Turboism plugin lifecycle example.",
+  "entrypoints": [
+    "dev.example.plugin.HelloPlugin"
+  ],
+  "turboismApi": "[0.1.0,0.2.0)",
+  "authors": [
+    { "name": "Example Author" }
+  ],
+  "license": "MIT",
+  "website": "https://example.org/hello-plugin",
+  "resources": [],
+  "i18n": {
+    "baseName": "META-INF/turboism/i18n/messages",
+    "locales": []
+  },
+  "dependencies": [],
+  "permissions": [],
+  "capabilities": [],
+  "environment": {
+    "requiresCubism": false,
+    "ui": "none"
+  }
+}
+```
+
+## Entrypoint のルール
+
+各 entrypoint は次を満たさなければなりません。
+
+- 同じ plugin JAR 内に存在する。
+- public である。
+- `TurboismPlugin` または subinterface を実装する。
+- public no-argument constructor を公開する。
+
+複数の entrypoint は、1 つの plugin identity、descriptor、ClassLoader、`PluginContext`、`DisposableScope`、permission set、configuration namespace、storage namespace、resource、localization declaration を共有します。
+
+```text
+construct/init/enable: manifest order
+disable/shutdown:       reverse manifest order
+```
+
+construct、initialization、enablement の途中で failure が発生すると、JAR 全体が rollback されます。
+
+## Dependency
+
+```json
+{
+  "id": "dev.example.plugin.base",
+  "version": "[1.0.0,2.0.0)",
+  "type": "required",
+  "ordering": "after",
+  "reason": "Uses the base plugin contract."
+}
+```
+
+- `type` は `required` または `optional` です。
+- `ordering` は `none`、`before`、または `after` です。
+- dependency ID は reverse-domain syntax を使います。
+- version range は現在の Turboism version-range grammar を使います。
+
+dependency record は resolution と ordering を制御します。別 plugin の private implementation package を public Java dependency にするものではありません。
+
+## Permission
+
+各 permission record には、既知の ID、`application` または `user` scope、空でない reason が含まれます。
+
+```json
+{
+  "id": "turboism.action.register",
+  "scope": "application",
+  "reason": "Registers the Hello action."
+}
+```
+
+plugin が呼び出す SDK service に必要な permission だけを宣言してください。permission は Provider の availability を保証せず、operation validation を迂回するものでもありません。
+
+## Resource と localization
+
+Resource root は `/` で終わる正規化済みの相対 prefix です。
+
+```json
+"resources": ["icons/"],
+"i18n": {
+  "baseName": "META-INF/turboism/i18n/messages",
+  "locales": ["base", "en", "zh_Hans"]
+}
+```
+
+その場合、JAR には次が含まれていなければなりません。
+
+```text
+icons/hello.png
+META-INF/turboism/i18n/messages.properties
+META-INF/turboism/i18n/messages_en.properties
+META-INF/turboism/i18n/messages_zh_Hans.properties
+```
+
+宣言した root と catalog は存在しなければなりません。通常の class 以外の resource は、宣言された root に属していなければなりません。path traversal、absolute path、backslash、空の segment、undeclared resource は拒否されます。
+
+## build と検証
+
+repository 内の plugin module では、次を実行します。
+
+```bash
+./gradlew :plugins:hello:test :plugins:hello:jar validatePluginMeta \
+  --no-daemon --console=plain
+```
+
+repository は Java 17 を使用し、module artifact を次の下に書き込みます。
+
+```text
+build/worktree/<worktreeId>/<module>/libs/
+```
+
+## `.tplugin` を build する
+
+```bash
+python3 scripts/release/package-plugin.py \
+  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
+  build/packages/hello.tplugin
+```
+
+現在の最小 package には次が含まれます。
+
+```text
+META-INF/turboism/package.json
+plugin/plugin.jar
+```
+
+Runtime は `.tplugin` を untrusted input として扱い、ZIP/JAR structure、path、size、hash、descriptor consistency、entrypoint、resource、forbidden content を検証します。
+
+plugin package に次を含めてはいけません。
+
+- copied Turboism SDK class。
+- Runtime、Bootstrap、test、または test-framework class。
+- `com/live2d/**` class または Cubism resource。
+- native binary または host payload。
+- installer script。
+- 現在の minimal builder output における nested JAR。
+
+任意の ZIP の名前を変更して package を作成しないでください。常に現在の plugin JAR から生成してください。

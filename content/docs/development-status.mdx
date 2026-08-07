@@ -1,0 +1,86 @@
+---
+title: Development Status
+description: What the current Turboism codebase implements, what remains preview, and what is not yet a product promise.
+---
+
+Turboism is a Java 17 runtime enhancement tool and plugin framework for Live2D Cubism Editor. Development is organized around usable framework and product capabilities rather than the retired M1–M16 migration sequence.
+
+This page is a source-backed snapshot of the current development branch. It is not a release announcement.
+
+## Current architecture
+
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
+
+Plugins depend on the Turboism SDK only. Runtime owns host access, lifecycle, safety, threading, transactions, diagnostics, compatibility, and version routing.
+
+## Implemented framework foundations
+
+- Java Agent bootstrap, Runtime, SDK, first-party plugin, test-framework, and integration-test modules.
+- Local plugin JAR discovery, manifest and API-range validation, dependency resolution, one ClassLoader per plugin, lifecycle execution, reverse shutdown, and scope/ClassLoader cleanup.
+- Plugin manifest v2 with ordered multiple entrypoints and whole-JAR startup rollback.
+- `PluginContext` services for logging, paths, localization, tasks, configuration, storage, user files, events, actions, UI contributions, Cubism access, and diagnostics.
+- Preview plugin management for local `.tplugin` install, enable, disable, and uninstall operations. Changes are staged and applied after Cubism restarts; the core plugin is protected.
+
+## Cubism and Editor API progress
+
+- A unified Preview object graph covers Canvas, Parameters, Parameter Groups, Parts, Drawables, Deformers, Glue, and parameter bindings.
+- Core-backed reads for Cubism 5.2 and 5.3.02 use immutable copied data, version normalization, generation-bound stale-reference rejection, and digest-pinned resolver evidence.
+- The Cubism 5.3.02 parameter authoring path connects `Parameter.setValue` to Editor operations, permission checks, Undo, dirty-state handling, refresh, and stale-target rejection.
+- Part display-name writes have real-host evidence on 5.2.03 and 5.3.02.
+- Part opacity authoring writes have evidence on 5.3.02. They are intentionally unavailable on 5.2.03 because the observed evaluation setter did not participate in native Part Undo.
+- Parameter lifecycle hooks support ordered synchronous `before` rewriting, changed-only `on`, normal-completion `after`, recursion rejection, bounded observation work, and unload cleanup.
+- The first-party Parameter CSV workflow now uses the unified `CubismModel` and `Parameter` API.
+
+## Shared plugin services and UI
+
+The SDK includes contracts for:
+
+- actions and menus;
+- main and palette toolbars;
+- typed context menus;
+- toolkit-neutral embedded panels;
+- overlays, status notifications, dialogs, and file selection;
+- typed plugin configuration and migrations;
+- plugin-owned data, state, and cache storage;
+- bounded tasks and cancellation;
+- asynchronous host reads;
+- localization and diagnostics;
+- appearance, scene-table, and selected Editor feature families.
+
+Host and UI families fail closed when a matching Provider or verified host capability is unavailable. Fake or static tests do not automatically establish real-host readiness.
+
+## In progress or version-limited
+
+- Many unified-object write methods still depend on a specific version Provider. A method in the interface does not mean every supported Cubism version can execute it.
+- The full Cubism 5.2 Editor-authoring matrix remains incomplete for several operation families.
+- Project, selection, model-tree, and additional semantic Editor APIs continue to evolve.
+- Drawable, Deformer, Glue, mesh, PSD, and texture-atlas writes and workflows require consumer-driven implementation and exact validation.
+- Host UI attachment, high-frequency hooks, and real-host readiness remain high-risk boundaries with exact-version gates.
+- SDK HTML Javadoc can be generated and is hosted here, but many public declarations still need better explanatory comments.
+
+## Not currently promised
+
+Turboism does not currently promise:
+
+- a production system installer;
+- automatic online updates or a marketplace;
+- publisher signing or revocation;
+- a complete immutable-generation install, repair, rollback, recovery, and purge lifecycle;
+- global modification of Cubism launchers;
+- uniform readiness across every Cubism version;
+- production readiness based only on Preview, fake, static, or single-version evidence.
+
+## Near-term order
+
+1. Finish the unified object and reference model.
+2. Complete Core reads and version-routed Providers.
+3. Expand Editor-owned writes with Undo from verified consumers.
+4. Standardize operation lifecycle semantics.
+5. Complete project, selection, and model-tree APIs.
+6. Restore first-party workflows through SDK-only plugins.
+7. Add hooks only when explicit APIs, refresh, polling, or callbacks are insufficient.
+8. Harden third-party SDK, packaging, and release evidence.
+
+For source-level context, see the [Turboism repository](https://github.com/Turboism/Turboism) and its `ARCHITECTURE.md` and `ROADMAP.md` files.

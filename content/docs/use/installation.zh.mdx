@@ -1,0 +1,93 @@
+---
+title: 安装
+description: 运行当前隔离的 Turboism Developer Preview，不修改 Cubism 安装。
+---
+
+Turboism 当前不提供生产系统安装器。现有产品路径是面向 Windows 和 Live2D Cubism Editor 5.3.02 的隔离 Developer Preview bundle。
+
+该 bundle 不会修改 Cubism JAR、DLL、官方 launcher 文件、许可状态或现有项目。
+
+## 构建 Preview bundle
+
+在 Turboism source repository 中执行：
+
+```bash
+./gradlew previewBundle checkPreviewBundleLayout \
+  --no-daemon --console=plain
+```
+
+输出写入：
+
+```text
+build/preview/<worktreeId>/
+├── turboism-agent.jar
+├── run-preview.bat
+├── launch-cubism-turboism.bat
+├── launch-cubism-turboism.ps1
+├── plugins/
+├── plugin-data/
+├── state/
+└── logs/
+```
+
+## 运行 Preview
+
+1. 将完整的 Preview 目录复制到装有匹配 Cubism 安装的 Windows 计算机。
+2. 保持目录完整。
+3. 双击 `run-preview.bat`，或者使用 bundle 中的 launcher script 和 README。
+4. 确认 Turboism 启动，并在 Preview 所有的目录中写入 diagnostics。
+
+当前 Preview launcher 会搜索受支持的 5.3.02 位置和 `CUBISM_ROOT`，然后使用 Turboism Java Agent 启动 Cubism，不会永久重写 Cubism 安装。
+
+## 选择 Turboism home
+
+Runtime 使用由 Java system property 或 agent option 选择的隔离 home：
+
+```text
+-Dturboism.home=/absolute/path/to/turboism-home
+```
+
+```text
+-javaagent:turboism-agent.jar=home=/absolute/path/to/turboism-home
+```
+
+home 包含：
+
+```text
+<turboism.home>/
+├── config.json
+├── plugins/
+├── config/<pluginId>/
+├── data/<pluginId>/
+├── cache/<pluginId>/
+├── state/<pluginId>/
+└── logs/<pluginId>/
+```
+
+Turboism 运行时不要编辑或清空 home。
+
+## 移除 Preview
+
+1. 关闭 Cubism。
+2. 确认 Preview 所有的进程已经退出。
+3. 删除 Preview 目录。
+
+由于 Preview 路径不会修改 Cubism，因此不应需要恢复任何 Cubism 安装文件。
+
+## 插件安装
+
+Turboism 插件包的管理与框架 Preview 分开。`.tplugin` 的安装、替换、启用、禁用和卸载行为请参阅[插件管理](./plugin-management)。
+
+## 安全性与兼容性
+
+- 使用备份或一次性 Cubism 项目测试 Preview。
+- 不要替换 Cubism JAR、DLL、官方 BAT 文件或许可组件。
+- 不匹配或未经验证的宿主 artifact 会使 host adapter 不可用，而不是使用不安全的 fallback。
+- 公共 Preview 工作流不等同于项目严格的真实宿主验证流程。
+
+## 当前限制
+
+- 仅支持 Windows Preview wrapper。
+- Cubism Editor 5.3.02 Preview 范围。
+- 没有生产级自动安装、更新、回滚、恢复、marketplace、签名或全局 launcher 集成。
+- 功能就绪性仍然取决于 capability 和版本。

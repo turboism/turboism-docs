@@ -1,42 +1,93 @@
 ---
 title: Installation
-description: The expected installation flow for Turboism and release-safe operation.
+description: Run the current isolated Turboism Developer Preview without modifying a Cubism installation.
 ---
 
-The installation path below is the documented workflow shape for the release stage. This
-site is still a preview and many steps are intentionally pending public release facts.
+Turboism does not currently provide a production system installer. The available product path is an isolated Developer Preview bundle for Windows and Live2D Cubism Editor 5.3.02.
 
-## What you need before installing
+The bundle does not modify Cubism JARs, DLLs, official launcher files, licensing state, or existing projects.
 
-- A stable Turboism download source (available from the product site when public release
-  is announced).
-- A Cubism Editor environment that matches the same compatibility envelope as your
-  release channel.
-- A backup of active Cubism projects.
+## Build the Preview bundle
 
-## Installation checklist (preview)
+From the Turboism source repository:
 
-1. **Obtain the package**
-   - Go to the official Turboism download entry point from the product site.
-   - Verify you downloaded the artifact for your platform.
-2. **Prepare Java Agent binaries**
-   - Keep the downloaded archive unchanged until checksums and signatures are validated.
-3. **Attach to Cubism**
-   - Follow the in-product onboarding steps to register the Java Agent.
-4. **Run first verification check**
-   - Start the first test project and confirm the agent reports loaded version metadata.
+```bash
+./gradlew previewBundle checkPreviewBundleLayout \
+  --no-daemon --console=plain
+```
 
-## Verify your install
+The output is written to:
 
-- Confirm the plugin manager detects the Agent runtime.
-- Confirm the documentation route `docs.turboism.dev` is reachable from within your
-  environment.
-- Confirm no unexpected changes are applied to existing projects during first launch.
+```text
+build/preview/<worktreeId>/
+├── turboism-agent.jar
+├── run-preview.bat
+├── launch-cubism-turboism.bat
+├── launch-cubism-turboism.ps1
+├── plugins/
+├── plugin-data/
+├── state/
+└── logs/
+```
 
-> **Preview status**
-> Public install commands, checksums, exact OS package names, and the minimum Java/Cubism
-> baseline are not yet published on this documentation site. This page intentionally tracks
-> the intended install flow, not finalized contract details.
+## Run the Preview
 
-When public artifacts are available, this page will be replaced with exact commands,
-checksums, and compatibility tables.
+1. Copy the entire Preview directory to the Windows machine that has the matching Cubism installation.
+2. Keep the directory intact.
+3. Double-click `run-preview.bat` or use the bundle's launcher script and README.
+4. Confirm that Turboism starts and writes diagnostics in the Preview-owned directory.
+
+The current Preview launcher searches supported 5.3.02 locations and `CUBISM_ROOT`, then starts Cubism with the Turboism Java Agent without permanently rewriting the Cubism installation.
+
+## Choose a Turboism home
+
+Runtime uses an isolated home selected by a Java system property or agent option:
+
+```text
+-Dturboism.home=/absolute/path/to/turboism-home
+```
+
+```text
+-javaagent:turboism-agent.jar=home=/absolute/path/to/turboism-home
+```
+
+The home contains:
+
+```text
+<turboism.home>/
+├── config.json
+├── plugins/
+├── config/<pluginId>/
+├── data/<pluginId>/
+├── cache/<pluginId>/
+├── state/<pluginId>/
+└── logs/<pluginId>/
+```
+
+Do not edit or clear the home while Turboism is running.
+
+## Remove the Preview
+
+1. Close Cubism.
+2. Confirm the Preview-owned process has exited.
+3. Delete the Preview directory.
+
+No Cubism installation file should need restoration because the Preview path does not modify it.
+
+## Plugin installation
+
+Turboism plugin packages are managed separately from the framework Preview. See [Plugin Management](./plugin-management) for `.tplugin` install, replacement, enable, disable, and uninstall behavior.
+
+## Safety and compatibility
+
+- Use a backup or disposable Cubism project for Preview testing.
+- Do not replace Cubism JARs, DLLs, official BAT files, or licensing components.
+- A mismatched or unverified host artifact leaves host adapters unavailable instead of using an unsafe fallback.
+- The public Preview workflow is not the same as the project's strict real-host validation procedure.
+
+## Current limitations
+
+- Windows Preview wrapper only.
+- Cubism Editor 5.3.02 Preview envelope.
+- No production automatic install, update, rollback, recovery, marketplace, signing, or global launcher integration.
+- Feature readiness remains capability- and version-specific.

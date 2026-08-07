@@ -1,39 +1,46 @@
 ---
 title: Quick Start
-description: A minimal path to a first functional setup.
+description: Launch the isolated Developer Preview and verify its first run.
 ---
 
-This guide shows the intended first-run flow when public release artifacts are available.
+This quick start assumes you have built or received the current Developer Preview directory described in [Installation](./installation).
 
-## 1) Prepare and verify environment
+## 1. Prepare safely
 
-- Install or update to a published Turboism release.
-- Open a copy of a non-critical Cubism project.
-- Ensure your local project is backed up.
+- Use Windows with the supported Cubism 5.3.02 Preview envelope.
+- Back up the project you intend to open, or use a disposable copy.
+- Keep the Preview directory separate from the Cubism installation.
+- Do not edit Cubism JARs, DLLs, BAT files, or licensing state.
 
-## 2) Start with the default workflow
+## 2. Start Turboism
 
-1. Install the Agent following the installation steps.
-2. Open Cubism.
-3. Confirm the Agent endpoint is active in the plugin tooling.
-4. Trigger a health check from the workspace tooling.
-5. Open the same project in documentation mode and verify navigation links.
+1. Open the Preview directory.
+2. Double-click `run-preview.bat`.
+3. If automatic discovery cannot find Cubism, use the provided launcher and select the matching Cubism root according to the bundle README.
+4. Wait for Cubism and Turboism diagnostics to initialize.
 
-## 3) Minimal sanity checks
+## 3. Verify the first run
 
-- The documentation surface should show this site in the agent context.
-- A no-op extension action should complete without modifying model data.
-- You should be able to open a preview workflow from the default template.
+Check that:
 
-## 4) Next steps
+- Cubism starts normally;
+- the Turboism Java Agent reports startup;
+- the Runtime uses the intended Turboism home;
+- bundled plugins appear in the plugin/runtime diagnostics;
+- unavailable host capabilities fail closed rather than crashing Cubism;
+- closing Cubism releases plugin scopes and framework-owned executors.
 
-- Read [Update and maintenance](./update-policy) to understand release behavior.
-- Move to [Troubleshooting and feedback](../troubleshooting) if anything is unexpected.
+## 4. Add a plugin
 
-## What is still not final
+Use [Plugin Management](./plugin-management) to install a local `.tplugin`. Plugin changes apply after Cubism restarts.
 
-- Exact startup UI actions,
-- exact CLI flags,
-- and official baseline versions.
+## 5. Find logs
 
-These are still withheld until release artifacts are published.
+Use the Preview-owned log directory or the selected Turboism home's `logs/` directory. Keep logs when reporting startup, package, dependency, permission, or Provider failures.
+
+## Next steps
+
+- [Plugin Management](./plugin-management)
+- [Troubleshooting](../troubleshooting)
+- [Development Status](../development-status)
+- [Build a Plugin](../build-a-plugin/quick-start)

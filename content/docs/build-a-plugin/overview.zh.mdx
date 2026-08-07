@@ -1,0 +1,26 @@
+---
+title: 构建插件
+description: 为当前 Turboism Developer Preview 创建仅依赖 SDK 的 Java 插件。
+---
+
+Turboism 插件是由 Runtime 加载的 Java 17 JAR。每个插件仅依赖 Turboism SDK，并在 manifest v2 中声明其身份、入口点、兼容性、资源、依赖和权限。
+
+## 推荐路径
+
+1. [开发者快速入门](./quick-start) — 创建、构建、验证、打包并安装一个最小插件。
+2. [插件接口](./plugin-interfaces) — 了解当前 `PluginContext` 服务系列。
+3. [插件 Manifest 与打包](./manifest) — 声明多个入口点、权限、资源和 `.tplugin` 打包。
+4. [设计插件](./designing-plugins) — 保持插件生命周期安全且兼容。
+5. [SDK API 指南](../reference/sdk-api) — 浏览引导式 API 概览和生成的参考文档。
+
+## 架构边界
+
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
+
+插件不得直接依赖 Runtime、`com.live2d.*`、反射桥接、主机 UI 小部件、原生句柄或主机 ClassLoader。
+
+## 当前发布边界
+
+有源代码支持的 Preview SDK 和插件加载器已经存在，但尚未发布稳定的独立入门模板和公开 Maven 坐标。仓库内 Gradle 模块流程是当前权威的上手路径。

@@ -1,0 +1,150 @@
+---
+title: 開発者向けクイックスタート
+description: 現在の Preview SDK に対して、最小の Java 17 Turboism plugin を build する。
+---
+
+現在の source-backed development path は、Turboism repository に plugin module を追加することです。standalone starter template と Stable Maven coordinates はまだ公開されていません。
+
+## 1. module を作成する
+
+```text
+plugins/hello/
+├── build.gradle.kts
+├── src/main/java/dev/example/plugin/HelloPlugin.java
+├── src/main/resources/META-INF/turboism/plugin.json
+└── src/test/java/dev/example/plugin/HelloPluginTest.java
+```
+
+source repository の `settings.gradle.kts` に追加します。
+
+```kotlin
+include("plugins:hello")
+```
+
+## 2. SDK のみに依存する
+
+```kotlin
+plugins {
+    `java-library`
+}
+
+dependencies {
+    compileOnly(project(":sdk"))
+    testImplementation(project(":sdk"))
+}
+```
+
+`compileOnly` は意図的な指定です。SDK は Runtime が提供します。plugin JAR に `dev/turboism/sdk/**` class をコピーしてはいけません。
+
+Runtime、Bootstrap、`com.live2d.*`、別 plugin の private implementation package、reflection bridge、host widget、native handle、host ClassLoader に依存しないでください。
+
+## 3. entrypoint を実装する
+
+```java
+package dev.example.plugin;
+
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.TurboismPlugin;
+
+public final class HelloPlugin implements TurboismPlugin {
+    private PluginContext context;
+
+    @Override
+    public void init(final PluginContext context) {
+        this.context = java.util.Objects.requireNonNull(context, "context");
+        context.logger().info("HelloPlugin initialized");
+    }
+
+    @Override
+    public void enable() {
+        context.logger().info("HelloPlugin enabled");
+    }
+
+    @Override
+    public void disable() {
+        context.logger().info("HelloPlugin disabled");
+    }
+
+    @Override
+    public void shutdown() {
+        context.logger().info("HelloPlugin shutdown");
+        context = null;
+    }
+}
+```
+
+class は public で、`TurboismPlugin` または subinterface を実装し、public no-argument constructor を公開しなければなりません。
+
+## 4. manifest v2 を追加する
+
+`src/main/resources/META-INF/turboism/plugin.json` を作成します。
+
+```json
+{
+  "format": "turboism.plugin.meta",
+  "schemaVersion": 2,
+  "id": "dev.example.plugin.hello",
+  "name": "Hello Plugin",
+  "version": "0.1.0",
+  "description": "Minimal Turboism plugin lifecycle example.",
+  "entrypoints": [
+    "dev.example.plugin.HelloPlugin"
+  ],
+  "turboismApi": "[0.1.0,0.2.0)",
+  "authors": [
+    { "name": "Example Author" }
+  ],
+  "license": "MIT",
+  "website": "https://example.org/hello-plugin",
+  "resources": [],
+  "i18n": {
+    "baseName": "META-INF/turboism/i18n/messages",
+    "locales": []
+  },
+  "dependencies": [],
+  "permissions": [],
+  "capabilities": [],
+  "environment": {
+    "requiresCubism": false,
+    "ui": "none"
+  }
+}
+```
+
+permission、resource、localization、dependency、複数の entrypoint を追加する前に、[プラグインマニフェストとパッケージング](./manifest) を読んでください。
+
+## 5. build と検証を行う
+
+```bash
+./gradlew :plugins:hello:test :plugins:hello:jar validatePluginMeta \
+  --no-daemon --console=plain
+```
+
+artifact は次の下に書き込まれます。
+
+```text
+build/worktree/<worktreeId>/hello/libs/
+```
+
+この lifecycle-only example には constructor-only test で十分です。plugin が action、UI、event、configuration、task を登録するようになったら、recording/fake `PluginContext` を使って registration、failure handling、disable/shutdown behavior、scope cleanup を検証してください。
+
+## 6. package する
+
+```bash
+python3 scripts/release/package-plugin.py \
+  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
+  build/packages/hello.tplugin
+```
+
+## 7. install する
+
+Turboism plugin management で `.tplugin` を選択します。変更はステージングされ、Cubism の再起動後に適用されます。
+
+分離された local development の場合に限り、plugin JAR を使い捨ての Turboism home の `plugins/` directory に直接置き、Runtime を再起動できます。Loose-JAR mode は推奨される user distribution path ではありません。
+
+## 次のステップ
+
+- [プラグインインターフェース](./plugin-interfaces)
+- [プラグインマニフェストとパッケージング](./manifest)
+- [SDK API ガイド](../reference/sdk-api)
+- [プラグイン管理](../use/plugin-management)

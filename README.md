@@ -17,4 +17,14 @@ npm run typecheck
 npm run build
 ```
 
-Documentation body copy is English-first. The interface provides English and Chinese labels without creating locale-prefixed duplicate URLs.
+## Sync generated SDK API docs
+
+The hosted Javadoc lives under `public/api/sdk/` and is generated from the Turboism source repository:
+
+```bash
+npm run sync:sdk-api -- /workspace/projects/turboism
+```
+
+This runs the source repository's `sdkApiDocs` Gradle task and replaces the hosted SDK reference.
+
+English is the authoritative source. Complete Simplified Chinese and Japanese translations are published at `/zh/docs/...` and `/ja/docs/...`; English lives at `/en/docs/...`.

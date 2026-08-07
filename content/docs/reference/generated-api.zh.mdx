@@ -1,0 +1,34 @@
+---
+title: 生成的 API 参考
+description: 当前 Turboism SDK 的源代码生成 HTML Javadoc。
+---
+
+当前 SDK HTML 参考由 Java 源代码通过 JDK 17 Javadoc 工具生成。
+
+- [打开 SDK HTML API 参考](/api/sdk/index.html)
+- [阅读 SDK 指南概览](./sdk-api)
+- [构建插件](../build-a-plugin/quick-start)
+
+## 范围
+
+托管的参考覆盖 `dev.turboism.sdk.*`，这是面向插件的唯一公共依赖。
+
+Runtime、Bootstrap、test-framework 以及第一方插件实现包不会合并到公共参考中。保持分离可以维护插件契约与宿主实现之间的架构边界。
+
+## Preview 状态
+
+HTML 页面由当前开发源代码生成。它们不能替代有版本标识的发布契约。
+
+部分公共声明仍缺少完整的说明性注释，因此 Javadoc 构建在生成有效 HTML 的同时，可能报告 missing-comment、`@param` 或 `@return` 警告。源项目保持启用 JDK doclint，而不是隐藏无效标记或链接。
+
+## 维护者同步
+
+在文档仓库中，使用以下命令重新生成并复制 SDK 参考：
+
+```bash
+npm run sync:sdk-api -- /path/to/Turboism
+```
+
+同步命令会运行源代码仓库的 `sdkApiDocs` Gradle task，并用生成的输出替换 `public/api/sdk/`。
+
+源代码仓库的二进制 API 基线和模块边界检查仍然是兼容性的权威依据。Javadoc 生成不能替代这些检查。

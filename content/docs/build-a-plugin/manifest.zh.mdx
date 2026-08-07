@@ -1,0 +1,163 @@
+---
+title: 插件 Manifest 与打包
+description: 定义一个 manifest v2 插件 JAR，并将其打包为严格的本地 .tplugin 归档文件。
+---
+
+每个 Turboism 插件 JAR 都恰好包含一个位于以下位置的描述符：
+
+```text
+META-INF/turboism/plugin.json
+```
+
+Runtime 仅接受 schema version 2。不会加载或自动升级 version 1。
+
+## 最小 Manifest
+
+```json
+{
+  "format": "turboism.plugin.meta",
+  "schemaVersion": 2,
+  "id": "dev.example.plugin.hello",
+  "name": "Hello Plugin",
+  "version": "0.1.0",
+  "description": "Minimal Turboism plugin lifecycle example.",
+  "entrypoints": [
+    "dev.example.plugin.HelloPlugin"
+  ],
+  "turboismApi": "[0.1.0,0.2.0)",
+  "authors": [
+    { "name": "Example Author" }
+  ],
+  "license": "MIT",
+  "website": "https://example.org/hello-plugin",
+  "resources": [],
+  "i18n": {
+    "baseName": "META-INF/turboism/i18n/messages",
+    "locales": []
+  },
+  "dependencies": [],
+  "permissions": [],
+  "capabilities": [],
+  "environment": {
+    "requiresCubism": false,
+    "ui": "none"
+  }
+}
+```
+
+## 入口点规则
+
+每个入口点必须：
+
+- 存在于同一个插件 JAR 中；
+- 为 public；
+- 实现 `TurboismPlugin` 或其子接口；
+- 提供一个 public 无参数构造函数。
+
+多个入口点共享一个插件身份、描述符、ClassLoader、`PluginContext`、`DisposableScope`、权限集、配置命名空间、存储命名空间、资源和本地化声明。
+
+```text
+construct/init/enable: manifest order
+disable/shutdown:       reverse manifest order
+```
+
+构造、初始化或启用期间发生的失败会回滚整个 JAR。
+
+## 依赖
+
+```json
+{
+  "id": "dev.example.plugin.base",
+  "version": "[1.0.0,2.0.0)",
+  "type": "required",
+  "ordering": "after",
+  "reason": "Uses the base plugin contract."
+}
+```
+
+- `type` 为 `required` 或 `optional`。
+- `ordering` 为 `none`、`before` 或 `after`。
+- 依赖 ID 使用反向域名语法。
+- 版本范围使用当前 Turboism 版本范围语法。
+
+依赖记录控制解析与排序。它不会将另一个插件的私有实现包变为公共 Java 依赖。
+
+## 权限
+
+每条权限记录都包含一个已知 ID、`application` 或 `user` scope，以及非空的原因。
+
+```json
+{
+  "id": "turboism.action.register",
+  "scope": "application",
+  "reason": "Registers the Hello action."
+}
+```
+
+仅声明插件调用的 SDK 服务所需的权限。权限不保证 Provider 可用，也不会绕过操作验证。
+
+## 资源与本地化
+
+资源根目录是以 `/` 结尾的规范化相对前缀：
+
+```json
+"resources": ["icons/"],
+"i18n": {
+  "baseName": "META-INF/turboism/i18n/messages",
+  "locales": ["base", "en", "zh_Hans"]
+}
+```
+
+随后 JAR 必须包含：
+
+```text
+icons/hello.png
+META-INF/turboism/i18n/messages.properties
+META-INF/turboism/i18n/messages_en.properties
+META-INF/turboism/i18n/messages_zh_Hans.properties
+```
+
+声明的根目录和目录必须存在。普通的非 class 资源必须属于已声明的根目录。路径遍历、绝对路径、反斜杠、空路径段和未声明资源都会被拒绝。
+
+## 构建与验证
+
+对于仓库内的插件模块：
+
+```bash
+./gradlew :plugins:hello:test :plugins:hello:jar validatePluginMeta \
+  --no-daemon --console=plain
+```
+
+该仓库使用 Java 17，并在以下位置写入模块构建产物：
+
+```text
+build/worktree/<worktreeId>/<module>/libs/
+```
+
+## 构建 `.tplugin`
+
+```bash
+python3 scripts/release/package-plugin.py \
+  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
+  build/packages/hello.tplugin
+```
+
+当前的最小包包含：
+
+```text
+META-INF/turboism/package.json
+plugin/plugin.jar
+```
+
+Runtime 将 `.tplugin` 视为不受信任的输入，并验证 ZIP/JAR 结构、路径、大小、哈希、描述符一致性、入口点、资源和禁止内容。
+
+插件包不得包含：
+
+- 复制的 Turboism SDK class；
+- Runtime、Bootstrap、测试或测试框架 class；
+- `com/live2d/**` class 或 Cubism 资源；
+- 原生二进制文件或主机载荷；
+- 安装脚本；
+- 当前最小构建器输出中的嵌套 JAR。
+
+不要通过重命名任意 ZIP 来创建包。始终从当前插件 JAR 生成它。

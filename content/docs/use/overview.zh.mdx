@@ -1,0 +1,26 @@
+---
+title: 使用 Turboism
+description: 运行 Developer Preview，并在不修改 Cubism 安装的情况下管理本地插件。
+---
+
+本节记录当前已实现的 Developer Preview 工作流，而不是未来的系统安装器。
+
+## 学习路径
+
+1. [安装](./installation) — 构建或获取隔离的 Preview 目录，并了解其安全边界。
+2. [快速开始](./quick-start) — 启动 Turboism 并验证首次运行。
+3. [插件管理](./plugin-management) — 安装、替换、启用、禁用和卸载本地 `.tplugin` 软件包。
+4. [更新策略](./update-policy) — 了解软件包替换与未来自动更新系统之间的区别。
+5. [故障排查](../troubleshooting) — 诊断 manifest、生命周期、软件包和 Provider 故障。
+
+## 当前边界
+
+Turboism 当前具备：
+
+- 隔离的 Java Agent Preview bundle；
+- 按版本路由的 Runtime 和 SDK；
+- 本地插件 JAR 发现；
+- 严格的本地 `.tplugin` 检查和分阶段插件管理；
+- 按 capability 区分、fail-closed 的宿主集成。
+
+Turboism 当前不具备生产系统安装器、marketplace、自动在线更新器、签名服务或全局 Cubism launcher 集成。

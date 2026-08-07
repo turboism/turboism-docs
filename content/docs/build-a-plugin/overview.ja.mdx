@@ -1,0 +1,26 @@
+---
+title: プラグインを作る
+description: 現在の Turboism Developer Preview 向けに、SDK のみに依存する Java プラグインを作成する。
+---
+
+Turboism plugin は Runtime がロードする Java 17 JAR です。各 plugin は Turboism SDK のみに依存し、manifest v2 で identity、entrypoint、compatibility、resource、dependency、permission を宣言します。
+
+## 推奨される進め方
+
+1. [開発者向けクイックスタート](./quick-start) — 最小 plugin を作成、build、検証、package、install する。
+2. [プラグインインターフェース](./plugin-interfaces) — 現在の `PluginContext` service family を理解する。
+3. [プラグインマニフェストとパッケージング](./manifest) — 複数の entrypoint、permission、resource、`.tplugin` packaging を宣言する。
+4. [プラグインの設計](./designing-plugins) — plugin を lifecycle-safe かつ互換性のあるものに保つ。
+5. [SDK API ガイド](../reference/sdk-api) — ガイド付き API 概要と生成済み reference を閲覧する。
+
+## アーキテクチャ上の境界
+
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
+
+Plugin は Runtime、`com.live2d.*`、reflection bridge、host UI widget、native handle、host ClassLoader に直接依存してはいけません。
+
+## 現在のリリース境界
+
+ソースに基づく Preview SDK と plugin loader は存在しますが、Stable な standalone starter template と公開 Maven coordinates はまだ公開されていません。現在の authoritative onboarding path は、repository 内の Gradle module flow です。

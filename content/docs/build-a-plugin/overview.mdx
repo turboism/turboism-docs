@@ -1,18 +1,26 @@
 ---
 title: Build a Plugin
-description: The future developer path for extending Turboism.
+description: Create SDK-only Java plugins for the current Turboism Developer Preview.
 ---
 
-Turboism is designed to be extended with plugins. This section is the developer track for
-plugin architecture and contribution behavior.
+Turboism plugins are Java 17 JARs loaded by Runtime. Each plugin depends on the Turboism SDK only and declares its identity, entrypoints, compatibility, resources, dependencies, and permissions in manifest v2.
 
 ## Recommended path
 
-- [Developer Quick Start](./quick-start) — scaffold a minimal plugin and validate it locally.
-- [Designing Plugins](./designing-plugins) — stable design patterns and compatibility planning.
-- [Plugin Interfaces (Preview)](./plugin-interfaces) — draft interface families and expected touchpoints.
+1. [Developer Quick Start](./quick-start) — create, build, validate, package, and install a minimal plugin.
+2. [Plugin Interfaces](./plugin-interfaces) — understand the current `PluginContext` service families.
+3. [Plugin Manifest and Packaging](./manifest) — declare multiple entrypoints, permissions, resources, and `.tplugin` packaging.
+4. [Designing Plugins](./designing-plugins) — keep plugins lifecycle-safe and compatible.
+5. [SDK API Guide](../reference/sdk-api) — browse the guided API overview and generated reference.
+
+## Architectural boundary
+
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
+
+Plugins must not depend directly on Runtime, `com.live2d.*`, reflection bridges, host UI widgets, native handles, or host ClassLoaders.
 
 ## Current release boundary
 
-> The public SDK, example project, and contractually final API signatures are not yet published.
-> These pages define the intended developer workflow before a hard release contract is posted.
+The source-backed Preview SDK and plugin loader exist, but a stable standalone starter template and public Maven coordinates are not published yet. The in-repository Gradle module flow is the current authoritative onboarding path.

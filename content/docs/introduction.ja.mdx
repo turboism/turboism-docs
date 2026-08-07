@@ -1,0 +1,32 @@
+---
+title: はじめに
+description: Turboism の概要、プラグイン境界、Preview ドキュメントの読み方。
+---
+
+Turboism は、Live2D Cubism Editor 向けのランタイム拡張ツールおよびプラグインフレームワークです。
+
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
+
+プラグインが依存するのは Turboism SDK だけです。ホストへのアクセス、ライフサイクル、安全性、スレッド、トランザクション、診断、互換性、バージョン差分は Runtime が担います。
+
+## プラグイン作者にとっての意味
+
+- `com.live2d.*` クラスではなく、Turboism が所有する Java 型を使う。
+- 設定、ストレージ、ユーザーファイル、タスク、UI、イベント、Cubism へのアクセスには `PluginContext` を使う。
+- クローズ可能なリソースを `DisposableScope` に登録する。
+- マニフェスト v2 で権限を宣言する。
+- Provider またはホストバージョンが利用できない場合を明示的に処理する。
+- リフレクション、ホストの生ウィジェット、ネイティブハンドル、バイトコードトランスフォーマーで Runtime を迂回しない。
+
+## Preview ドキュメント
+
+現在の SDK とプラグインローダーは実装済みで、生成済み API ページもこのサイトで公開されています。ただし、Preview API が存在することは、Stable 互換性やすべての Cubism バージョンでの実ホスト対応を意味しません。
+
+次に進むには:
+
+- [Turboism を使う](./use/overview)
+- [プラグインを作る](./build-a-plugin/overview)
+- [SDK API ガイド](./reference/sdk-api)
+- [開発状況](./development-status)

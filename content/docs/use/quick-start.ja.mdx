@@ -1,0 +1,46 @@
+---
+title: クイックスタート
+description: 分離された Developer Preview を起動し、初回起動を確認する。
+---
+
+このクイックスタートでは、[インストール](./installation) で説明している現在の Developer Preview directory を構築または受け取っていることを前提とします。
+
+## 1. 安全に準備する
+
+- サポート対象の Cubism 5.3.02 Preview envelope を備えた Windows を使用します。
+- 開く project を backup するか、使い捨ての copy を使用します。
+- Preview directory を Cubism installation から分離しておきます。
+- Cubism JAR、DLL、BAT file、licensing state を編集しないでください。
+
+## 2. Turboism を起動する
+
+1. Preview directory を開きます。
+2. `run-preview.bat` をダブルクリックします。
+3. 自動 discovery で Cubism が見つからない場合は、提供された launcher を使い、bundle README に従って対応する Cubism root を選択します。
+4. Cubism と Turboism の診断情報が初期化されるまで待ちます。
+
+## 3. 初回起動を確認する
+
+次を確認してください。
+
+- Cubism が通常どおり起動する。
+- Turboism Java Agent が起動を報告する。
+- Runtime が意図した Turboism home を使用する。
+- bundle された plugin が plugin/runtime diagnostics に表示される。
+- 利用できない host capability が Cubism をクラッシュさせず fail closed する。
+- Cubism を閉じると plugin scope と framework 所有の executor が解放される。
+
+## 4. プラグインを追加する
+
+[プラグイン管理](./plugin-management) を使ってローカル `.tplugin` をインストールします。プラグインの変更は Cubism の再起動後に適用されます。
+
+## 5. ログを見つける
+
+Preview が所有する log directory、または選択した Turboism home の `logs/` directory を使用します。起動、package、dependency、permission、Provider の失敗を報告するときはログを保持してください。
+
+## 次のステップ
+
+- [プラグイン管理](./plugin-management)
+- [トラブルシューティング](../troubleshooting)
+- [開発状況](../development-status)
+- [プラグインを作る](../build-a-plugin/quick-start)

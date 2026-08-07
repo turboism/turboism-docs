@@ -1,0 +1,99 @@
+---
+title: Plugin Management
+description: Install, replace, enable, disable, and uninstall local Turboism plugin packages safely.
+---
+
+Turboism currently provides a Preview runtime plugin-management path for local `.tplugin` packages. It is not a system-level Turboism installer or an online marketplace.
+
+All plugin-management changes are staged and applied after Cubism restarts. They do not hot-swap the currently loaded plugin instance.
+
+## Install a plugin
+
+1. Obtain or build a `.tplugin` from a source you trust.
+2. Open Turboism plugin management.
+3. Choose **Install plugin**.
+4. Select the local `.tplugin` file.
+5. Confirm that the operation is shown as pending.
+6. Close Cubism normally.
+7. Start Cubism again through the same Turboism home.
+8. Check the plugin list and Runtime logs for the effective state.
+
+Before staging the operation, Runtime validates the package and creates a private snapshot. On the next discovery cycle it applies the pending change and performs the normal manifest, dependency, permission, ClassLoader, and lifecycle checks.
+
+## Replace or update a plugin
+
+There is no separate production update service today. Installing a newer package with the same plugin ID stages a replacement intent.
+
+Recommended procedure:
+
+1. Back up the current package and the plugin's persistent configuration/data.
+2. Install the newer `.tplugin` through plugin management.
+3. Restart Cubism.
+4. Verify the displayed version, lifecycle state, configuration migration, and logs.
+5. If it fails, stop Turboism and restore or reinstall the known-good package.
+
+This is not an automatic update, retained-version, or complete rollback transaction system.
+
+## Disable or enable a plugin
+
+The desired state is persisted in the Turboism home configuration and applies after restart.
+
+- the Runtime-owned `turboism.core` plugin cannot be disabled;
+- disabled plugins are skipped during the next startup discovery;
+- changing the toggle does not immediately unload the active instance;
+- normal shutdown still gives the plugin a chance to close its scope and ClassLoader references.
+
+## Uninstall a plugin
+
+1. Select the plugin in plugin management.
+2. Choose **Uninstall**.
+3. Confirm the pending operation.
+4. Close and restart Cubism.
+5. Confirm that the plugin is no longer loaded.
+6. Decide whether to retain or remove its data.
+
+The core plugin cannot be uninstalled.
+
+Removing the plugin JAR does not automatically erase every plugin-owned file:
+
+- retain `config/<pluginId>/` and `data/<pluginId>/` if settings or business data may be needed after reinstall;
+- `cache/<pluginId>/`, `state/<pluginId>/`, and `logs/<pluginId>/` are generally rebuildable or diagnostic, but remove them only while Turboism is stopped;
+- deleting configuration or persistent data is irreversible without a backup.
+
+## Loose-JAR development mode
+
+For an isolated, disposable development home, a developer may place a built plugin JAR directly in:
+
+```text
+<turboism.home>/plugins/
+```
+
+and restart Runtime.
+
+This path is useful for local development but bypasses `.tplugin` transport staging and package-level checks. It is not the recommended end-user distribution flow.
+
+## Package rejection
+
+A package can be rejected for reasons including:
+
+- invalid hashes or sizes;
+- malformed or ambiguous ZIP paths;
+- duplicate entries or special files;
+- copied SDK, Runtime, test, or Live2D classes;
+- native or installer payloads;
+- nested JAR content outside the accepted package profile;
+- mismatched package and plugin IDs or versions;
+- missing entrypoint classes or undeclared resources.
+
+Regenerate the package from the current plugin JAR. Do not edit the archive manually or disable inspection.
+
+## Current limitations
+
+Plugin management does not currently provide:
+
+- online discovery or downloads;
+- publisher signing or revocation;
+- a marketplace;
+- retained historical versions;
+- a complete repair, rollback, recovery, or purge lifecycle;
+- system-level modification of Cubism installations or launchers.

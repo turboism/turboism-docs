@@ -1,0 +1,99 @@
+---
+title: 插件管理
+description: 安全地安装、替换、启用、禁用和卸载本地 Turboism 插件软件包。
+---
+
+Turboism 当前为本地 `.tplugin` 软件包提供 Preview Runtime 插件管理路径。它不是系统级 Turboism 安装器，也不是在线 marketplace。
+
+所有插件管理变更都会分阶段提交，并在 Cubism 重启后应用。它们不会热切换当前已加载的插件实例。
+
+## 安装插件
+
+1. 从你信任的 source 获取或构建 `.tplugin`。
+2. 打开 Turboism 插件管理。
+3. 选择 **Install plugin**。
+4. 选择本地 `.tplugin` 文件。
+5. 确认操作显示为 pending。
+6. 正常关闭 Cubism。
+7. 使用同一个 Turboism home 再次启动 Cubism。
+8. 检查插件列表和 Runtime 日志中的生效状态。
+
+在分阶段提交操作之前，Runtime 会验证软件包并创建私有 snapshot。在下一次 discovery cycle 中，它会应用 pending 变更，并执行正常的 manifest、依赖、权限、ClassLoader 和生命周期检查。
+
+## 替换或更新插件
+
+目前没有单独的生产级更新服务。使用相同 plugin ID 安装新版软件包会分阶段提交 replacement intent。
+
+推荐流程：
+
+1. 备份当前软件包以及插件的持久化配置/数据。
+2. 通过插件管理安装新版 `.tplugin`。
+3. 重启 Cubism。
+4. 验证显示的版本、生命周期状态、配置迁移和日志。
+5. 如果失败，停止 Turboism，并恢复或重新安装已知可用的软件包。
+
+这不是自动更新、版本保留或完整回滚事务系统。
+
+## 禁用或启用插件
+
+目标状态会持久化在 Turboism home 配置中，并在重启后生效。
+
+- Runtime 所有的 `turboism.core` 插件不能禁用；
+- 被禁用的插件会在下一次启动发现期间跳过；
+- 修改开关不会立即卸载活动实例；
+- 正常关闭仍会让插件有机会关闭其 scope 并释放 ClassLoader 引用。
+
+## 卸载插件
+
+1. 在插件管理中选择插件。
+2. 选择 **Uninstall**。
+3. 确认 pending 操作。
+4. 关闭并重启 Cubism。
+5. 确认插件不再加载。
+6. 决定是否保留其数据。
+
+核心插件不能卸载。
+
+删除插件 JAR 不会自动擦除每个插件所有的文件：
+
+- 如果重新安装后可能还需要设置或业务数据，请保留 `config/<pluginId>/` 和 `data/<pluginId>/`；
+- `cache/<pluginId>/`、`state/<pluginId>/` 和 `logs/<pluginId>/` 通常可以重建或仅用于诊断，但只能在 Turboism 停止时删除；
+- 没有备份时，删除配置或持久化数据不可逆。
+
+## Loose-JAR 开发模式
+
+对于隔离且可丢弃的开发 home，开发者可以将构建出的插件 JAR 直接放入：
+
+```text
+<turboism.home>/plugins/
+```
+
+然后重启 Runtime。
+
+此路径适合本地开发，但会绕过 `.tplugin` transport staging 和软件包级检查。它不是推荐的最终用户分发流程。
+
+## 软件包拒绝
+
+软件包可能因以下原因被拒绝：
+
+- 哈希或大小无效；
+- ZIP 路径格式错误或有歧义；
+- 重复条目或特殊文件；
+- 复制的 SDK、Runtime、test 或 Live2D 类；
+- native 或 installer payload；
+- 嵌套 JAR 内容超出接受的软件包 profile；
+- 软件包与插件 ID 或版本不匹配；
+- 缺少 entrypoint class 或存在未声明资源。
+
+请从当前插件 JAR 重新生成软件包。不要手动编辑归档，也不要禁用检查。
+
+## 当前限制
+
+插件管理当前不提供：
+
+- 在线发现或下载；
+- 发布者签名或撤销；
+- marketplace；
+- 保留历史版本；
+- 完整的修复、回滚、恢复或清理生命周期；
+- 对 Cubism 安装或 launcher 的系统级修改。

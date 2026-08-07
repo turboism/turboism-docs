@@ -1,0 +1,20 @@
+---
+title: 参考
+description: 当前 Turboism Preview SDK 的指南式参考和生成式参考。
+---
+
+Reference 部分记录当前面向插件的 SDK 边界。
+
+## 从这里开始
+
+- [SDK API 指南](./sdk-api) — 生命周期、`PluginContext`、对象 API、hooks、配置、存储、任务、UI、权限和就绪性限制。
+- [生成的 API 参考](./generated-api) — 面向 `dev.turboism.sdk.*`、由源代码生成的 JDK 17 Javadoc。
+- [打开 HTML 类型索引](/api/sdk/index.html) — 直接浏览包、类、record、接口和方法。
+
+## 契约状态
+
+当前参考由开发源代码生成，描述的是 Preview API，除非某个 API 被明确记录为 Stable。
+
+源代码仓库经过审查的二进制 API 基线仍然是兼容性门槛。生成的 Javadoc 是文档产物，不是独立的稳定性承诺。
+
+内部 Runtime、Bootstrap、test-framework、mapping、Provider 以及第一方插件实现包会被有意排除在公共参考之外。

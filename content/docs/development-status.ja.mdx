@@ -1,0 +1,86 @@
+---
+title: 開発状況
+description: 現在の Turboism コードベースが実装しているもの、Preview として残っているもの、まだ製品上の約束ではないもの。
+---
+
+Turboism は、Live2D Cubism Editor 向けの Java 17 ランタイム拡張ツールおよびプラグインフレームワークです。開発は、廃止された M1–M16 移行シーケンスではなく、利用可能なフレームワークと製品機能を中心に進められています。
+
+このページは現在の開発ブランチをソースに基づいて切り取ったスナップショットです。リリース告知ではありません。
+
+## 現在のアーキテクチャ
+
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
+
+プラグインが依存するのは Turboism SDK だけです。ホストへのアクセス、ライフサイクル、安全性、スレッド、トランザクション、診断、互換性、バージョンルーティングは Runtime が担います。
+
+## 実装済みのフレームワーク基盤
+
+- Java Agent bootstrap、Runtime、SDK、first-party plugin、test-framework、integration-test モジュール。
+- ローカルプラグイン JAR の検出、マニフェストと API 範囲の検証、依存関係の解決、プラグインごとの ClassLoader、ライフサイクル実行、逆順シャットダウン、scope/ClassLoader のクリーンアップ。
+- 順序付き複数エントリポイントと JAR 全体の起動ロールバックを備えたプラグインマニフェスト v2。
+- ロギング、パス、ローカライズ、タスク、設定、ストレージ、ユーザーファイル、イベント、アクション、UI 貢献、Cubism アクセス、診断のための `PluginContext` サービス。
+- ローカル `.tplugin` のインストール、有効化、無効化、アンインストールを行う Preview プラグイン管理。変更はステージングされ、Cubism の再起動後に適用されます。core plugin は保護されます。
+
+## Cubism と Editor API の進捗
+
+- 統合された Preview オブジェクトグラフが Canvas、Parameters、Parameter Groups、Parts、Drawables、Deformers、Glue、パラメータバインディングをカバーします。
+- Cubism 5.2 と 5.3.02 の Core-backed read は、不変のコピー済みデータ、バージョン正規化、generation に束縛された stale-reference 拒否、digest-pinned resolver evidence を使用します。
+- Cubism 5.3.02 のパラメータ編集経路は、`Parameter.setValue` を Editor 操作、権限チェック、Undo、dirty-state 処理、refresh、stale-target 拒否に接続します。
+- Part display-name の書き込みには 5.2.03 と 5.3.02 で実ホストの証拠があります。
+- Part opacity の編集書き込みには 5.3.02 で証拠があります。観測された evaluation setter がネイティブ Part Undo に参加しなかったため、5.2.03 では意図的に利用できません。
+- Parameter lifecycle hook は、順序付き同期 `before` 書き換え、変更時のみの `on`、正常完了時の `after`、再帰拒否、上限付き観測処理、アンロード時のクリーンアップをサポートします。
+- first-party Parameter CSV workflow は現在、統合された `CubismModel` と `Parameter` API を使用します。
+
+## 共有プラグインサービスと UI
+
+SDK には次の契約が含まれます。
+
+- アクションとメニュー。
+- main と palette toolbar。
+- 型付き context menu。
+- toolkit-neutral embedded panel。
+- overlay、status notification、dialog、file selection。
+- 型付きプラグイン設定と migration。
+- プラグイン所有のデータ、状態、cache storage。
+- 上限付きタスクとキャンセル。
+- 非同期ホスト読み取り。
+- ローカライズと診断。
+- appearance、scene-table、選択された Editor feature family。
+
+対応する Provider または検証済みホスト capability が利用できない場合、ホストと UI の各 family は fail closed します。Fake または static test だけでは、実ホスト対応の準備が自動的に確立されることはありません。
+
+## 進行中またはバージョン制限付き
+
+- 多くの unified-object write method は、特定のバージョン Provider に依存しています。インターフェースにメソッドがあることは、サポート対象のすべての Cubism バージョンで実行できることを意味しません。
+- Cubism 5.2 Editor-authoring の完全な matrix は、いくつかの operation family でまだ不完全です。
+- Project、selection、model-tree、その他の semantic Editor API は引き続き進化しています。
+- Drawable、Deformer、Glue、mesh、PSD、texture-atlas の write と workflow には、利用者主導の実装と正確な検証が必要です。
+- Host UI attachment、高頻度 hook、実ホスト対応は、正確なバージョンゲートを伴う高リスク境界として残っています。
+- SDK HTML Javadoc は生成でき、このサイトで公開されていますが、多くの public declaration にはより詳しい説明コメントがまだ必要です。
+
+## 現在約束されていないもの
+
+Turboism は現在、次のものを約束していません。
+
+- 本番用システムインストーラー。
+- 自動オンライン更新またはマーケットプレイス。
+- publisher signing または revocation。
+- 完全な immutable-generation install、repair、rollback、recovery、purge lifecycle。
+- Cubism launcher のグローバルな変更。
+- すべての Cubism バージョンに対する一様な対応準備。
+- Preview、fake、static、または単一バージョンの証拠だけに基づく本番対応。
+
+## 近い将来の順序
+
+1. unified object と reference model を完成させる。
+2. Core reads と version-routed Providers を完成させる。
+3. 検証済み consumer から Undo を伴う Editor-owned writes を拡張する。
+4. operation lifecycle semantics を標準化する。
+5. project、selection、model-tree API を完成させる。
+6. SDK-only plugin によって first-party workflow を復元する。
+7. 明示的 API、refresh、polling、callback で不十分な場合に限り hook を追加する。
+8. third-party SDK、packaging、release evidence を強化する。
+
+ソースレベルの背景については、[Turboism repository](https://github.com/Turboism/Turboism) と、その `ARCHITECTURE.md` および `ROADMAP.md` ファイルを参照してください。

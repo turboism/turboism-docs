@@ -1,0 +1,26 @@
+---
+title: Turboism を使う
+description: Cubism のインストールを変更せずに Developer Preview を実行し、ローカルプラグインを管理する。
+---
+
+このセクションでは、将来のシステムインストーラーではなく、現在実装されている Developer Preview の workflow を説明します。
+
+## 学習の流れ
+
+1. [インストール](./installation) — 分離された Preview directory を構築または入手し、安全境界を理解する。
+2. [クイックスタート](./quick-start) — Turboism を起動し、初回起動を確認する。
+3. [プラグイン管理](./plugin-management) — ローカル `.tplugin` package をインストール、置換、有効化、無効化、アンインストールする。
+4. [更新ポリシー](./update-policy) — package replacement と将来の automatic update system の違いを理解する。
+5. [トラブルシューティング](../troubleshooting) — manifest、lifecycle、package、Provider の失敗を診断する。
+
+## 現在の境界
+
+Turboism には現在、次のものがあります。
+
+- 分離された Java Agent Preview bundle。
+- version-routed Runtime と SDK。
+- ローカル plugin JAR discovery。
+- 厳格なローカル `.tplugin` inspection と staged plugin management。
+- capability 固有の fail-closed host integration。
+
+Turboism には現在、本番用システムインストーラー、マーケットプレイス、自動オンライン updater、署名サービス、グローバル Cubism launcher integration はありません。

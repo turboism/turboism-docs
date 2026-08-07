@@ -1,0 +1,34 @@
+---
+title: Generated API Reference
+description: Source-generated HTML Javadoc for the current Turboism SDK.
+---
+
+The current SDK HTML reference is generated from the Java source with the JDK 17 Javadoc tool.
+
+- [Open the SDK HTML API reference](/api/sdk/index.html)
+- [Read the guided SDK overview](./sdk-api)
+- [Build a plugin](../build-a-plugin/quick-start)
+
+## Scope
+
+The hosted reference covers `dev.turboism.sdk.*`, the only public dependency intended for plugins.
+
+Runtime, Bootstrap, test-framework, and first-party plugin implementation packages are not combined into the public reference. Keeping them separate preserves the architectural boundary between plugin contracts and host implementation.
+
+## Preview status
+
+The HTML pages are generated from the current development source. They are not a substitute for a versioned release contract.
+
+Some public declarations still have incomplete explanatory comments, so the Javadoc build may report missing-comment, `@param`, or `@return` warnings while producing valid HTML. The source project keeps JDK doclint enabled rather than hiding invalid markup or links.
+
+## Maintainer sync
+
+From the documentation repository, regenerate and copy the SDK reference with:
+
+```bash
+npm run sync:sdk-api -- /path/to/Turboism
+```
+
+The sync command runs the source repository's `sdkApiDocs` Gradle task and replaces `public/api/sdk/` with the generated output.
+
+The source repository's binary API baseline and module-boundary checks remain authoritative for compatibility. Javadoc generation does not replace them.

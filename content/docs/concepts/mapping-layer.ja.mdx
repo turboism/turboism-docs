@@ -1,0 +1,8 @@
+---
+title: Mapping layer
+description: Host adaptation に明示的な境界が必要な理由。
+---
+
+Host application は、version の違いによって symbol と implementation detail が変わることがあります。Mapping layer は、host 固有の知識を extension experience から分離できる概念上の boundary です。
+
+Plugin developer は、Cubism internals に対する独自の reflection を実装するのではなく、公開された extension point を対象にできるべきです。
