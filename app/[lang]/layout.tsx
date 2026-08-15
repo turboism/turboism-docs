@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Geist, Geist_Mono } from "next/font/google";
 import { RootProvider } from "fumadocs-ui/provider/next";
-import { SiteHeader } from "@/components/site-header";
 import { LanguageProvider } from "@/components/language-provider";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import { languages, isLanguage } from "@/lib/i18n";
 import { providerOptions } from "@/lib/layout.shared";
 
@@ -37,7 +38,8 @@ export default async function LanguageLayout({
         <LanguageProvider language={lang}>
           <RootProvider i18n={providerOptions(lang)}>
             <SiteHeader />
-            <div className="pt-20">{children}</div>
+            <div className="pt-20 flex-1">{children}</div>
+            <SiteFooter />
           </RootProvider>
         </LanguageProvider>
       </body>

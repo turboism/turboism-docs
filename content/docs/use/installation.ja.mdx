@@ -1,93 +1,78 @@
 ---
 title: インストール
-description: Cubism のインストールを変更せずに、現在の分離された Turboism Developer Preview を実行する。
+description: Windows .exe インストーラーまたはクロスプラットフォーム .jar インストーラーで、Cubism のインストールを変更せずに Turboism をインストールする。
 ---
 
-Turboism は現在、本番用システムインストーラーを提供していません。利用できる製品経路は、Windows と Live2D Cubism Editor 5.3.02 向けの分離された Developer Preview bundle です。
+Turboism はインストーラー artifact を使ってインストールします。インストーラーには、Windows ネイティブの `TurboismInstaller-<version>.exe` と、クロスプラットフォームの `TurboismInstaller-<version>.jar`（Windows と macOS にインストールでき、Java 17+ ランタイムが必要）の 2 種類があります。一般ユーザーはどちらかのインストーラーでインストールします。ソースからのビルドは開発者・メンテナー向けの作業です。
 
-bundle は Cubism JAR、DLL、公式 launcher file、licensing state、既存 project を変更しません。
+どちらのインストーラーも、Cubism JAR、DLL、公式 launcher file、licensing state、既存 project を変更しません。
 
-## Preview bundle を構築する
+## インストーラーを選ぶ
 
-Turboism source repository から実行します。
+- Windows では `.exe` インストーラーを使用します。ネイティブ経路であり、ユーザー単位でインストールされ、管理者権限は不要で、Windows 設定ツールとスタートメニュー連携を含みます。
+- Windows または macOS で、プラットフォームをまたいで 1 つの artifact を使いたい場合は `.jar` インストーラーを使用します。Java 17+ が必要で、`java -jar TurboismInstaller-<version>.jar` で実行します。
+- インストーラー artifact は、そのビルドを提供した release または preview チャネルから入手する必要があります。Turboism は現在、これらのインストーラーの公開ダウンロードアセットを提供していません。
+- インストーラー JAR はプラグイン JAR とは別物です。プラグインはこのインストーラーではなく[プラグイン管理](./plugin-management)で管理します。
+
+## Windows `.exe` インストーラー
+
+`TurboismInstaller-<version>.exe` は Windows ネイティブの NSIS インストーラーです。
+
+- ユーザー単位で実行され、管理者権限を要求しません。
+- 既定では `%LOCALAPPDATA%\Turboism` にインストールされます。別のディレクトリも選択できます。
+- Lite と Full の 2 つのモードを提供します。Full は first-party plugin をインストールし、Lite は agent と共通ファイルのみをインストールします。
+- Full モードでは、インストール前に個々のプラグインの選択を解除できます。
+- ユーザー単位のスタートメニュー項目を追加し、現在のユーザーの「プログラムと機能」にアンインストールを登録します。
+- インストール後に `configure_turboism.ps1` を自動的に開き、Cubism ルートと管理起動エントリを設定できます。
+- 後で削除するための `uninstall.exe` を書き込みます。
+- Cubism のインストールファイルを変更しません。
+
+## クロスプラットフォーム `.jar` インストーラー（Windows/macOS）
+
+`TurboismInstaller-<version>.jar` は IzPack ベースの Windows および macOS 用インストーラーです。
+
+- Java 17 以降が必要です。
+- 実行方法：
 
 ```bash
-./gradlew previewBundle checkPreviewBundleLayout \
-  --no-daemon --console=plain
+java -jar TurboismInstaller-<version>.jar
 ```
 
-出力先は次のとおりです。
+- 既定のインストール先：Windows では `%LOCALAPPDATA%\Turboism`、macOS では `~/Library/Application Support/Turboism`。別のディレクトリも選択できます。
+- `.exe` インストーラーと同じ Lite/Full モードを提供します。Full は first-party plugin をインストールし、Lite は agent と共通ファイルのみをインストールし、Full では個々のプラグインの選択を解除できます。
+- インストーラーを再実行すると、同じ Turboism home とプラグイン選択が更新されます。無関係な設定を盲目的に上書きすることはありません。
+- どちらのプラットフォームでも、生成されたアンインストーラーでアンインストールできます。
+
+macOS のパッケージングとアンインストールは Preview です。Apple Silicon と Intel のパッケージングレーンでは検証されていますが、macOS Cubism ホストの起動と準備状態は未検証で、macOS Cubism ランチャーはインストールされません。macOS では、このインストーラーで Turboism のインストールとアンインストールはできますが、Cubism 内で Turboism を起動する検証済みの方法はまだ提供されていません。
+
+## インストール後
+
+1. Windows では、Turboism home にある `configure_turboism.ps1` を実行します。サポート対象の Cubism 5.2/5.3 ルートを検出し、選択した各ルートに管理起動エントリを 1 つ作成します。設定をキャンセルしても、フレームワークのみの有効なインストールが残ります。
+2. 選択した Cubism ルートの管理ランチャーで Turboism を起動します（Windows では `launch-cubism-turboism.bat`）。
+3. Turboism が起動し、Turboism home に診断情報が書き込まれることを確認します。
+4. [プラグイン管理](./plugin-management)でプラグインをインストールします。プラグイン JAR はステージングされ、Cubism の再起動後に適用されます。
+
+## アンインストール
+
+- `.exe` インストーラーで作成した Windows インストール：Turboism home ディレクトリの `uninstall.exe` を実行します。確認時に `config.json` を保持するかどうかが尋ねられます。
+- `.jar` インストーラーで作成した Windows インストール：以下を実行します。
 
 ```text
-build/preview/<worktreeId>/
-├── turboism-agent.jar
-├── run-preview.bat
-├── launch-cubism-turboism.bat
-├── launch-cubism-turboism.ps1
-├── plugins/
-├── plugin-data/
-├── state/
-└── logs/
+java -jar <home>\Uninstaller\uninstaller.jar
 ```
 
-## Preview を実行する
+- `.jar` インストーラーで作成した macOS インストール：home ディレクトリの `uninstall.command` をダブルクリックするか、ターミナルで実行します。
 
-1. Preview directory 全体を、対応する Cubism installation がある Windows machine にコピーします。
-2. directory の構成を保ちます。
-3. `run-preview.bat` をダブルクリックするか、bundle の launcher script と README を使います。
-4. Turboism が起動し、Preview が所有する directory に診断情報を書き込むことを確認します。
+アンインストーラーは、インストーラー所有のファイルとランタイムの `logs`、`state`、`cache` データを削除します。不明なファイルと third-party plugin JAR は保持されます。`config.json` は、削除を選択した場合にのみ削除されます。
 
-現在の Preview launcher は、対応する 5.3.02 の場所と `CUBISM_ROOT` を検索し、Cubism installation を恒久的に書き換えずに Turboism Java Agent とともに Cubism を起動します。
+## 開発者とメンテナー
 
-## Turboism home を選択する
-
-Runtime は、Java system property または agent option によって選択された分離 home を使用します。
-
-```text
--Dturboism.home=/absolute/path/to/turboism-home
-```
-
-```text
--javaagent:turboism-agent.jar=home=/absolute/path/to/turboism-home
-```
-
-home には次が含まれます。
-
-```text
-<turboism.home>/
-├── config.json
-├── plugins/
-├── config/<pluginId>/
-├── data/<pluginId>/
-├── cache/<pluginId>/
-├── state/<pluginId>/
-└── logs/<pluginId>/
-```
-
-Turboism の実行中に home を編集または消去しないでください。
-
-## Preview を削除する
-
-1. Cubism を閉じます。
-2. Preview が所有する process が終了したことを確認します。
-3. Preview directory を削除します。
-
-Preview 経路は Cubism を変更しないため、Cubism installation file を復元する必要はありません。
-
-## プラグインのインストール
-
-Turboism plugin package は framework Preview とは別に管理されます。`.tplugin` の install、replacement、enable、disable、uninstall の挙動については、[プラグイン管理](./plugin-management) を参照してください。
-
-## 安全性と互換性
-
-- Preview のテストには backup または使い捨ての Cubism project を使用します。
-- Cubism JAR、DLL、公式 BAT file、licensing component を置き換えないでください。
-- host artifact が不一致または未検証の場合、安全でない fallback を使わず host adapter を利用不可にします。
-- 公開されている Preview workflow は、プロジェクトの厳格な実ホスト検証手順と同じではありません。
+ソースからの Turboism のビルドとインストーラー artifact のビルドは、開発者・メンテナー向けの作業です。ソース、フレームワーク、インストーラーのビルドは開発者・メンテナーのワークフローであり、このユーザーガイドには意図的に含めていません。
 
 ## 現在の制限
 
-- Windows Preview wrapper のみ。
-- Cubism Editor 5.3.02 Preview envelope。
-- 本番用の automatic install、update、rollback、recovery、marketplace、signing、global launcher integration はありません。
+- macOS Cubism ホストの起動は未検証で、macOS Cubism ランチャーもインストールされません。
+- インストーラー artifact はまだ署名・ノータリゼーションされておらず、公開ダウンロードチャネルもありません。
+- 自動オンラインアップデーターはありません。更新は新しいインストーラーの再実行を意味します。
+- プラグイン置換の失敗は内部の backup/restore で保護されますが、完全なユーザー向け修復・履歴 UI はまだ存在しません。
 - feature readiness は capability と version に依存します。

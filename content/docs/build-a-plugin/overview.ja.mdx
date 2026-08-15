@@ -5,11 +5,13 @@ description: 現在の Turboism Developer Preview 向けに、SDK のみに依�
 
 Turboism plugin は Runtime がロードする Java 17 JAR です。各 plugin は Turboism SDK のみに依存し、manifest v2 で identity、entrypoint、compatibility、resource、dependency、permission を宣言します。
 
+プラグインのリリース成果物は module JAR そのものです。`META-INF/turboism/plugin.json` を正確に 1 つ含み、直接配布します。wrapper archive や別の packaging step はありません。
+
 ## 推奨される進め方
 
-1. [開発者向けクイックスタート](./quick-start) — 最小 plugin を作成、build、検証、package、install する。
+1. [開発者向けクイックスタート](./quick-start) — 最小 plugin を作成、build、検証、install する。
 2. [プラグインインターフェース](./plugin-interfaces) — 現在の `PluginContext` service family を理解する。
-3. [プラグインマニフェストとパッケージング](./manifest) — 複数の entrypoint、permission、resource、`.tplugin` packaging を宣言する。
+3. [プラグインマニフェストとパッケージング](./manifest) — 複数の entrypoint、permission、resource、JAR packaging rule を宣言する。
 4. [プラグインの設計](./designing-plugins) — plugin を lifecycle-safe かつ互換性のあるものに保つ。
 5. [SDK API ガイド](../reference/sdk-api) — ガイド付き API 概要と生成済み reference を閲覧する。
 

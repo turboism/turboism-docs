@@ -1,26 +1,37 @@
 ---
 title: Use Turboism
-description: Run the Developer Preview and manage local plugins without modifying Cubism installations.
+description: Install Turboism with an installer artifact and manage local plugins without modifying Cubism installations.
 ---
 
-This section documents the currently implemented Developer Preview workflow rather than a future system installer.
+This section documents the currently implemented installer workflow: choose an installer artifact, run it, and manage local plugins.
 
 ## Learning path
 
-1. [Installation](./installation) — build or obtain the isolated Preview directory and understand its safety boundary.
-2. [Quick Start](./quick-start) — launch Turboism and verify the first run.
-3. [Plugin Management](./plugin-management) — install, replace, enable, disable, and uninstall local `.tplugin` packages.
-4. [Update Policy](./update-policy) — understand the difference between package replacement and a future automatic update system.
-5. [Troubleshooting](../troubleshooting) — diagnose manifest, lifecycle, package, and Provider failures.
+1. [Installation](./installation) — choose and run the Windows `.exe` installer or the cross-platform `.jar` installer, and understand its safety boundary.
+2. [Quick Start](./quick-start) — install Turboism, configure it, and verify the first run.
+3. [Plugin Management](./plugin-management) — install, replace, enable, disable, and uninstall local plugin JARs.
+4. [Update Policy](./update-policy) — understand the difference between JAR replacement, installer reruns, and a future automatic update system.
+5. [Troubleshooting](../troubleshooting) — diagnose manifest, lifecycle, JAR, and Provider failures.
+
+## Available installers
+
+Turboism currently has two implemented installers:
+
+- `TurboismInstaller-<version>.exe` — the Windows-native NSIS installer, preferred on Windows.
+- `TurboismInstaller-<version>.jar` — the cross-platform IzPack installer for Windows and macOS, requiring Java 17+.
+
+Both share the same staged payload and offer Lite and Full modes. Installer artifacts must come from the release or preview channel that provided your build; public download assets are not published yet. The installer JAR is separate from plugin JARs, which are managed through [Plugin Management](./plugin-management).
 
 ## Current boundary
 
 Turboism currently has:
 
-- an isolated Java Agent Preview bundle;
+- Windows and Windows/macOS installer implementations with Lite/Full selection;
 - a version-routed Runtime and SDK;
 - local plugin JAR discovery;
-- strict local `.tplugin` inspection and staged plugin management;
+- strict local JAR inspection and staged plugin management;
 - capability-specific fail-closed host integration.
 
-Turboism does not currently have a production system installer, marketplace, automatic online updater, signing service, or global Cubism launcher integration.
+Turboism does not currently have a signed/notarized public release channel, a production-enabled online repository, an automatic online updater, a signing service, or verified macOS Cubism host launch. No macOS Cubism launcher is installed.
+
+The signed Official Directory client and UI exist in the codebase, but production activation is not ready and it is not a live marketplace.

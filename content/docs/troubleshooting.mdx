@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting and Feedback
-description: Diagnose Preview startup, plugin package, lifecycle, permission, and Provider failures.
+description: Diagnose Preview startup, plugin JAR, lifecycle, permission, and Provider failures.
 ---
 
 ## Turboism does not start
@@ -14,7 +14,9 @@ description: Diagnose Preview startup, plugin package, lifecycle, permission, an
 
 Check that:
 
-- the loose JAR is under a configured relative `pluginDirs` entry, or the `.tplugin` installation completed after restart;
+- the managed JAR installation completed after restart, or the manual JAR is directly in the root of `<turboism.home>/plugins/` (not in a subdirectory);
+- the same Turboism home is used on both launches;
+- no older JAR with the same plugin ID remains (a duplicate ID fails with `DUPLICATE_PLUGIN_ID`);
 - the JAR has exactly one `META-INF/turboism/plugin.json`;
 - the manifest uses schema version 2;
 - the entrypoint class exists, is public, implements `TurboismPlugin`, and has a public no-argument constructor;
@@ -22,11 +24,13 @@ Check that:
 - the plugin ID is not disabled or duplicated;
 - `environment.requiresCubism` matches the current environment.
 
-## A package is rejected
+## A JAR is rejected
 
-A `.tplugin` can be rejected for invalid hashes, malformed paths, duplicate entries, special files, copied SDK/Runtime/Live2D classes, native or installer payloads, nested JARs outside the accepted profile, descriptor mismatches, missing entrypoints, or undeclared resources.
+A managed JAR can be rejected for a symbolic link or non-regular source, size over the 16 MiB cap, malformed paths, duplicate entries, special files, or a missing or duplicate `META-INF/turboism/plugin.json`.
 
-Regenerate the package from the current plugin JAR. Do not edit the archive manually or disable package inspection.
+Descriptor ID/version/API inconsistencies, copied SDK/Runtime/Live2D classes, native or installer payloads, nested JARs, missing entrypoints, and undeclared resources are also rejected.
+
+Rebuild the JAR from the current plugin source. Do not edit the archive manually or disable inspection. The reasons above describe managed preflight; manual copying skips it, and only violations enforced by startup validation appear in Runtime startup diagnostics.
 
 ## An operation remains pending
 

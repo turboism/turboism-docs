@@ -1,93 +1,78 @@
 ---
 title: Installation
-description: Run the current isolated Turboism Developer Preview without modifying a Cubism installation.
+description: Install Turboism with the Windows .exe installer or the cross-platform .jar installer without modifying a Cubism installation.
 ---
 
-Turboism does not currently provide a production system installer. The available product path is an isolated Developer Preview bundle for Windows and Live2D Cubism Editor 5.3.02.
+Turboism is installed with an installer artifact. Two installers exist: the Windows-native `TurboismInstaller-<version>.exe` and the cross-platform `TurboismInstaller-<version>.jar`, which installs on Windows and macOS with a Java 17+ runtime. Ordinary users install with one of these artifacts; building from source is developer and maintainer work.
 
-The bundle does not modify Cubism JARs, DLLs, official launcher files, licensing state, or existing projects.
+Neither installer modifies Cubism JARs, DLLs, official launcher files, licensing state, or existing projects.
 
-## Build the Preview bundle
+## Choose an installer
 
-From the Turboism source repository:
+- On Windows, use the `.exe` installer. It is the native path: per-user, no administrator rights, with the Windows configurator and Start Menu integration.
+- On Windows or macOS, use the `.jar` installer when you prefer one artifact across platforms. It requires Java 17+ and runs with `java -jar TurboismInstaller-<version>.jar`.
+- Installer artifacts must come from the release or preview channel that provided your build. Turboism does not currently publish public download assets for these installers.
+- The installer JAR is separate from plugin JARs. Plugins are managed through [Plugin Management](./plugin-management), not through this installer.
+
+## Windows `.exe` installer
+
+`TurboismInstaller-<version>.exe` is the Windows-native NSIS installer.
+
+- Runs per-user and requests no administrator elevation.
+- Installs to `%LOCALAPPDATA%\Turboism` by default; you can choose another directory.
+- Offers Lite and Full modes. Full installs the first-party plugins; Lite installs only the agent and common files.
+- Full mode lets you deselect individual plugins before installing.
+- Adds per-user Start Menu entries and registers uninstall in the current user's Programs and Features.
+- Opens `configure_turboism.ps1` after installation so you can configure Cubism roots and managed launch entries.
+- Writes `uninstall.exe` for later removal.
+- Does not modify Cubism installation files.
+
+## Cross-platform `.jar` installer (Windows/macOS)
+
+`TurboismInstaller-<version>.jar` is the IzPack-based installer for Windows and macOS.
+
+- Requires Java 17 or newer.
+- Run it with:
 
 ```bash
-./gradlew previewBundle checkPreviewBundleLayout \
-  --no-daemon --console=plain
+java -jar TurboismInstaller-<version>.jar
 ```
 
-The output is written to:
+- Default install location: `%LOCALAPPDATA%\Turboism` on Windows; `~/Library/Application Support/Turboism` on macOS. You can choose another directory.
+- Offers the same Lite/Full modes as the `.exe` installer: Full installs the first-party plugins, Lite installs only the agent and common files, and Full lets you deselect individual plugins.
+- Rerunning the installer updates the same Turboism home and plugin selection without blindly overwriting unrelated configuration.
+- Uninstalls on both platforms through the generated uninstaller.
+
+macOS packaging and uninstall are in Preview: they are verified on Apple Silicon and Intel packaging lanes, but macOS Cubism host launch and readiness are not verified and no macOS Cubism launcher is installed. On macOS, this installer can install and uninstall Turboism, but it does not yet provide a verified way to launch Turboism inside Cubism.
+
+## After installation
+
+1. On Windows, run `configure_turboism.ps1` in the Turboism home. It discovers supported Cubism 5.2/5.3 roots and creates one managed launch entry per selected root. Canceling the configurator leaves a valid framework-only install.
+2. Start Turboism through the managed launcher for your Cubism root (`launch-cubism-turboism.bat` on Windows).
+3. Confirm that Turboism starts and writes diagnostics in the Turboism home.
+4. Install plugins through [Plugin Management](./plugin-management), which stages JARs and applies them after Cubism restarts.
+
+## Uninstall
+
+- Windows installation created by the `.exe` installer: run `uninstall.exe` in the Turboism home directory. The confirmation asks whether to keep `config.json`.
+- Windows installation created by the `.jar` installer: run
 
 ```text
-build/preview/<worktreeId>/
-├── turboism-agent.jar
-├── run-preview.bat
-├── launch-cubism-turboism.bat
-├── launch-cubism-turboism.ps1
-├── plugins/
-├── plugin-data/
-├── state/
-└── logs/
+java -jar <home>\Uninstaller\uninstaller.jar
 ```
 
-## Run the Preview
+- macOS installation created by the `.jar` installer: double-click `uninstall.command` in the home directory, or run it in a terminal.
 
-1. Copy the entire Preview directory to the Windows machine that has the matching Cubism installation.
-2. Keep the directory intact.
-3. Double-click `run-preview.bat` or use the bundle's launcher script and README.
-4. Confirm that Turboism starts and writes diagnostics in the Preview-owned directory.
+The uninstaller removes installer-owned files and the runtime `logs`, `state`, and `cache` data. Unknown files and third-party plugin JARs are preserved; `config.json` is removed only when you choose to delete it.
 
-The current Preview launcher searches supported 5.3.02 locations and `CUBISM_ROOT`, then starts Cubism with the Turboism Java Agent without permanently rewriting the Cubism installation.
+## Developers and maintainers
 
-## Choose a Turboism home
-
-Runtime uses an isolated home selected by a Java system property or agent option:
-
-```text
--Dturboism.home=/absolute/path/to/turboism-home
-```
-
-```text
--javaagent:turboism-agent.jar=home=/absolute/path/to/turboism-home
-```
-
-The home contains:
-
-```text
-<turboism.home>/
-├── config.json
-├── plugins/
-├── config/<pluginId>/
-├── data/<pluginId>/
-├── cache/<pluginId>/
-├── state/<pluginId>/
-└── logs/<pluginId>/
-```
-
-Do not edit or clear the home while Turboism is running.
-
-## Remove the Preview
-
-1. Close Cubism.
-2. Confirm the Preview-owned process has exited.
-3. Delete the Preview directory.
-
-No Cubism installation file should need restoration because the Preview path does not modify it.
-
-## Plugin installation
-
-Turboism plugin packages are managed separately from the framework Preview. See [Plugin Management](./plugin-management) for `.tplugin` install, replacement, enable, disable, and uninstall behavior.
-
-## Safety and compatibility
-
-- Use a backup or disposable Cubism project for Preview testing.
-- Do not replace Cubism JARs, DLLs, official BAT files, or licensing components.
-- A mismatched or unverified host artifact leaves host adapters unavailable instead of using an unsafe fallback.
-- The public Preview workflow is not the same as the project's strict real-host validation procedure.
+Building Turboism from source and building installer artifacts is developer and maintainer work. Source, framework, and installer builds belong to developer or maintainer workflows and are intentionally excluded from this user guide.
 
 ## Current limitations
 
-- Windows Preview wrapper only.
-- Cubism Editor 5.3.02 Preview envelope.
-- No production automatic install, update, rollback, recovery, marketplace, signing, or global launcher integration.
+- macOS Cubism host launch is not verified, and no macOS Cubism launcher is installed.
+- Installer artifacts are not yet signed or notarized, and there is no public download channel.
+- There is no automatic online updater: updating means rerunning a newer installer.
+- Failed plugin replacements are protected by internal backup/restore, but a complete user-facing repair or history UI does not exist yet.
 - Feature readiness remains capability- and version-specific.

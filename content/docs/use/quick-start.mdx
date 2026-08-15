@@ -1,42 +1,77 @@
 ---
 title: Quick Start
-description: Launch the isolated Developer Preview and verify its first run.
+description: Install Turboism from an installer artifact, configure it, and verify the first run.
 ---
 
-This quick start assumes you have built or received the current Developer Preview directory described in [Installation](./installation).
+This quick start starts from an installer artifact as described in [Installation](./installation). You only need the installer artifact and an installed Cubism.
 
 ## 1. Prepare safely
 
-- Use Windows with the supported Cubism 5.3.02 Preview envelope.
+- Windows is currently the verified Cubism host launch path.
+- The installer JAR itself runs on Windows and macOS and requires a Java 17+ runtime.
 - Back up the project you intend to open, or use a disposable copy.
-- Keep the Preview directory separate from the Cubism installation.
+- Keep the Turboism home separate from the Cubism installation.
 - Do not edit Cubism JARs, DLLs, BAT files, or licensing state.
 
-## 2. Start Turboism
+## 2. Install and launch with the Windows `.exe` installer
 
-1. Open the Preview directory.
-2. Double-click `run-preview.bat`.
-3. If automatic discovery cannot find Cubism, use the provided launcher and select the matching Cubism root according to the bundle README.
-4. Wait for Cubism and Turboism diagnostics to initialize.
+1. Run `TurboismInstaller-<version>.exe`.
+2. Choose the install directory (`%LOCALAPPDATA%\Turboism` by default) and a Lite or Full mode. In Full mode you can deselect individual plugins.
+3. When the installer opens `configure_turboism.ps1`, select the Cubism roots to use and save. Turboism records them separately from `config.json` and creates one managed launch entry per selected root. Canceling the configurator is safe and leaves a valid framework-only install.
+4. Start Turboism through the managed launcher for your Cubism root (`launch-cubism-turboism.bat`).
+5. Wait for Cubism and Turboism diagnostics to initialize.
 
-## 3. Verify the first run
+## 3. Install with the cross-platform `.jar` installer (Windows/macOS)
+
+1. Run `TurboismInstaller-<version>.jar`:
+
+```bash
+java -jar TurboismInstaller-<version>.jar
+```
+
+2. Choose a Lite or Full mode and the target directory. Full mode installs the first-party plugins and lets you deselect individual plugins.
+3. On Windows, when the installer finishes, run `configure_turboism.ps1`, select the Cubism roots to use, and save. Turboism records them separately from `config.json` and creates one managed launch entry per selected root; then launch through the managed launcher for your Cubism root. On macOS, this installer covers installation and uninstall only: macOS Cubism host launch is not verified and no macOS Cubism launcher is installed, so there is no verified way to launch Turboism inside Cubism on macOS yet.
+
+## 4. Verify the first run
+
+The checklist below applies to Windows, the verified Cubism host launch path.
 
 Check that:
 
 - Cubism starts normally;
-- the Turboism Java Agent reports startup;
+- the Turboism runtime reports startup;
 - the Runtime uses the intended Turboism home;
-- bundled plugins appear in the plugin/runtime diagnostics;
+- installed plugins appear in the plugin/runtime diagnostics;
 - unavailable host capabilities fail closed rather than crashing Cubism;
 - closing Cubism releases plugin scopes and framework-owned executors.
 
-## 4. Add a plugin
+## 5. Add a plugin
 
-Use [Plugin Management](./plugin-management) to install a local `.tplugin`. Plugin changes apply after Cubism restarts.
+Use [Plugin Management](./plugin-management) to install a local plugin JAR:
 
-## 5. Find logs
+1. Open Turboism and choose **Plugin Management**.
+2. Choose **Install from JAR…**.
+3. Select the local `.jar` file.
+4. Confirm the dialog that marks the JAR as a local/unverified source.
+5. Restart Cubism when the operation is shown as pending.
 
-Use the Preview-owned log directory or the selected Turboism home's `logs/` directory. Keep logs when reporting startup, package, dependency, permission, or Provider failures.
+The JAR is staged after confirmation and applies after the restart. Plugin changes do not hot-swap the currently loaded plugin instance. Plugin JARs are separate from the Turboism installer JAR.
+
+### Manual alternative
+
+As an advanced/fallback path, you can also install a plugin JAR manually — for example, to test a locally built JAR. A plugin JAR is the JAR built from plugin source; it is not the Turboism installer JAR (`TurboismInstaller-<version>.jar`).
+
+1. Fully close Cubism and Turboism.
+2. Copy the trusted plugin JAR directly into the root of `<turboism.home>/plugins/`.
+3. Keep at most one JAR for each plugin ID — make sure no older same-ID JAR remains.
+4. Restart with the same Turboism home.
+5. Verify the plugin state and Runtime logs.
+
+Manual installation bypasses the managed safeguards. See [Plugin Management](./plugin-management) for the full safeguards and update/uninstall details.
+
+## 6. Find logs
+
+Use the installed Turboism home's `logs/` directory. Keep logs when reporting startup, JAR, dependency, permission, or Provider failures.
 
 ## Next steps
 

@@ -21,7 +21,17 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - ローカルプラグイン JAR の検出、マニフェストと API 範囲の検証、依存関係の解決、プラグインごとの ClassLoader、ライフサイクル実行、逆順シャットダウン、scope/ClassLoader のクリーンアップ。
 - 順序付き複数エントリポイントと JAR 全体の起動ロールバックを備えたプラグインマニフェスト v2。
 - ロギング、パス、ローカライズ、タスク、設定、ストレージ、ユーザーファイル、イベント、アクション、UI 貢献、Cubism アクセス、診断のための `PluginContext` サービス。
-- ローカル `.tplugin` のインストール、有効化、無効化、アンインストールを行う Preview プラグイン管理。変更はステージングされ、Cubism の再起動後に適用されます。core plugin は保護されます。
+- ローカル JAR の install、replacement、enable、disable、uninstall を行う Preview マネージド管理。変更は journal にステージングされ、Cubism の再起動後に適用されます。core plugin は保護されます。
+- startup preflight は適用前にステージング済み payload の identity（SHA-256、size、descriptor hash）を再検証し、private backup/restore が失敗した置換適用を保護します。
+
+## インストーラーと配布
+
+実装済みのインストーラーは 2 つあり、同じステージング済み payload と Lite/Full モデルを共有しています。
+
+- Windows ネイティブの NSIS インストーラー（`TurboismInstaller-<version>.exe`）。Windows ではこちらを優先します。
+- Java 17 の IzPack インストーラー（`TurboismInstaller-<version>.jar`）。Windows/macOS のインストールセマンティクス向けに実装されています。
+
+Windows EXE は、ユーザー単位のインストール、Lite/Full と first-party plugin の選択、スタートメニュー項目、アンインストールをカバーします。インストーラー JAR は Windows と macOS で同じ Lite/Full 選択を提供し、プラットフォームのアンインストールサポートを生成します。どちらも Cubism のインストールファイルを変更しません。これらの実装は、release または preview チャネル向けにインストーラー artifact を生成しますが、署名・ノータリゼーション済みの公開チャネルはまだ存在しません。
 
 ## Cubism と Editor API の進捗
 
@@ -51,6 +61,10 @@ SDK には次の契約が含まれます。
 
 対応する Provider または検証済みホスト capability が利用できない場合、ホストと UI の各 family は fail closed します。Fake または static test だけでは、実ホスト対応の準備が自動的に確立されることはありません。
 
+## Official Directory の状況
+
+組み込みの署名済み Official Directory client と UI は実装されていますが、本番アクティベーションは未準備です。本番 key list は空で、ライブ署名済み catalog の準備は確立されていません。ライブマーケットプレイスではありません。
+
 ## 進行中またはバージョン制限付き
 
 - 多くの unified-object write method は、特定のバージョン Provider に依存しています。インターフェースにメソッドがあることは、サポート対象のすべての Cubism バージョンで実行できることを意味しません。
@@ -64,10 +78,11 @@ SDK には次の契約が含まれます。
 
 Turboism は現在、次のものを約束していません。
 
-- 本番用システムインストーラー。
-- 自動オンライン更新またはマーケットプレイス。
+- 署名・ノータリゼーション済みのインストーラー artifact の公開リリースチャネル。
+- 検証済みの macOS Cubism ホスト起動。
+- 自動オンライン更新または本番利用可能なマーケットプレイス。
 - publisher signing または revocation。
-- 完全な immutable-generation install、repair、rollback、recovery、purge lifecycle。
+- 完全なユーザー向け immutable-generation install、repair、rollback、recovery、purge UI。
 - Cubism launcher のグローバルな変更。
 - すべての Cubism バージョンに対する一様な対応準備。
 - Preview、fake、static、または単一バージョンの証拠だけに基づく本番対応。

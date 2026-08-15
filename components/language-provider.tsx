@@ -13,6 +13,7 @@ type Copy = {
     learn: string;
     chat: string;
     github: string;
+    contact: string;
   };
   home: {
     eyebrow: string;
@@ -22,73 +23,53 @@ type Copy = {
     useTurboismDescription: string;
     buildPluginTitle: string;
     buildPluginDescription: string;
-    sdkTitle: string;
-    sdkDescription: string;
-    startHere: string;
-    introduction: string;
-    architecture: string;
-    documentationPreview: string;
+    learnMore: string;
   };
 };
 
 const copy: Record<Language, Copy> = {
   en: {
     language: "English",
-    nav: { home: "Home", docs: "Docs", download: "Download", plugins: "Plugins", learn: "Learn", chat: "Chat", github: "GitHub" },
+    nav: { home: "Home", docs: "Docs", download: "Download", plugins: "Plugins", learn: "Learn", chat: "Chat", github: "GitHub", contact: "Contact" },
     home: {
       eyebrow: "Turboism / Documentation",
       title: "Build with a clearer boundary.",
       description:
         "The home for Turboism product and developer documentation — structured for the people using the framework and the people extending it.",
-      useTurboismTitle: "Use Turboism",
-      useTurboismDescription: "Install the Preview, verify startup, and manage local plugins safely.",
-      buildPluginTitle: "Build a Plugin",
-      buildPluginDescription: "Build Java 17 plugins against the current SDK-only contract.",
-      sdkTitle: "SDK Reference",
-      sdkDescription: "Browse the generated Java API reference for the current Turboism Preview SDK.",
-      startHere: "Start here",
-      introduction: "Introduction",
-      architecture: "Architecture",
-      documentationPreview: "Documentation preview",
+      useTurboismTitle: "I'm a user",
+      useTurboismDescription: "Install Turboism and manage local JAR plugins.",
+      buildPluginTitle: "I'm a developer",
+      buildPluginDescription: "Build SDK-only Cubism plugins with Java 17 and the Preview SDK.",
+      learnMore: "Learn more",
     },
   },
   zh: {
     language: "简体中文",
-    nav: { home: "首页", docs: "文档", download: "下载", plugins: "插件", learn: "学习", chat: "聊天", github: "GitHub" },
+    nav: { home: "首页", docs: "文档", download: "下载", plugins: "插件", learn: "学习", chat: "聊天", github: "GitHub", contact: "联系我们" },
     home: {
       eyebrow: "Turboism / 文档",
       title: "在更清晰的边界上构建。",
       description: "Turboism 产品和开发者文档中心，为框架使用者与插件开发者提供完整指引。",
-      useTurboismTitle: "使用 Turboism",
-      useTurboismDescription: "安装 Preview、验证启动，并安全管理本地插件。",
-      buildPluginTitle: "构建插件",
-      buildPluginDescription: "依据当前仅面向 SDK 的契约构建 Java 17 插件。",
-      sdkTitle: "SDK 参考",
-      sdkDescription: "浏览当前 Turboism Preview SDK 自动生成的 Java API 文档。",
-      startHere: "从这里开始",
-      introduction: "简介",
-      architecture: "架构",
-      documentationPreview: "文档预览",
+      useTurboismTitle: "我是普通用户",
+      useTurboismDescription: "安装 Turboism，并管理本地 JAR 插件。",
+      buildPluginTitle: "我是开发者",
+      buildPluginDescription: "使用 Java 17 与 Preview SDK 构建 SDK-only Cubism 插件。",
+      learnMore: "了解更多",
     },
   },
   ja: {
     language: "日本語",
-    nav: { home: "ホーム", docs: "ドキュメント", download: "ダウンロード", plugins: "プラグイン", learn: "学ぶ", chat: "チャット", github: "GitHub" },
+    nav: { home: "ホーム", docs: "ドキュメント", download: "ダウンロード", plugins: "プラグイン", learn: "学ぶ", chat: "チャット", github: "GitHub", contact: "お問い合わせ" },
     home: {
       eyebrow: "Turboism / ドキュメント",
       title: "より明確な境界で構築する。",
       description:
         "Turboism の製品・開発者向けドキュメント。フレームワークの利用者とプラグイン開発者向けに整理されています。",
-      useTurboismTitle: "Turboism を使う",
-      useTurboismDescription: "Preview を導入し、起動を確認して、ローカルプラグインを安全に管理します。",
-      buildPluginTitle: "プラグインを作る",
-      buildPluginDescription: "現在の SDK 専用契約に基づいて Java 17 プラグインを構築します。",
-      sdkTitle: "SDK リファレンス",
-      sdkDescription: "現在の Turboism Preview SDK から生成された Java API ドキュメントを参照します。",
-      startHere: "はじめに",
-      introduction: "イントロダクション",
-      architecture: "アーキテクチャ",
-      documentationPreview: "ドキュメントプレビュー",
+      useTurboismTitle: "一般ユーザーです",
+      useTurboismDescription: "Turboism を導入し、ローカル JAR プラグインを管理します。",
+      buildPluginTitle: "開発者です",
+      buildPluginDescription: "Java 17 と Preview SDK で SDK 専用 Cubism プラグインを開発します。",
+      learnMore: "詳しく見る",
     },
   },
 };

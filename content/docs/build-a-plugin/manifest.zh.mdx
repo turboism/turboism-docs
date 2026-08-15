@@ -1,6 +1,6 @@
 ---
 title: 插件 Manifest 与打包
-description: 定义一个 manifest v2 插件 JAR，并将其打包为严格的本地 .tplugin 归档文件。
+description: 定义一个 manifest v2 插件 JAR，并将其作为发布产物分发。
 ---
 
 每个 Turboism 插件 JAR 都恰好包含一个位于以下位置的描述符：
@@ -134,30 +134,17 @@ META-INF/turboism/i18n/messages_zh_Hans.properties
 build/worktree/<worktreeId>/<module>/libs/
 ```
 
-## 构建 `.tplugin`
+## 严格的 JAR 验证
 
-```bash
-python3 scripts/release/package-plugin.py \
-  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
-  build/packages/hello.tplugin
-```
+JAR 本身即是安装产物。Runtime 将所选 JAR 视为不受信任的本地输入，并验证：
 
-当前的最小包包含：
+- 常规文件、源链中没有符号链接，上限 16 MiB；
+- 恰好一个 `META-INF/turboism/plugin.json`；
+- 描述符 ID、版本和 API 范围一致；
+- 没有复制的 SDK、Runtime、test、test-framework 或 Live2D 类；
+- 没有原生二进制或 installer payload；
+- 没有嵌套 JAR；
+- 声明的入口点、资源根目录和 i18n catalog 都存在；
+- 没有未声明的普通资源。
 
-```text
-META-INF/turboism/package.json
-plugin/plugin.jar
-```
-
-Runtime 将 `.tplugin` 视为不受信任的输入，并验证 ZIP/JAR 结构、路径、大小、哈希、描述符一致性、入口点、资源和禁止内容。
-
-插件包不得包含：
-
-- 复制的 Turboism SDK class；
-- Runtime、Bootstrap、测试或测试框架 class；
-- `com/live2d/**` class 或 Cubism 资源；
-- 原生二进制文件或主机载荷；
-- 安装脚本；
-- 当前最小构建器输出中的嵌套 JAR。
-
-不要通过重命名任意 ZIP 来创建包。始终从当前插件 JAR 生成它。
+托管安装会暂存验证过的 JAR，并在 Cubism 重启后应用。不要通过重命名任意 ZIP 或 JAR 来创建插件。始终分发 Gradle 构建产出的 JAR。

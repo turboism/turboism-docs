@@ -126,21 +126,21 @@ artifact は次の下に書き込まれます。
 build/worktree/<worktreeId>/hello/libs/
 ```
 
+`libs/` の JAR がプラグインのリリース成果物です。配布時は変更しないでください。
+
 この lifecycle-only example には constructor-only test で十分です。plugin が action、UI、event、configuration、task を登録するようになったら、recording/fake `PluginContext` を使って registration、failure handling、disable/shutdown behavior、scope cleanup を検証してください。
 
-## 6. package する
+## 6. JAR を配布する
 
-```bash
-python3 scripts/release/package-plugin.py \
-  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
-  build/packages/hello.tplugin
-```
+build 済み JAR を直接共有します。wrapper archive も package script も、別の packaging step もありません。
 
 ## 7. install する
 
-Turboism plugin management で `.tplugin` を選択します。変更はステージングされ、Cubism の再起動後に適用されます。
+Turboism plugin management で **JAR からインストール…**（Install from JAR…）を選択し、build 済み JAR を選びます。JAR をローカル/未検証ソースと示すダイアログを確認します。変更はステージングされ、Cubism の再起動後に適用されます。
 
-分離された local development の場合に限り、plugin JAR を使い捨ての Turboism home の `plugins/` directory に直接置き、Runtime を再起動できます。Loose-JAR mode は推奨される user distribution path ではありません。
+local development やフォールバック用途では、JAR を手動でインストールすることもできます：Cubism を完全に閉じ、build 済み JAR を `<turboism.home>/plugins/` の直下にコピーし、同じ plugin ID の古い JAR が残っていないことを確認して、同じ Turboism home で再起動します。
+
+手動インストールはマネージドの保護（UI 確認、preflight、ステージング、backup/restore）を迂回します。JAR は引き続き startup validation を受けます。完全な手動手順と更新/アンインストールのルールについては [プラグイン管理](../use/plugin-management) を参照してください。
 
 ## 次のステップ
 

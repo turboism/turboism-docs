@@ -1,6 +1,6 @@
 ---
 title: Plugin Manifest and Packaging
-description: Define a manifest v2 plugin JAR and package it as a strict local .tplugin archive.
+description: Define a manifest v2 plugin JAR and distribute it as the release artifact.
 ---
 
 Every Turboism plugin JAR contains exactly one descriptor at:
@@ -134,30 +134,17 @@ The repository uses Java 17 and writes module artifacts under:
 build/worktree/<worktreeId>/<module>/libs/
 ```
 
-## Build a `.tplugin`
+## Strict JAR validation
 
-```bash
-python3 scripts/release/package-plugin.py \
-  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
-  build/packages/hello.tplugin
-```
+The JAR itself is the install artifact. Runtime treats a selected JAR as untrusted local input and validates:
 
-The current minimal package contains:
+- a regular file with no symbolic link in the source chain, capped at 16 MiB;
+- exactly one `META-INF/turboism/plugin.json`;
+- descriptor ID, version, and API-range consistency;
+- no copied SDK, Runtime, test, test-framework, or Live2D classes;
+- no native binaries or installer payloads;
+- no nested JARs;
+- declared entrypoints, resource roots, and i18n catalogs present;
+- no undeclared ordinary resources.
 
-```text
-META-INF/turboism/package.json
-plugin/plugin.jar
-```
-
-Runtime treats `.tplugin` as untrusted input and validates ZIP/JAR structure, paths, sizes, hashes, descriptor consistency, entrypoints, resources, and forbidden content.
-
-A plugin package must not contain:
-
-- copied Turboism SDK classes;
-- Runtime, Bootstrap, test, or test-framework classes;
-- `com/live2d/**` classes or Cubism resources;
-- native binaries or host payloads;
-- installer scripts;
-- nested JARs in the current minimal builder output.
-
-Do not create a package by renaming an arbitrary ZIP. Always generate it from the current plugin JAR.
+Managed installation stages the validated JAR and applies it after Cubism restarts. Do not create a plugin by renaming an arbitrary ZIP or JAR. Always distribute the JAR produced by the Gradle build.

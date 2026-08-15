@@ -5,11 +5,13 @@ description: Create SDK-only Java plugins for the current Turboism Developer Pre
 
 Turboism plugins are Java 17 JARs loaded by Runtime. Each plugin depends on the Turboism SDK only and declares its identity, entrypoints, compatibility, resources, dependencies, and permissions in manifest v2.
 
+The plugin release artifact is the module JAR itself. It contains exactly one `META-INF/turboism/plugin.json` and is distributed directly; there is no wrapper archive or separate packaging step.
+
 ## Recommended path
 
-1. [Developer Quick Start](./quick-start) — create, build, validate, package, and install a minimal plugin.
+1. [Developer Quick Start](./quick-start) — create, build, validate, and install a minimal plugin.
 2. [Plugin Interfaces](./plugin-interfaces) — understand the current `PluginContext` service families.
-3. [Plugin Manifest and Packaging](./manifest) — declare multiple entrypoints, permissions, resources, and `.tplugin` packaging.
+3. [Plugin Manifest and Packaging](./manifest) — declare multiple entrypoints, permissions, resources, and JAR packaging rules.
 4. [Designing Plugins](./designing-plugins) — keep plugins lifecycle-safe and compatible.
 5. [SDK API Guide](../reference/sdk-api) — browse the guided API overview and generated reference.
 

@@ -126,21 +126,23 @@ public final class HelloPlugin implements TurboismPlugin {
 build/worktree/<worktreeId>/hello/libs/
 ```
 
-对于此仅包含生命周期的示例，只有构造函数的测试已足够。一旦插件注册操作、UI、事件、配置或任务，请使用记录型/伪造的 `PluginContext` 来验证注册、失败处理、disable/shutdown 行为和 scope 清理。
+`libs/` 中的 JAR 就是插件发布产物；分发时请保持其不变。
 
-## 6. 打包
+对于此仅包含生命周期的示例，只有构造函数的测试已足够。
 
-```bash
-python3 scripts/release/package-plugin.py \
-  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
-  build/packages/hello.tplugin
-```
+一旦插件注册操作、UI、事件、配置或任务，请使用记录型/伪造的 `PluginContext` 来验证注册、失败处理、disable/shutdown 行为和 scope 清理。
+
+## 6. 分发 JAR
+
+直接分享构建出的 JAR。没有 wrapper 归档、没有打包脚本，也没有单独的打包步骤。
 
 ## 7. 安装
 
-使用 Turboism 插件管理选择 `.tplugin`。更改会暂存，并在 Cubism 重启后生效。
+使用 Turboism 插件管理并选择 **从 JAR 安装…**（Install from JAR…）来选取构建出的 JAR。确认将 JAR 标记为本地/未验证来源的对话框。更改会暂存，并在 Cubism 重启后生效。
 
-仅对于隔离的本地开发，您可以将插件 JAR 直接放入一次性 Turboism home 的 `plugins/` 目录，然后重启 Runtime。散装 JAR 模式不是推荐的用户分发路径。
+对于本地开发或备用场景，您也可以手动安装 JAR：完全关闭 Cubism，将构建出的 JAR 复制到 `<turboism.home>/plugins/` 根下，确保没有同 plugin ID 的旧 JAR 残留，然后使用同一个 Turboism home 重启。
+
+手动安装会绕过托管保护（UI 确认、preflight、暂存、备份/恢复）；JAR 仍会经过启动验证。完整的手动流程以及更新/卸载规则请参见[插件管理](../use/plugin-management)。
 
 ## 后续步骤
 

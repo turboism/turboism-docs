@@ -31,11 +31,11 @@ html {
 html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
+}
 
 /* Fixed site header offset: docs layout rows start below the 5rem header */
 :root {
   --fd-banner-height: 5rem;
-}
 }
 
 /* Holy / Sacred dynamic texture shared with www.turboism.dev */
@@ -61,5 +61,49 @@ html > body[data-scroll-locked] {
   100% {
     transform: scale(1.02);
     opacity: 0.8;
+  }
+}
+
+/* Dark code windows (approved visual contract).
+ * Fumadocs renders Shiki code blocks with the light theme (github-light) via
+ * inline --shiki-light* CSS variables; flip the rendered token colors to the
+ * dark theme values already emitted on the same elements (--shiki-dark*). */
+pre.shiki {
+  background-color: #0f172a;
+}
+
+figure.shiki {
+  background-color: #0f172a;
+  border-color: #1e293b;
+}
+
+/* Match Fumadocs' stable `.shiki` selector and its documented
+ * `not-fumadocs-codeblock` opt-out boundary, at higher specificity
+ * (pre.shiki:not(.) adds an element + class over the compiled
+ * `.shiki:not(.not-fumadocs-codeblock *) code span`) and later source
+ * order, so the light-theme token colors never paint the dark window. */
+pre.shiki:not(.not-fumadocs-codeblock *) code {
+  background-color: transparent;
+  color: var(--shiki-dark);
+}
+
+pre.shiki:not(.not-fumadocs-codeblock *) code span {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style, normal);
+}
+
+/* Copy control contrast on the dark code surface */
+figure.shiki button {
+  color: #94a3b8;
+}
+
+figure.shiki button:hover,
+figure.shiki button[data-checked="true"] {
+  color: #e2e8f0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sacred-texture {
+    animation: none;
   }
 }

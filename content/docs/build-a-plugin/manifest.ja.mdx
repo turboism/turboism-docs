@@ -1,6 +1,6 @@
 ---
 title: プラグインマニフェストとパッケージング
-description: Manifest v2 の plugin JAR を定義し、厳格なローカル .tplugin archive として package する。
+description: Manifest v2 の plugin JAR を定義し、リリース成果物として配布する。
 ---
 
 すべての Turboism plugin JAR には、次の場所に descriptor が正確に 1 つあります。
@@ -134,30 +134,17 @@ repository は Java 17 を使用し、module artifact を次の下に書き込�
 build/worktree/<worktreeId>/<module>/libs/
 ```
 
-## `.tplugin` を build する
+## 厳格な JAR 検証
 
-```bash
-python3 scripts/release/package-plugin.py \
-  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
-  build/packages/hello.tplugin
-```
+JAR 自体がインストール成果物です。Runtime は選択された JAR を信頼できないローカル入力として扱い、次を検証します。
 
-現在の最小 package には次が含まれます。
+- 通常ファイルで、source chain にシンボリックリンクがなく、16 MiB 上限。
+- `META-INF/turboism/plugin.json` が正確に 1 つ。
+- descriptor の ID、version、API range の整合性。
+- コピーされた SDK、Runtime、test、test-framework、Live2D class がない。
+- native binary や installer payload がない。
+- ネストされた JAR がない。
+- 宣言された entrypoint、resource root、i18n catalog が存在する。
+- 未宣言の通常 resource がない。
 
-```text
-META-INF/turboism/package.json
-plugin/plugin.jar
-```
-
-Runtime は `.tplugin` を untrusted input として扱い、ZIP/JAR structure、path、size、hash、descriptor consistency、entrypoint、resource、forbidden content を検証します。
-
-plugin package に次を含めてはいけません。
-
-- copied Turboism SDK class。
-- Runtime、Bootstrap、test、または test-framework class。
-- `com/live2d/**` class または Cubism resource。
-- native binary または host payload。
-- installer script。
-- 現在の minimal builder output における nested JAR。
-
-任意の ZIP の名前を変更して package を作成しないでください。常に現在の plugin JAR から生成してください。
+マネージドインストールは検証済み JAR をステージングし、Cubism の再起動後に適用します。任意の ZIP や JAR の名前を変更して plugin を作成しないでください。常に Gradle build が生成した JAR を配布してください。

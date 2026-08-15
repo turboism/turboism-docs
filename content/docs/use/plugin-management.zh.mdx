@@ -1,38 +1,40 @@
 ---
 title: 插件管理
-description: 安全地安装、替换、启用、禁用和卸载本地 Turboism 插件软件包。
+description: 安全地安装、替换、启用、禁用和卸载本地 Turboism 插件 JAR。
 ---
 
-Turboism 当前为本地 `.tplugin` 软件包提供 Preview Runtime 插件管理路径。它不是系统级 Turboism 安装器，也不是在线 marketplace。
+Turboism 提供两种本地插件 JAR 安装方式：托管安装（推荐）和手动安装（高级/备用）。它不是系统级 Turboism 安装器，签名 Official Directory 也尚未生产可用。
 
 所有插件管理变更都会分阶段提交，并在 Cubism 重启后应用。它们不会热切换当前已加载的插件实例。
 
-## 安装插件
+## 托管安装（推荐）
 
-1. 从你信任的 source 获取或构建 `.tplugin`。
+1. 从你信任的 source 获取或构建插件 JAR。
 2. 打开 Turboism 插件管理。
-3. 选择 **Install plugin**。
-4. 选择本地 `.tplugin` 文件。
-5. 确认操作显示为 pending。
-6. 正常关闭 Cubism。
-7. 使用同一个 Turboism home 再次启动 Cubism。
-8. 检查插件列表和 Runtime 日志中的生效状态。
+3. 选择 **从 JAR 安装…**（Install from JAR…）。
+4. 选择本地 `.jar` 文件。
+5. 确认将 JAR 标记为本地/未验证来源的对话框。
+6. 确认操作显示为 pending。
+7. 正常关闭 Cubism。
+8. 使用同一个 Turboism home 再次启动 Cubism。
+9. 检查插件列表和 Runtime 日志中的生效状态。
 
-在分阶段提交操作之前，Runtime 会验证软件包并创建私有 snapshot。在下一次 discovery cycle 中，它会应用 pending 变更，并执行正常的 manifest、依赖、权限、ClassLoader 和生命周期检查。
+在暂存之前，Runtime 将所选 JAR 视为不受信任的本地输入。它打开不超过 16 MiB 的常规非符号链接 JAR，严格检查恰好一个描述符和插件内容，然后将载荷快照到 pending 状态。
+
+暂存 journal 会持久化原始 JAR 的 SHA-256 和大小、描述符哈希、插件 ID 和版本。下次启动时，Runtime 会在应用前对照该身份重新验证暂存的 JAR。
 
 ## 替换或更新插件
 
-目前没有单独的生产级更新服务。使用相同 plugin ID 安装新版软件包会分阶段提交 replacement intent。
+目前没有单独的生产级更新服务。使用相同 plugin ID 安装新版 JAR 会分阶段提交 replacement intent。
 
 推荐流程：
 
-1. 备份当前软件包以及插件的持久化配置/数据。
-2. 通过插件管理安装新版 `.tplugin`。
+1. 备份当前 JAR 以及插件的持久化配置/数据。
+2. 通过插件管理安装新版 JAR。
 3. 重启 Cubism。
 4. 验证显示的版本、生命周期状态、配置迁移和日志。
-5. 如果失败，停止 Turboism，并恢复或重新安装已知可用的软件包。
 
-这不是自动更新、版本保留或完整回滚事务系统。
+启动 preflight 会重新验证暂存的 JAR；应用失败时，会从私有 backup 恢复之前的插件文件。没有保留历史版本列表，也没有完整的用户面向修复、回滚、恢复或清理 UI。
 
 ## 禁用或启用插件
 
@@ -46,7 +48,7 @@ Turboism 当前为本地 `.tplugin` 软件包提供 Preview Runtime 插件管理
 ## 卸载插件
 
 1. 在插件管理中选择插件。
-2. 选择 **Uninstall**。
+2. 选择 **卸载**（Uninstall）。
 3. 确认 pending 操作。
 4. 关闭并重启 Cubism。
 5. 确认插件不再加载。
@@ -60,40 +62,79 @@ Turboism 当前为本地 `.tplugin` 软件包提供 Preview Runtime 插件管理
 - `cache/<pluginId>/`、`state/<pluginId>/` 和 `logs/<pluginId>/` 通常可以重建或仅用于诊断，但只能在 Turboism 停止时删除；
 - 没有备份时，删除配置或持久化数据不可逆。
 
-## Loose-JAR 开发模式
+## 手动安装
 
-对于隔离且可丢弃的开发 home，开发者可以将构建出的插件 JAR 直接放入：
+手动安装是面向受信任插件 JAR 的高级/备用路径。它将插件 JAR 直接复制到 Turboism home 的 `plugins/` 目录，而不是走托管暂存流程。普通用户应优先使用上面的托管安装。
 
-```text
-<turboism.home>/plugins/
-```
+手动复制会绕过下方对比中详述的托管保护措施。Runtime 仍会执行启动验证，但启动验证不等同于托管 preflight。
 
-然后重启 Runtime。
+插件 JAR 是从插件源码构建出的 JAR，不是 Turboism 安装器 artifact `TurboismInstaller-<version>.jar`。
 
-此路径适合本地开发，但会绕过 `.tplugin` transport staging 和软件包级检查。它不是推荐的最终用户分发流程。
+### 手动安装插件 JAR
 
-## 软件包拒绝
+1. 完全关闭 Cubism 和 Turboism。插件 JAR 在启动时扫描，因此变更需要完全停止并重启后才会生效。
+2. 确定 launcher 使用的确切 Turboism home。
+3. 创建或打开 `<turboism.home>/plugins/`。
+4. 将插件 JAR 直接复制到 `<turboism.home>/plugins/` 根下，并保持每个 plugin ID 最多一个 JAR。不要放入嵌套文件夹，也不要使用符号链接。
+5. 使用同一个 Turboism home 再次启动 Cubism。
+6. 检查插件列表/状态和 Runtime 日志。
 
-软件包可能因以下原因被拒绝：
+`plugins/` 的位置取决于 launcher 和安装模式：
 
-- 哈希或大小无效；
+- Windows `.exe` 安装器默认：`%LOCALAPPDATA%\Turboism\plugins\`
+- 自定义 `.exe`/`.jar` 安装器 home：`<selected Turboism directory>/plugins/`
+
+### 替换或更新手动安装的插件
+
+1. 先停止 Cubism 和 Turboism。
+2. 备份旧 JAR 以及插件的 `config/<pluginId>/` 和 `data/<pluginId>/` 重要内容。
+3. 在复制替换件之前移除旧的同 ID JAR。两个具有相同 plugin ID 的 JAR 会以 `DUPLICATE_PLUGIN_ID` 失败。
+4. 使用同一个 Turboism home 重启，并验证版本、状态和日志。
+
+### 卸载手动安装的插件
+
+1. 停止 Cubism 和 Turboism。
+2. 从 `<turboism.home>/plugins/` 移除插件 JAR。
+3. 重启并确认插件不再加载。
+4. 除非你刻意删除，插件数据会保留。仅在 Turboism 停止时删除 `config/<pluginId>/` 或 `data/<pluginId>/`，并且要有备份。
+
+### 托管安装与手动安装对比
+
+托管安装还提供：
+
+- UI 确认和 pending 操作跟踪；
+- 源路径与严格归档 preflight，包括 16 MiB 上限；
+- 私有快照、pending journal 和暂存应用；
+- 暂存应用失败时的托管备份/恢复。
+
+手动安装会绕过上述所有保护，但复制的 JAR 仍会经过启动验证：descriptor 解析/schema、插件 JAR 内容契约、保留 ID、Turboism API 范围、依赖、禁用 ID、entrypoint 加载和生命周期。
+
+## JAR 拒绝
+
+受管理的 JAR 可能因以下原因被拒绝：
+
+- 符号链接或非常规源路径；
+- 大小超过 16 MiB 上限；
 - ZIP 路径格式错误或有歧义；
 - 重复条目或特殊文件；
+- `META-INF/turboism/plugin.json` 多于或少于一个；
+- 描述符 ID、版本或 API 范围不一致；
 - 复制的 SDK、Runtime、test 或 Live2D 类；
 - native 或 installer payload；
-- 嵌套 JAR 内容超出接受的软件包 profile；
-- 软件包与插件 ID 或版本不匹配；
-- 缺少 entrypoint class 或存在未声明资源。
+- 嵌套 JAR 内容；
+- 缺少 entrypoint class、已声明资源或 i18n catalog。
 
-请从当前插件 JAR 重新生成软件包。不要手动编辑归档，也不要禁用检查。
+请从当前插件源码重新构建 JAR。不要手动编辑归档，也不要禁用检查。上述原因描述的是托管 preflight；手动复制会跳过它，只有启动验证强制执行的违规才会出现在 Runtime 启动诊断中。
 
 ## 当前限制
 
 插件管理当前不提供：
 
-- 在线发现或下载；
+- 生产可用的在线发现或下载；
 - 发布者签名或撤销；
-- marketplace；
+- 实时 marketplace；
 - 保留历史版本；
-- 完整的修复、回滚、恢复或清理生命周期；
+- 完整的用户面向修复、回滚、恢复或清理 UI；
 - 对 Cubism 安装或 launcher 的系统级修改。
+
+内置的 Official Directory 客户端和 UI 已存在，但生产激活尚未就绪：生产密钥列表为空，实时签名 catalog 就绪性尚未建立。

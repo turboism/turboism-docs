@@ -1,38 +1,40 @@
 ---
 title: プラグイン管理
-description: ローカル Turboism plugin package を安全にインストール、置換、有効化、無効化、アンインストールする。
+description: ローカル Turboism プラグイン JAR を安全にインストール、置換、有効化、無効化、アンインストールする。
 ---
 
-Turboism は現在、ローカル `.tplugin` package 向けに Preview runtime plugin-management 経路を提供しています。これは system-level Turboism installer や online marketplace ではありません。
+Turboism は、ローカルプラグイン JAR のインストール方法として、管理インストール（推奨）と手動インストール（上級/フォールバック）の 2 つを提供しています。これは system-level Turboism installer ではなく、署名済み Official Directory もまだ本番利用できません。
 
 すべての plugin-management 変更はステージングされ、Cubism の再起動後に適用されます。現在ロードされている plugin instance を hot-swap することはありません。
 
-## プラグインをインストールする
+## 管理インストール（推奨）
 
-1. 信頼できる source から `.tplugin` を入手または build します。
-2. Turboism plugin management を開きます。
-3. **Install plugin** を選択します。
-4. ローカル `.tplugin` file を選択します。
-5. operation が pending として表示されることを確認します。
-6. Cubism を通常どおり閉じます。
-7. 同じ Turboism home を通じて Cubism を再起動します。
-8. plugin list と Runtime logs で有効な state を確認します。
+1. 信頼できる source からプラグイン JAR を入手または build します。
+2. Turboism プラグイン管理を開きます。
+3. **JAR からインストール…**（Install from JAR…）を選択します。
+4. ローカル `.jar` file を選択します。
+5. JAR をローカル/未検証ソースと示すダイアログを確認します。
+6. operation が pending と表示されることを確認します。
+7. Cubism を通常どおり閉じます。
+8. 同じ Turboism home を通じて Cubism を再起動します。
+9. plugin list と Runtime logs で有効な state を確認します。
 
-operation をステージングする前に、Runtime は package を検証し、private snapshot を作成します。次の discovery cycle で pending change を適用し、通常の manifest、dependency、permission、ClassLoader、lifecycle check を行います。
+ステージング前に、Runtime は選択された JAR を信頼できないローカル入力として扱います。16 MiB 上限の通常の非シンボリックリンク JAR を開き、descriptor が正確に 1 つであることと plugin content を厳格に検査し、payload を pending state にスナップショットします。
+
+staging journal は、raw JAR の SHA-256 と size、descriptor hash、plugin ID、version を永続化します。次の起動時に Runtime は、適用前にステージング済み JAR をその identity と照合して再検証します。
 
 ## プラグインを置換または更新する
 
-現在、production update service は別に存在しません。同じ plugin ID を持つ新しい package をインストールすると、replacement intent がステージングされます。
+現在、production update service は別に存在しません。同じ plugin ID を持つ新しい JAR をインストールすると、replacement intent がステージングされます。
 
 推奨手順:
 
-1. 現在の package と plugin の persistent configuration/data を backup します。
-2. plugin management を通じて新しい `.tplugin` をインストールします。
+1. 現在の JAR と plugin の persistent configuration/data を backup します。
+2. plugin management を通じて新しい JAR をインストールします。
 3. Cubism を再起動します。
 4. 表示された version、lifecycle state、configuration migration、logs を確認します。
-5. 失敗した場合は Turboism を停止し、known-good package を復元または再インストールします。
 
-これは automatic update、retained-version、または完全な rollback transaction system ではありません。
+startup preflight はステージング済み JAR を再検証し、適用失敗時は private backup から以前の plugin file を復元します。保持される履歴バージョンの一覧はなく、完全なユーザー向け修復・ロールバック・リカバリ・purge UI もありません。
 
 ## プラグインを無効化または有効化する
 
@@ -46,7 +48,7 @@ desired state は Turboism home configuration に永続化され、再起動後�
 ## プラグインをアンインストールする
 
 1. plugin management で plugin を選択します。
-2. **Uninstall** を選択します。
+2. **アンインストール**（Uninstall）を選択します。
 3. pending operation を確認します。
 4. Cubism を閉じて再起動します。
 5. plugin がロードされなくなったことを確認します。
@@ -60,40 +62,79 @@ plugin JAR を削除しても、plugin 所有の全ファイルが自動的に�
 - `cache/<pluginId>/`、`state/<pluginId>/`、`logs/<pluginId>/` は通常再構築可能または診断用ですが、Turboism を停止しているときだけ削除します。
 - configuration または persistent data の削除は backup なしでは取り消せません。
 
-## Loose-JAR 開発モード
+## 手動インストール
 
-分離された使い捨ての development home では、developer は build 済み plugin JAR を直接次に置くことができます。
+手動インストールは、信頼できるプラグイン JAR のための上級/フォールバック経路です。プラグイン JAR をマネージド・ステージングではなく、Turboism home の `plugins/` directory に直接コピーします。通常のユーザーは、上記の管理インストールを推奨します。
 
-```text
-<turboism.home>/plugins/
-```
+手動コピーは、下記の比較で詳述するマネージドの保護を迂回します。Runtime は引き続き startup validation を実行しますが、startup validation はマネージド preflight と同等ではありません。
 
-その後 Runtime を再起動します。
+plugin JAR は plugin source から build した JAR であり、Turboism installer artifact である `TurboismInstaller-<version>.jar` とは別物です。
 
-この経路は local development には便利ですが、`.tplugin` transport staging と package-level check を迂回します。end-user distribution flow としては推奨されません。
+### プラグイン JAR を手動でインストールする
 
-## パッケージの拒否
+1. Cubism と Turboism を完全に閉じます。plugin JAR は起動時にスキャンされるため、変更は完全に停止して再起動した後にのみ反映されます。
+2. launcher が使用する正確な Turboism home を確認します。
+3. `<turboism.home>/plugins/` を作成するか開きます。
+4. plugin JAR を `<turboism.home>/plugins/` の直下に直接コピーし、plugin ID ごとに JAR を最大 1 つにします。ネストした folder に置かず、symlink も使用しないでください。
+5. 同じ Turboism home で Cubism を再起動します。
+6. plugin list/state と Runtime logs を確認します。
 
-package は、次のような理由で拒否されることがあります。
+`plugins/` の場所は launcher とインストールモードによって異なります。
 
-- invalid hash または size。
+- Windows `.exe` インストーラーの既定: `%LOCALAPPDATA%\Turboism\plugins\`
+- カスタム `.exe`/`.jar` インストーラーの home: `<selected Turboism directory>/plugins/`
+
+### 手動インストールしたプラグインを置換または更新する
+
+1. 最初に Cubism と Turboism を停止します。
+2. 古い JAR と、plugin の重要な `config/<pluginId>/`・`data/<pluginId>/` の内容を backup します。
+3. 置換 JAR をコピーする前に、同じ ID の古い JAR を削除します。同じ plugin ID の JAR が 2 つあると `DUPLICATE_PLUGIN_ID` で失敗します。
+4. 同じ Turboism home で再起動し、version、state、logs を確認します。
+
+### 手動インストールしたプラグインをアンインストールする
+
+1. Cubism と Turboism を停止します。
+2. `<turboism.home>/plugins/` から plugin JAR を削除します。
+3. 再起動し、plugin がロードされなくなったことを確認します。
+4. 意図的に削除しない限り plugin data は残ります。`config/<pluginId>/` や `data/<pluginId>/` を削除するのは Turboism 停止中のみ、backup を取ってからにしてください。
+
+### 管理インストールと手動インストールの比較
+
+管理インストールはさらに次を提供します。
+
+- UI 確認と pending operation の追跡。
+- source path と厳格な archive preflight（16 MiB 上限を含む）。
+- private snapshot、pending journal、staged apply。
+- staged apply が失敗したときの managed backup/restore。
+
+手動インストールは上記すべてを迂回しますが、コピーした JAR は引き続き startup validation（descriptor の解析/schema、plugin JAR content contract、予約済み ID、Turboism API range、dependency、disabled ID、entrypoint の読み込み、lifecycle）を受けます。
+
+## JAR の拒否
+
+マネージド JAR は、次のような理由で拒否されることがあります。
+
+- シンボリックリンクまたは通常ファイルでない source path。
+- 16 MiB 上限を超える size。
 - malformed または ambiguous ZIP path。
 - duplicate entry または special file。
+- `META-INF/turboism/plugin.json` が 1 つより多い、または少ない。
+- descriptor の ID、version、API range の不一致。
 - copied SDK、Runtime、test、または Live2D class。
 - native または installer payload。
-- accepted package profile 外の nested JAR content。
-- package と plugin の ID または version の不一致。
-- entrypoint class の欠落または undeclared resource。
+- ネストされた JAR content。
+- entrypoint class、宣言済み resource、i18n catalog の欠落。
 
-現在の plugin JAR から package を再生成してください。archive を手動で編集したり inspection を無効化したりしないでください。
+現在の plugin source から JAR を再ビルドしてください。archive を手動で編集したり inspection を無効化したりしないでください。上記の理由はマネージド preflight の説明です。手動コピーはこれをスキップし、startup validation で強制される違反のみが Runtime の startup diagnostics に現れます。
 
 ## 現在の制限
 
 Plugin management は現在、次を提供していません。
 
-- online discovery または download。
+- 本番利用可能な online discovery または download。
 - publisher signing または revocation。
-- marketplace。
-- retained historical version。
-- 完全な repair、rollback、recovery、purge lifecycle。
+- ライブマーケットプレイス。
+- 保持される履歴バージョン。
+- 完全なユーザー向け修復・ロールバック・リカバリ・purge UI。
 - Cubism installation または launcher の system-level modification。
+
+組み込みの Official Directory client と UI は存在しますが、本番アクティベーションは未準備です。本番 key list は空で、ライブ署名済み catalog の準備は確立されていません。

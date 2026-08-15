@@ -1,34 +1,33 @@
 ---
 title: 更新ポリシー
-description: Preview plugin を安全に置換し、まだ存在しない automatic update capability を理解する。
+description: プラグインを置換し、インストーラーの再実行でフレームワークを更新する方法と、まだ存在しない自動更新機能について理解する。
 ---
 
-Turboism に現在あるのは local package replacement であり、本番用の automatic update system ではありません。
+Turboism に現在あるのは、ローカル JAR replacement と手動によるインストーラーの再実行であり、本番用の automatic update system ではありません。
 
 ## 現在のプラグイン置換
 
-同じ plugin ID を持つ新しい `.tplugin` をインストールすると、replacement intent がステージングされます。Cubism の再起動後に適用されます。
+同じ plugin ID を持つ新しいプラグイン JAR をインストールすると、replacement intent がステージングされます。Cubism の再起動後に適用されます。
 
-1. 現在の plugin package を backup します。
+1. 現在の plugin JAR を backup します。
 2. 重要な場合は、persistent `config/<pluginId>/` と `data/<pluginId>/` の内容を backup します。
-3. plugin management を通じて新しい `.tplugin` をインストールします。
+3. plugin management を通じて新しい JAR をインストールします。
 4. Cubism を再起動します。
 5. version、lifecycle state、configuration migration、logs を確認します。
-6. replacement が失敗した場合は Turboism を停止し、known-good package を復元または再インストールします。
 
-この workflow は historical generation を保持せず、完全な transactional rollback UI も提供しません。
+適用に失敗した場合、private backup から以前の plugin file が復元されます。この workflow は historical generation を保持せず、完全なユーザー向け修復・ロールバック・purge UI も提供しません。
 
-## Framework Preview の更新
+## フレームワークのインストーラー更新
 
-分離された Developer Preview directory は移動および削除できます。新しい Preview build では次のようにします。
+新しいフレームワークバージョンは、インストーラー artifact を再実行してインストールします。
 
-1. 新しい build が startup check に合格するまで、以前の Preview directory を保持します。
-2. 使い捨ての project copy を使用します。
-3. 以前の Turboism home を保持するか、migration behavior のテスト時には別の新しい home を作成します。
-4. Java Agent startup、plugin discovery、host capability status、clean shutdown を確認します。
-5. 新しいものを受け入れてから古い Preview を削除します。
+1. そのビルドを提供した release または preview チャネルから、新しい `TurboismInstaller-<version>.exe`（Windows）または `TurboismInstaller-<version>.jar`（Windows/macOS）を入手します。
+2. `config.json` と、重要な persistent プラグインの `config/`・`data/` の内容を backup します。
+3. 新しいインストーラーを実行し、同じ Turboism home ディレクトリを対象にします。
+4. 更新の一部としてプラグイン選択（Lite/Full）を再実行します。
+5. 更新後に startup、plugin discovery、host capability status、logs を確認します。
 
-update の手段として Cubism installation file を上書きまたは書き換えないでください。
+インストーラーを再実行すると、同じ home と選択が更新され、無関係な設定を盲目的に上書きすることはありません。自動オンラインアップデーターも署名済みの公開ダウンロードチャネルもまだないため、インストーラーの更新は手動での再実行です。update の手段として Cubism installation file を上書きまたは書き換えないでください。
 
 ## 互換性に関する期待値
 
@@ -40,10 +39,12 @@ update の手段として Cubism installation file を上書きまたは書き�
 
 ## 現在利用できないもの
 
-- online update discovery と download。
+- 本番向け online update discovery と download。
 - marketplace channel。
 - publisher signature と revocation。
-- retained immutable package generation。
-- automatic repair、rollback、または recovery。
-- system-level framework installer update。
+- retained immutable JAR generation。
+- 完全なユーザー向け修復・ロールバック・リカバリ UI。
+- 自動のシステムレベルインストーラー更新。
 - 公開された Stable compatibility matrix。
+
+組み込みの Official Directory client と UI は存在しますが、本番アクティベーションは未準備です。署名済み endpoint と key の準備は不完全です。

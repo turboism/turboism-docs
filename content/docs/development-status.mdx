@@ -21,7 +21,17 @@ Plugins depend on the Turboism SDK only. Runtime owns host access, lifecycle, sa
 - Local plugin JAR discovery, manifest and API-range validation, dependency resolution, one ClassLoader per plugin, lifecycle execution, reverse shutdown, and scope/ClassLoader cleanup.
 - Plugin manifest v2 with ordered multiple entrypoints and whole-JAR startup rollback.
 - `PluginContext` services for logging, paths, localization, tasks, configuration, storage, user files, events, actions, UI contributions, Cubism access, and diagnostics.
-- Preview plugin management for local `.tplugin` install, enable, disable, and uninstall operations. Changes are staged and applied after Cubism restarts; the core plugin is protected.
+- Managed local JAR install, replacement, enable, disable, and uninstall operations for Preview. Changes are staged in a journal and applied after Cubism restarts; the core plugin is protected.
+- Startup preflight revalidates the staged payload identity (SHA-256, size, descriptor hash) before apply, and a private backup/restore protects failed replacement applies.
+
+## Installer and delivery
+
+Two installer implementations exist and share one staged payload and the Lite/Full model:
+
+- the Windows-native NSIS installer (`TurboismInstaller-<version>.exe`), preferred on Windows;
+- the Java 17 IzPack installer (`TurboismInstaller-<version>.jar`), implemented for Windows/macOS install semantics.
+
+The Windows EXE covers per-user install, Lite/Full and first-party plugin selection, Start Menu entries, and uninstall. The installer JAR covers the same Lite/Full selection on Windows and macOS and generates platform uninstall support. Neither modifies Cubism installation files. The implementations produce installer artifacts for a release or preview channel, but no signed/notarized public channel exists yet.
 
 ## Cubism and Editor API progress
 
@@ -51,6 +61,10 @@ The SDK includes contracts for:
 
 Host and UI families fail closed when a matching Provider or verified host capability is unavailable. Fake or static tests do not automatically establish real-host readiness.
 
+## Official Directory status
+
+A built-in signed Official Directory client and UI are implemented, but production activation is not ready: the production key list is empty and live signed catalog readiness is not established. It is not a live marketplace.
+
 ## In progress or version-limited
 
 - Many unified-object write methods still depend on a specific version Provider. A method in the interface does not mean every supported Cubism version can execute it.
@@ -64,10 +78,11 @@ Host and UI families fail closed when a matching Provider or verified host capab
 
 Turboism does not currently promise:
 
-- a production system installer;
-- automatic online updates or a marketplace;
+- a signed/notarized public release channel for installer artifacts;
+- verified macOS Cubism host launch;
+- automatic online updates or a production-enabled marketplace;
 - publisher signing or revocation;
-- a complete immutable-generation install, repair, rollback, recovery, and purge lifecycle;
+- a complete user-facing immutable-generation install, repair, rollback, recovery, and purge UI;
 - global modification of Cubism launchers;
 - uniform readiness across every Cubism version;
 - production readiness based only on Preview, fake, static, or single-version evidence.

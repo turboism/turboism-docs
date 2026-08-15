@@ -16,7 +16,13 @@ export default async function Layout({
   if (!isLanguage(lang)) notFound();
 
   return (
-    <DocsLayout {...baseOptions(lang)} tree={source.getPageTree(lang)} nav={{ enabled: false }}>
+    <DocsLayout
+      {...baseOptions(lang)}
+      tree={source.getPageTree(lang)}
+      nav={{ enabled: false }}
+      sidebar={{ className: "bg-white/60 backdrop-blur-md" }}
+      containerProps={{ className: "bg-transparent" }}
+    >
       {children}
     </DocsLayout>
   );

@@ -1,34 +1,33 @@
 ---
 title: Update Policy
-description: Replace Preview plugins safely and understand which automatic update capabilities do not exist yet.
+description: Replace plugins and update the framework by rerunning an installer, and understand which automatic update capabilities do not exist yet.
 ---
 
-Turboism currently has local package replacement, not a production automatic update system.
+Turboism currently has local JAR replacement and manual installer reruns, not a production automatic update system.
 
 ## Plugin replacement today
 
-Installing a newer `.tplugin` with the same plugin ID stages a replacement intent. It applies after Cubism restarts.
+Installing a newer plugin JAR with the same plugin ID stages a replacement intent. It applies after Cubism restarts.
 
-1. Back up the current plugin package.
+1. Back up the current plugin JAR.
 2. Back up persistent `config/<pluginId>/` and `data/<pluginId>/` content when it matters.
-3. Install the newer `.tplugin` through plugin management.
+3. Install the newer JAR through plugin management.
 4. Restart Cubism.
 5. Verify version, lifecycle state, configuration migration, and logs.
-6. If the replacement fails, stop Turboism and restore or reinstall the known-good package.
 
-This workflow does not retain historical generations or provide a complete transactional rollback UI.
+A failed apply restores the previous plugin files from a private backup. This workflow does not retain historical generations and does not provide a complete user-facing repair, rollback, or purge UI.
 
-## Framework Preview updates
+## Framework installer updates
 
-The isolated Developer Preview directory is relocatable and removable. For a newer Preview build:
+A newer framework version is installed by rerunning an installer artifact:
 
-1. keep the previous Preview directory until the new build passes startup checks;
-2. use a disposable project copy;
-3. preserve the previous Turboism home or create a separate new home when testing migration behavior;
-4. verify Java Agent startup, plugin discovery, host capability status, and clean shutdown;
-5. remove the old Preview only after the new one is accepted.
+1. Obtain the newer `TurboismInstaller-<version>.exe` (Windows) or `TurboismInstaller-<version>.jar` (Windows/macOS) from the release or preview channel that provided your build.
+2. Back up `config.json` and any persistent plugin `config/` and `data/` content that matters.
+3. Run the newer installer and target the same Turboism home directory.
+4. Rerun the plugin selection (Lite/Full) as part of the update.
+5. Verify startup, plugin discovery, host capability status, and logs after the update.
 
-Do not overwrite or rewrite Cubism installation files as an update mechanism.
+Rerunning the installer updates the same home and selection without blindly overwriting unrelated configuration. There is no automatic online updater and no signed public download channel yet; installer updates are manual reruns. Do not overwrite or rewrite Cubism installation files as an update mechanism.
 
 ## Compatibility expectations
 
@@ -40,10 +39,12 @@ Do not overwrite or rewrite Cubism installation files as an update mechanism.
 
 ## Not currently available
 
-- online update discovery and downloads;
+- production online update discovery and downloads;
 - marketplace channels;
 - publisher signatures and revocation;
-- retained immutable package generations;
-- automatic repair, rollback, or recovery;
-- system-level framework installer updates;
+- retained immutable JAR generations;
+- a complete user-facing repair, rollback, or recovery UI;
+- automatic system-level installer updates;
 - a published Stable compatibility matrix.
+
+The built-in Official Directory client and UI exist, but production activation is not ready: the signed endpoint and key readiness are incomplete.

@@ -1,38 +1,40 @@
 ---
 title: Plugin Management
-description: Install, replace, enable, disable, and uninstall local Turboism plugin packages safely.
+description: Install, replace, enable, disable, and uninstall local Turboism plugin JARs safely.
 ---
 
-Turboism currently provides a Preview runtime plugin-management path for local `.tplugin` packages. It is not a system-level Turboism installer or an online marketplace.
+Turboism provides two ways to install a local plugin JAR: managed installation (recommended) and manual installation (advanced/fallback). It is not a system-level Turboism installer, and the signed Official Directory is not production-enabled yet.
 
 All plugin-management changes are staged and applied after Cubism restarts. They do not hot-swap the currently loaded plugin instance.
 
-## Install a plugin
+## Managed installation (recommended)
 
-1. Obtain or build a `.tplugin` from a source you trust.
+1. Build or obtain a plugin JAR from a source you trust.
 2. Open Turboism plugin management.
-3. Choose **Install plugin**.
-4. Select the local `.tplugin` file.
-5. Confirm that the operation is shown as pending.
-6. Close Cubism normally.
-7. Start Cubism again through the same Turboism home.
-8. Check the plugin list and Runtime logs for the effective state.
+3. Choose **Install from JAR…**.
+4. Select the local `.jar` file.
+5. Confirm the dialog that marks the JAR as a local/unverified source.
+6. Confirm that the operation is shown as pending.
+7. Close Cubism normally.
+8. Start Cubism again through the same Turboism home.
+9. Check the plugin list and Runtime logs for the effective state.
 
-Before staging the operation, Runtime validates the package and creates a private snapshot. On the next discovery cycle it applies the pending change and performs the normal manifest, dependency, permission, ClassLoader, and lifecycle checks.
+Before staging, Runtime treats the selected JAR as untrusted local input. It opens a regular non-symlink JAR capped at 16 MiB, inspects exactly one descriptor and the plugin content, then snapshots the payload into pending state.
+
+The staging journal persists the raw JAR SHA-256 and size, the descriptor hash, the plugin ID, and the version. On the next startup, Runtime revalidates the staged JAR against that identity before applying it.
 
 ## Replace or update a plugin
 
-There is no separate production update service today. Installing a newer package with the same plugin ID stages a replacement intent.
+There is no separate production update service today. Installing a newer JAR with the same plugin ID stages a replacement intent.
 
 Recommended procedure:
 
-1. Back up the current package and the plugin's persistent configuration/data.
-2. Install the newer `.tplugin` through plugin management.
+1. Back up the current JAR and the plugin's persistent configuration/data.
+2. Install the newer JAR through plugin management.
 3. Restart Cubism.
 4. Verify the displayed version, lifecycle state, configuration migration, and logs.
-5. If it fails, stop Turboism and restore or reinstall the known-good package.
 
-This is not an automatic update, retained-version, or complete rollback transaction system.
+Startup preflight revalidates the staged JAR, and a failed apply restores the previous plugin files from a private backup. There is no retained historical version list, and no complete user-facing repair, rollback, recovery, or purge UI.
 
 ## Disable or enable a plugin
 
@@ -60,40 +62,79 @@ Removing the plugin JAR does not automatically erase every plugin-owned file:
 - `cache/<pluginId>/`, `state/<pluginId>/`, and `logs/<pluginId>/` are generally rebuildable or diagnostic, but remove them only while Turboism is stopped;
 - deleting configuration or persistent data is irreversible without a backup.
 
-## Loose-JAR development mode
+## Manual installation
 
-For an isolated, disposable development home, a developer may place a built plugin JAR directly in:
+Manual installation is an advanced/fallback path for trusted plugin JARs. It copies a plugin JAR directly into the Turboism home's `plugins/` directory instead of going through managed staging. Ordinary users should prefer the managed installation above.
 
-```text
-<turboism.home>/plugins/
-```
+Manual copying bypasses the managed safeguards detailed in the comparison below. Runtime still performs startup validation, but startup validation is not equivalent to managed preflight.
 
-and restart Runtime.
+A plugin JAR is the JAR built from plugin source. It is not `TurboismInstaller-<version>.jar`, the Turboism installer artifact.
 
-This path is useful for local development but bypasses `.tplugin` transport staging and package-level checks. It is not the recommended end-user distribution flow.
+### Install a plugin JAR manually
 
-## Package rejection
+1. Fully close Cubism and Turboism. Plugin JARs are scanned at startup, so changes only take effect after a full stop and restart.
+2. Identify the exact Turboism home used by the launcher.
+3. Create or open `<turboism.home>/plugins/`.
+4. Copy the plugin JAR directly into the root of `<turboism.home>/plugins/`, and keep at most one JAR for each plugin ID. Do not place it in a nested folder and do not use a symlink.
+5. Start Cubism again through the same Turboism home.
+6. Check the plugin list/state and Runtime logs.
 
-A package can be rejected for reasons including:
+The `plugins/` location depends on the launcher and installation mode:
 
-- invalid hashes or sizes;
+- Windows `.exe` installer default: `%LOCALAPPDATA%\Turboism\plugins\`
+- custom `.exe`/`.jar` installer home: `<selected Turboism directory>/plugins/`
+
+### Replace or update a manually installed plugin
+
+1. Stop Cubism and Turboism first.
+2. Back up the old JAR and the plugin's important `config/<pluginId>/` and `data/<pluginId>/` content.
+3. Remove the old same-ID JAR before copying the replacement. Two JARs with the same plugin ID fail with `DUPLICATE_PLUGIN_ID`.
+4. Restart with the same Turboism home and verify the version, state, and logs.
+
+### Uninstall a manually installed plugin
+
+1. Stop Cubism and Turboism.
+2. Remove the plugin JAR from `<turboism.home>/plugins/`.
+3. Restart and confirm the plugin is no longer loaded.
+4. Plugin data remains unless you deliberately remove it. Delete `config/<pluginId>/` or `data/<pluginId>/` only while Turboism is stopped, and only with a backup.
+
+### Managed vs manual installation
+
+Managed installation additionally provides:
+
+- UI confirmation and pending-operation tracking;
+- source-path and strict archive preflight, including the 16 MiB cap;
+- private snapshot, pending journal, and staged apply;
+- managed backup/restore if the staged apply fails.
+
+Manual installation bypasses all of the above, but the copied JAR still goes through startup validation: descriptor parsing/schema, plugin JAR content contract, reserved IDs, Turboism API range, dependencies, disabled IDs, entrypoint loading, and lifecycle.
+
+## JAR rejection
+
+A managed JAR can be rejected for reasons including:
+
+- a symbolic link or non-regular source path;
+- size over the 16 MiB cap;
 - malformed or ambiguous ZIP paths;
 - duplicate entries or special files;
+- more or fewer than one `META-INF/turboism/plugin.json`;
+- descriptor ID, version, or API-range inconsistencies;
 - copied SDK, Runtime, test, or Live2D classes;
 - native or installer payloads;
-- nested JAR content outside the accepted package profile;
-- mismatched package and plugin IDs or versions;
-- missing entrypoint classes or undeclared resources.
+- nested JAR content;
+- missing entrypoint classes, declared resources, or i18n catalogs.
 
-Regenerate the package from the current plugin JAR. Do not edit the archive manually or disable inspection.
+Rebuild the JAR from the current plugin source. Do not edit the archive manually or disable inspection. The reasons above describe managed preflight; manual copying skips it, and only violations enforced by startup validation appear in Runtime startup diagnostics.
 
 ## Current limitations
 
 Plugin management does not currently provide:
 
-- online discovery or downloads;
+- production-enabled online discovery or downloads;
 - publisher signing or revocation;
-- a marketplace;
+- a live marketplace;
 - retained historical versions;
-- a complete repair, rollback, recovery, or purge lifecycle;
+- a complete user-facing repair, rollback, recovery, or purge UI;
 - system-level modification of Cubism installations or launchers.
+
+The built-in Official Directory client and UI exist, but production activation is not ready: the production key list is empty and live signed catalog readiness is not established.

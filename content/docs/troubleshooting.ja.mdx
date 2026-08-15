@@ -1,6 +1,6 @@
 ---
 title: トラブルシューティングとフィードバック
-description: Preview の起動、プラグインパッケージ、ライフサイクル、権限、Provider の失敗を診断する。
+description: Preview の起動、プラグイン JAR、ライフサイクル、権限、Provider の失敗を診断する。
 ---
 
 ## Turboism が起動しない
@@ -14,7 +14,9 @@ description: Preview の起動、プラグインパッケージ、ライフサ�
 
 次を確認してください。
 
-- loose JAR が設定済みの相対 `pluginDirs` entry の下にある、または `.tplugin` のインストールが再起動後に完了している。
+- マネージド JAR のインストールが再起動後に完了している、または手動の JAR が `<turboism.home>/plugins/` のルート直下にある（サブディレクトリにない）。
+- 両方の起動で同じ Turboism home が使われている。
+- 同じ plugin ID の古い JAR が残っていない（重複 ID は `DUPLICATE_PLUGIN_ID` で失敗する）。
 - JAR に `META-INF/turboism/plugin.json` が正確に 1 つある。
 - マニフェストが schema version 2 を使用している。
 - entrypoint class が存在し、public で、`TurboismPlugin` を実装し、public no-argument constructor を持つ。
@@ -22,11 +24,13 @@ description: Preview の起動、プラグインパッケージ、ライフサ�
 - plugin ID が disabled または重複していない。
 - `environment.requiresCubism` が現在の environment と一致する。
 
-## パッケージが拒否される
+## JAR が拒否される
 
-`.tplugin` は、無効な hash、壊れた path、重複した entry、special file、コピーされた SDK/Runtime/Live2D class、native または installer payload、受け入れられた profile 外の nested JAR、descriptor mismatch、missing entrypoint、undeclared resource などを理由に拒否されることがあります。
+マネージド JAR は、シンボリックリンクまたは通常ファイルでない source、16 MiB 上限を超える size、壊れた path、duplicate entry、special file、`META-INF/turboism/plugin.json` の欠落または重複などを理由に拒否されることがあります。
 
-現在の plugin JAR からパッケージを再生成してください。アーカイブを手動で編集したり、package inspection を無効にしたりしないでください。
+descriptor の ID/version/API 不一致、コピーされた SDK/Runtime/Live2D class、native または installer payload、nested JAR、missing entrypoint、undeclared resource も拒否されます。
+
+現在の plugin source から JAR を再ビルドしてください。アーカイブを手動で編集したり、inspection を無効にしたりしないでください。上記の理由はマネージド preflight の説明です。手動コピーはこれをスキップし、startup validation で強制される違反のみが Runtime の startup diagnostics に現れます。
 
 ## 操作が pending のままになる
 

@@ -1,42 +1,77 @@
 ---
 title: 快速开始
-description: 启动隔离的 Developer Preview 并验证首次运行。
+description: 从安装器 artifact 安装 Turboism，进行配置，并验证首次运行。
 ---
 
-本快速开始假定你已经构建或收到[安装](./installation)中所述的当前 Developer Preview 目录。
+本快速开始从[安装](./installation)中所述的安装器 artifact 开始。你只需要安装器 artifact 和已安装的 Cubism。
 
 ## 1. 安全准备
 
-- 使用符合受支持的 Cubism 5.3.02 Preview 范围的 Windows。
+- Windows 是目前经过验证的 Cubism 宿主启动路径。
+- 安装器 JAR 本身可在 Windows 和 macOS 上运行，需要 Java 17+ 运行时。
 - 备份要打开的项目，或使用一次性副本。
-- 将 Preview 目录与 Cubism 安装分开。
+- 将 Turboism home 与 Cubism 安装分开。
 - 不要编辑 Cubism JAR、DLL、BAT 文件或许可状态。
 
-## 2. 启动 Turboism
+## 2. 使用 Windows `.exe` 安装器安装并启动
 
-1. 打开 Preview 目录。
-2. 双击 `run-preview.bat`。
-3. 如果自动发现无法找到 Cubism，请根据 bundle README 使用提供的 launcher 并选择匹配的 Cubism root。
-4. 等待 Cubism 和 Turboism diagnostics 初始化。
+1. 运行 `TurboismInstaller-<version>.exe`。
+2. 选择安装目录（默认为 `%LOCALAPPDATA%\Turboism`）以及 Lite 或 Full 模式。在 Full 模式下可以取消勾选单个插件。
+3. 当安装器打开 `configure_turboism.ps1` 时，选择要使用的 Cubism 根目录并保存。Turboism 会将其单独记录在 `config.json` 之外，并为每个选中的根目录创建一个托管启动入口。取消配置器是安全的，会留下一个有效的仅框架安装。
+4. 通过所选 Cubism 根目录的托管 launcher 启动 Turboism（`launch-cubism-turboism.bat`）。
+5. 等待 Cubism 和 Turboism diagnostics 初始化。
 
-## 3. 验证首次运行
+## 3. 使用跨平台 `.jar` 安装器安装（Windows/macOS）
+
+1. 运行 `TurboismInstaller-<version>.jar`：
+
+```bash
+java -jar TurboismInstaller-<version>.jar
+```
+
+2. 选择 Lite 或 Full 模式以及目标目录。Full 模式会安装第一方插件，并允许取消勾选单个插件。
+3. 在 Windows 上，安装完成后运行 `configure_turboism.ps1`，选择要使用的 Cubism 根目录并保存。Turboism 会将其单独记录在 `config.json` 之外，并为每个选中的根目录创建一个托管启动入口；然后通过所选根目录的托管 launcher 启动。在 macOS 上，此安装器仅覆盖安装和卸载：macOS Cubism 宿主启动尚未验证，且未安装 macOS Cubism launcher，因此 macOS 上尚没有经过验证的在 Cubism 内部启动 Turboism 的方式。
+
+## 4. 验证首次运行
+
+下面的检查清单适用于 Windows，即经过验证的 Cubism 宿主启动路径。
 
 检查以下各项：
 
 - Cubism 正常启动；
-- Turboism Java Agent 报告启动成功；
+- Turboism runtime 报告启动成功；
 - Runtime 使用预期的 Turboism home；
-- bundle 中的插件出现在 plugin/runtime diagnostics 中；
+- 已安装的插件出现在 plugin/runtime diagnostics 中；
 - 不可用的宿主 capability 会 fail closed，而不是导致 Cubism 崩溃；
 - 关闭 Cubism 后，插件 scope 和框架所有的 executor 都会释放。
 
-## 4. 添加插件
+## 5. 添加插件
 
-使用[插件管理](./plugin-management)安装本地 `.tplugin`。插件变更会在 Cubism 重启后生效。
+使用[插件管理](./plugin-management)安装本地插件 JAR：
 
-## 5. 查找日志
+1. 打开 Turboism，选择 **插件管理**（Plugin Management）。
+2. 选择 **从 JAR 安装…**（Install from JAR…）。
+3. 选择本地 `.jar` 文件。
+4. 确认将 JAR 标记为本地/未验证来源的对话框。
+5. 当操作显示为 pending 时重启 Cubism。
 
-使用 Preview 所有的日志目录或所选 Turboism home 的 `logs/` 目录。报告启动、软件包、依赖、权限或 Provider 故障时，请保留日志。
+确认后插件 JAR 会被暂存，并在重启后生效。插件变更不会热切换当前已加载的插件实例。插件 JAR 与 Turboism 安装器 JAR 是分开的。
+
+### 手动安装（备选）
+
+作为高级/备用路径，你也可以手动安装插件 JAR——例如在本地测试构建出的 JAR。插件 JAR 是从插件源码构建出的 JAR，不是 Turboism 安装器 JAR（`TurboismInstaller-<version>.jar`）。
+
+1. 完全关闭 Cubism 和 Turboism。
+2. 将受信任的插件 JAR 直接复制到 `<turboism.home>/plugins/` 根下。
+3. 保持每个 plugin ID 最多一个 JAR——确保没有同 ID 的旧 JAR 残留。
+4. 使用同一个 Turboism home 重启。
+5. 验证插件状态和 Runtime 日志。
+
+手动安装会绕过托管保护。完整的保护措施以及更新/卸载细节请参见[插件管理](./plugin-management)。
+
+## 6. 查找日志
+
+使用已安装的 Turboism home 的 `logs/` 目录。报告启动、JAR、依赖、权限或 Provider 故障时，请保留日志。
 
 ## 后续步骤
 

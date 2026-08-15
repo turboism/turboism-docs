@@ -126,21 +126,23 @@ Artifacts are written under:
 build/worktree/<worktreeId>/hello/libs/
 ```
 
-A constructor-only test is sufficient for this lifecycle-only example. Once the plugin registers actions, UI, events, configuration, or tasks, use a recording/fake `PluginContext` to verify registrations, failure handling, disable/shutdown behavior, and scope cleanup.
+The JAR in `libs/` is the plugin release artifact; keep it unchanged when distributing.
 
-## 6. Package it
+A constructor-only test is sufficient for this lifecycle-only example.
 
-```bash
-python3 scripts/release/package-plugin.py \
-  build/worktree/<worktreeId>/hello/libs/<plugin-jar>.jar \
-  build/packages/hello.tplugin
-```
+Once the plugin registers actions, UI, events, configuration, or tasks, use a recording/fake `PluginContext` to verify registrations, failure handling, disable/shutdown behavior, and scope cleanup.
+
+## 6. Distribute the JAR
+
+Share the built JAR directly. There is no wrapper archive, no package script, and no separate packaging step.
 
 ## 7. Install it
 
-Use Turboism plugin management to select the `.tplugin`. The change is staged and applies after Cubism restarts.
+Use Turboism plugin management and choose **Install from JAR…** to select the built JAR. Confirm the dialog that marks the JAR as a local/unverified source. The change is staged and applies after Cubism restarts.
 
-For isolated local development only, you may place the plugin JAR directly in a disposable Turboism home's `plugins/` directory and restart Runtime. Loose-JAR mode is not the recommended user distribution path.
+For local development or fallback use, you can also install the JAR manually: fully close Cubism, copy the built JAR into the root of `<turboism.home>/plugins/`, make sure no older JAR with the same plugin ID remains, and restart with the same Turboism home.
+
+Manual installation bypasses the managed safeguards (UI confirmation, preflight, staging, backup/restore); the JAR still goes through startup validation. See [Plugin Management](../use/plugin-management) for the full manual procedure and the update/uninstall rules.
 
 ## Next steps
 

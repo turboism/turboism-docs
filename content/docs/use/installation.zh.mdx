@@ -1,93 +1,78 @@
 ---
 title: 安装
-description: 运行当前隔离的 Turboism Developer Preview，不修改 Cubism 安装。
+description: 使用 Windows .exe 安装器或跨平台 .jar 安装器安装 Turboism，不修改 Cubism 安装。
 ---
 
-Turboism 当前不提供生产系统安装器。现有产品路径是面向 Windows 和 Live2D Cubism Editor 5.3.02 的隔离 Developer Preview bundle。
+Turboism 通过安装器 artifact 安装。现有两种安装器：Windows 原生 `TurboismInstaller-<version>.exe`，以及跨平台 `TurboismInstaller-<version>.jar`（在 Windows 和 macOS 上安装，需要 Java 17+ 运行时）。普通用户使用其中一种安装器安装；从源码构建是开发者和维护者的工作。
 
-该 bundle 不会修改 Cubism JAR、DLL、官方 launcher 文件、许可状态或现有项目。
+两种安装器都不会修改 Cubism JAR、DLL、官方 launcher 文件、许可状态或现有项目。
 
-## 构建 Preview bundle
+## 选择安装器
 
-在 Turboism source repository 中执行：
+- 在 Windows 上，使用 `.exe` 安装器。这是原生路径：按用户安装、无需管理员权限，并包含 Windows 配置器和开始菜单集成。
+- 在 Windows 或 macOS 上，如果希望跨平台使用同一个 artifact，请使用 `.jar` 安装器。它需要 Java 17+，通过 `java -jar TurboismInstaller-<version>.jar` 运行。
+- 安装器 artifact 必须来自提供构建的 release 或 preview 渠道。Turboism 目前不公开提供这些安装器的下载资源。
+- 安装器 JAR 与插件 JAR 是分开的。插件通过[插件管理](./plugin-management)管理，而不是通过本安装器。
+
+## Windows `.exe` 安装器
+
+`TurboismInstaller-<version>.exe` 是 Windows 原生的 NSIS 安装器。
+
+- 按用户运行，不请求管理员权限。
+- 默认安装到 `%LOCALAPPDATA%\Turboism`；也可以选择其他目录。
+- 提供 Lite 和 Full 两种模式。Full 安装第一方插件；Lite 只安装 agent 和通用文件。
+- Full 模式允许在安装前取消勾选单个插件。
+- 添加按用户的开始菜单项，并在当前用户的“程序和功能”中注册卸载。
+- 安装后自动打开 `configure_turboism.ps1`，以便配置 Cubism 根目录和托管启动入口。
+- 写入 `uninstall.exe` 供日后卸载。
+- 不修改 Cubism 安装文件。
+
+## 跨平台 `.jar` 安装器（Windows/macOS）
+
+`TurboismInstaller-<version>.jar` 是基于 IzPack 的 Windows 和 macOS 安装器。
+
+- 需要 Java 17 或更高版本。
+- 运行方式：
 
 ```bash
-./gradlew previewBundle checkPreviewBundleLayout \
-  --no-daemon --console=plain
+java -jar TurboismInstaller-<version>.jar
 ```
 
-输出写入：
+- 默认安装位置：Windows 为 `%LOCALAPPDATA%\Turboism`；macOS 为 `~/Library/Application Support/Turboism`。也可以选择其他目录。
+- 提供与 `.exe` 安装器相同的 Lite/Full 模式：Full 安装第一方插件，Lite 只安装 agent 和通用文件，Full 允许取消勾选单个插件。
+- 重新运行安装器会更新同一个 Turboism home 和插件选择，不会盲目覆盖无关配置。
+- 在两个平台上都通过生成的卸载器卸载。
+
+macOS 的打包和卸载仍处于 Preview：它们已在 Apple Silicon 和 Intel 打包通道上验证，但 macOS Cubism 宿主启动与就绪度尚未验证，且没有安装 macOS Cubism launcher。在 macOS 上，此安装器可以安装和卸载 Turboism，但尚不提供经过验证的在 Cubism 内部启动 Turboism 的方式。
+
+## 安装之后
+
+1. 在 Windows 上，运行 Turboism home 中的 `configure_turboism.ps1`。它会发现受支持的 Cubism 5.2/5.3 根目录，并为每个选中的根目录创建一个托管启动入口。取消配置器会留下一个有效的仅框架安装。
+2. 通过所选 Cubism 根目录的托管 launcher 启动 Turboism（Windows 上是 `launch-cubism-turboism.bat`）。
+3. 确认 Turboism 启动并在 Turboism home 中写入 diagnostics。
+4. 通过[插件管理](./plugin-management)安装插件，插件 JAR 会被暂存并在 Cubism 重启后应用。
+
+## 卸载
+
+- 由 `.exe` 安装器创建的 Windows 安装：运行 Turboism home 目录中的 `uninstall.exe`。确认时会询问是否保留 `config.json`。
+- 由 `.jar` 安装器创建的 Windows 安装：运行
 
 ```text
-build/preview/<worktreeId>/
-├── turboism-agent.jar
-├── run-preview.bat
-├── launch-cubism-turboism.bat
-├── launch-cubism-turboism.ps1
-├── plugins/
-├── plugin-data/
-├── state/
-└── logs/
+java -jar <home>\Uninstaller\uninstaller.jar
 ```
 
-## 运行 Preview
+- 由 `.jar` 安装器创建的 macOS 安装：双击 home 目录中的 `uninstall.command`，或在终端中运行。
 
-1. 将完整的 Preview 目录复制到装有匹配 Cubism 安装的 Windows 计算机。
-2. 保持目录完整。
-3. 双击 `run-preview.bat`，或者使用 bundle 中的 launcher script 和 README。
-4. 确认 Turboism 启动，并在 Preview 所有的目录中写入 diagnostics。
+卸载器会删除安装器所有的文件以及运行时 `logs`、`state` 和 `cache` 数据。未知文件和第三方插件 JAR 会被保留；`config.json` 仅在您选择删除时才会被移除。
 
-当前 Preview launcher 会搜索受支持的 5.3.02 位置和 `CUBISM_ROOT`，然后使用 Turboism Java Agent 启动 Cubism，不会永久重写 Cubism 安装。
+## 开发者和维护者
 
-## 选择 Turboism home
-
-Runtime 使用由 Java system property 或 agent option 选择的隔离 home：
-
-```text
--Dturboism.home=/absolute/path/to/turboism-home
-```
-
-```text
--javaagent:turboism-agent.jar=home=/absolute/path/to/turboism-home
-```
-
-home 包含：
-
-```text
-<turboism.home>/
-├── config.json
-├── plugins/
-├── config/<pluginId>/
-├── data/<pluginId>/
-├── cache/<pluginId>/
-├── state/<pluginId>/
-└── logs/<pluginId>/
-```
-
-Turboism 运行时不要编辑或清空 home。
-
-## 移除 Preview
-
-1. 关闭 Cubism。
-2. 确认 Preview 所有的进程已经退出。
-3. 删除 Preview 目录。
-
-由于 Preview 路径不会修改 Cubism，因此不应需要恢复任何 Cubism 安装文件。
-
-## 插件安装
-
-Turboism 插件包的管理与框架 Preview 分开。`.tplugin` 的安装、替换、启用、禁用和卸载行为请参阅[插件管理](./plugin-management)。
-
-## 安全性与兼容性
-
-- 使用备份或一次性 Cubism 项目测试 Preview。
-- 不要替换 Cubism JAR、DLL、官方 BAT 文件或许可组件。
-- 不匹配或未经验证的宿主 artifact 会使 host adapter 不可用，而不是使用不安全的 fallback。
-- 公共 Preview 工作流不等同于项目严格的真实宿主验证流程。
+从源码构建 Turboism 和构建安装器 artifact 是开发者和维护者的工作。源码、框架和安装器构建都属于开发者或维护者工作流，有意不包含在本用户指南中。
 
 ## 当前限制
 
-- 仅支持 Windows Preview wrapper。
-- Cubism Editor 5.3.02 Preview 范围。
-- 没有生产级自动安装、更新、回滚、恢复、marketplace、签名或全局 launcher 集成。
+- macOS Cubism 宿主启动尚未验证，且未安装 macOS Cubism launcher。
+- 安装器 artifact 尚未签名或公证，也没有公开下载渠道。
+- 没有自动在线更新器：更新意味着重新运行更新的安装器。
+- 失败的插件替换由内部 backup/restore 保护，但完整的用户面向修复或历史 UI 尚不存在。
 - 功能就绪性仍然取决于 capability 和版本。

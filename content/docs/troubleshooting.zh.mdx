@@ -1,6 +1,6 @@
 ---
 title: 故障排查与反馈
-description: 诊断 Preview 启动、插件包、生命周期、权限和 Provider 故障。
+description: 诊断 Preview 启动、插件 JAR、生命周期、权限和 Provider 故障。
 ---
 
 ## Turboism 未启动
@@ -14,7 +14,9 @@ description: 诊断 Preview 启动、插件包、生命周期、权限和 Provid
 
 检查以下各项：
 
-- loose JAR 位于已配置的相对 `pluginDirs` 条目下，或者 `.tplugin` 安装已在重启后完成；
+- 托管 JAR 安装已在重启后完成，或者手动安装的 JAR 直接位于 `<turboism.home>/plugins/` 根下（不在子目录中）；
+- 两次启动使用同一个 Turboism home；
+- 没有同 plugin ID 的旧 JAR 残留（重复 ID 会以 `DUPLICATE_PLUGIN_ID` 失败）；
 - JAR 中恰好有一个 `META-INF/turboism/plugin.json`；
 - manifest 使用 schema version 2；
 - entrypoint class 存在、是 public、实现 `TurboismPlugin`，并且有 public 无参构造函数；
@@ -22,11 +24,11 @@ description: 诊断 Preview 启动、插件包、生命周期、权限和 Provid
 - plugin ID 未被禁用且没有重复；
 - `environment.requiresCubism` 与当前环境匹配。
 
-## 软件包被拒绝
+## JAR 被拒绝
 
-`.tplugin` 可能因哈希无效、路径格式错误、重复条目、特殊文件、复制的 SDK/Runtime/Live2D 类、native 或 installer payload、超出接受 profile 的嵌套 JAR、descriptor 不匹配、缺少 entrypoint 或存在未声明资源而被拒绝。
+受管理的 JAR 可能因符号链接或非常规源、大小超过 16 MiB 上限、路径格式错误、重复条目、特殊文件、`META-INF/turboism/plugin.json` 缺失或重复、描述符 ID/版本/API 不一致、复制的 SDK/Runtime/Live2D 类、native 或 installer payload、嵌套 JAR、缺少 entrypoint 或存在未声明资源而被拒绝。
 
-请从当前插件 JAR 重新生成软件包。不要手动编辑归档，也不要禁用软件包检查。
+请从当前插件源码重新构建 JAR。不要手动编辑归档，也不要禁用检查。上述原因描述的是托管 preflight；手动复制会跳过它，只有启动验证强制执行的违规才会出现在 Runtime 启动诊断中。
 
 ## 操作一直处于 pending
 

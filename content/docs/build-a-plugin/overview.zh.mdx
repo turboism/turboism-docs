@@ -5,11 +5,13 @@ description: 为当前 Turboism Developer Preview 创建仅依赖 SDK 的 Java �
 
 Turboism 插件是由 Runtime 加载的 Java 17 JAR。每个插件仅依赖 Turboism SDK，并在 manifest v2 中声明其身份、入口点、兼容性、资源、依赖和权限。
 
+插件发布产物就是模块 JAR 本身。它恰好包含一个 `META-INF/turboism/plugin.json`，并直接分发；没有 wrapper 归档或单独的打包步骤。
+
 ## 推荐路径
 
-1. [开发者快速入门](./quick-start) — 创建、构建、验证、打包并安装一个最小插件。
+1. [开发者快速入门](./quick-start) — 创建、构建、验证并安装一个最小插件。
 2. [插件接口](./plugin-interfaces) — 了解当前 `PluginContext` 服务系列。
-3. [插件 Manifest 与打包](./manifest) — 声明多个入口点、权限、资源和 `.tplugin` 打包。
+3. [插件 Manifest 与打包](./manifest) — 声明多个入口点、权限、资源和 JAR 打包规则。
 4. [设计插件](./designing-plugins) — 保持插件生命周期安全且兼容。
 5. [SDK API 指南](../reference/sdk-api) — 浏览引导式 API 概览和生成的参考文档。
 

@@ -21,7 +21,17 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - 本地插件 JAR 发现、manifest 和 API 范围验证、依赖解析、每个插件一个 ClassLoader、生命周期执行、逆序关闭以及 scope/ClassLoader 清理。
 - 支持有序多个入口点和整个 JAR 启动回滚的插件 manifest v2。
 - `PluginContext` 服务涵盖日志、路径、本地化、任务、配置、存储、用户文件、事件、操作、UI 贡献项、Cubism 访问和诊断。
-- 面向本地 `.tplugin` 安装、启用、禁用和卸载操作的 Preview 插件管理。变更会暂存并在 Cubism 重启后应用；核心插件受保护。
+- 面向本地 JAR 安装、替换、启用、禁用和卸载操作的 Preview 托管管理。变更会写入 journal 暂存，并在 Cubism 重启后应用；核心插件受保护。
+- 启动 preflight 会在应用前重新验证暂存载荷的身份（SHA-256、大小、描述符哈希），私有 backup/restore 保护失败的替换应用。
+
+## 安装器与交付
+
+现有两种安装器实现，共享同一个分阶段 payload 和 Lite/Full 模型：
+
+- Windows 原生的 NSIS 安装器（`TurboismInstaller-<version>.exe`），在 Windows 上优先使用；
+- Java 17 IzPack 安装器（`TurboismInstaller-<version>.jar`），实现了 Windows/macOS 安装语义。
+
+Windows EXE 覆盖按用户安装、Lite/Full 与第一方插件选择、开始菜单项和卸载。安装器 JAR 在 Windows 和 macOS 上提供相同的 Lite/Full 选择，并生成平台卸载支持。两者都不会修改 Cubism 安装文件。这些实现会为 release 或 preview 渠道产出安装器 artifact，但尚不存在签名/公证的公开渠道。
 
 ## Cubism 和 Editor API 进展
 
@@ -51,6 +61,10 @@ SDK 包含以下契约：
 
 当匹配的 Provider 或已验证的主机能力不可用时，主机和 UI 系列会安全地失败关闭。伪造或静态测试不会自动证明已为真实主机做好准备。
 
+## Official Directory 状态
+
+内置的签名 Official Directory 客户端和 UI 已实现，但生产激活尚未就绪：生产密钥列表为空，实时签名 catalog 就绪性尚未建立。它不是实时 marketplace。
+
 ## 进行中或受版本限制
 
 - 许多统一对象写入方法仍取决于特定版本的 Provider。接口中存在方法并不意味着每个受支持的 Cubism 版本都能执行它。
@@ -64,10 +78,11 @@ SDK 包含以下契约：
 
 Turboism 当前不承诺：
 
-- 生产环境系统安装程序；
-- 自动在线更新或市场；
+- 签名/公证的安装器 artifact 公开发布渠道；
+- 经过验证的 macOS Cubism 宿主启动；
+- 自动在线更新或生产可用的 marketplace；
 - 发布者签名或撤销；
-- 完整的不可变 generation 安装、修复、回滚、恢复和清除生命周期；
+- 完整的用户面向不可变 generation 安装、修复、回滚、恢复和清除 UI；
 - 对 Cubism launcher 的全局修改；
 - 在每个 Cubism 版本上具有一致的就绪度；
 - 仅基于 Preview、伪造、静态或单版本证据的生产就绪度。
