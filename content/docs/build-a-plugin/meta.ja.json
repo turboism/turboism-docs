@@ -1,0 +1,14 @@
+{
+  "title": "開発者",
+  "pagesIndex": "overview",
+  "pages": [
+    "contributing",
+    "quick-start",
+    "plugin-interfaces",
+    "manifest",
+    "designing-plugins",
+    "graaljs-scripts",
+    "mcp",
+    "llm-coding-context"
+  ]
+}

@@ -1,0 +1,24 @@
+---
+title: 安装器模式
+description: 面向未来公开安装流程的候选 Managed Runtime 模式语义。
+---
+
+本页是待发布的候选文档。这些模式名称描述的是候选 Managed Runtime；它们并不表示安装器、插件目录或任何模式已经公开发布。
+
+## 候选模式
+
+- **Full** — 包含 agent 和完整的候选第一方插件集。在受支持的 Linux 和 macOS Java Full 安装中，还包含相应的受管 fx component。
+- **Thin** — 包含 agent 和相同的候选第一方插件集，但不包含受管 fx component。在受支持的系统上，如提供该操作，可显式**安装**或**修复**受管 fx component。
+- **Lite** — 仅包含 agent 和通用文件：没有可选插件 JAR，也没有受管 fx component。
+
+## 平台条件
+
+不提供 Windows Java Full。Windows Java Thin 可以安装候选插件集，但使用相关能力需要你自行提供可信的 fx executable。模式标签本身并不保证宿主支持、某个特定插件或受管 component。
+
+具体可用性、内容、选择 UI 和兼容性仍待确定，并且可能因 Preview 构建而异。不要从这些标签推断已经公开发布或可部署。
+
+## 选择之前
+
+当候选安装器随你的 Preview 构建提供时，请阅读其随附说明，保留重要配置和数据，并在切换模式前查看[更新策略](./update-policy)和[降级与恢复](./downgrade-recovery)。
+
+[SCREENSHOT PLACEHOLDER — 安装器模式选择；在可用的候选安装器中手动截图。]

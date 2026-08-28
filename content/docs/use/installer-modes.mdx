@@ -1,0 +1,24 @@
+---
+title: Installer Modes
+description: Candidate Managed Runtime mode semantics for a future public installation flow.
+---
+
+This page is candidate documentation for publication pending. These mode names describe a candidate Managed Runtime; they do not establish that an installer, a plugin directory, or any mode has been publicly released.
+
+## Candidate modes
+
+- **Full** — the agent plus the complete candidate first-party plugin set. On supported Linux and macOS Java Full installations, it also includes the corresponding managed fx component.
+- **Thin** — the agent plus the same candidate first-party plugin set, but no managed fx component. On supported systems, the managed fx component can be explicitly **Install**ed or **Repair**ed when that action is offered.
+- **Lite** — the agent and common files only: no optional plugin JARs and no managed fx component.
+
+## Platform conditions
+
+Windows Java Full is not offered. Windows Java Thin can install the candidate plugin set, but using the related capability requires you to provide a trusted fx executable yourself. A mode label alone does not guarantee host support, a particular plugin, or a managed component.
+
+Exact availability, contents, selection UI, and compatibility remain pending and may differ by Preview build. Do not infer public publication or deployment availability from these labels.
+
+## Before choosing
+
+When a candidate installer is supplied with your Preview build, read its accompanying guidance, preserve important configuration and data, and review [Update Policy](./update-policy) and [Downgrade and Recovery](./downgrade-recovery) before changing modes.
+
+[SCREENSHOT PLACEHOLDER — installer mode selection; capture manually from an available candidate installer.]

@@ -1,0 +1,28 @@
+---
+title: MCP
+description: 信頼できるローカル client を first-party Preview MCP plugin に接続する。
+---
+
+このページは公開待ちの候補ドキュメントです。MCP は first-party Preview plugin により提供され、リリース済み platform service や第 4 のプロセス内拡張タイプではありません。
+
+## 接続要件
+
+plugin は `127.0.0.1` のみで listen し、認証済み Streamable HTTP を使用します。local client は、その connection に発行された bearer secret を送る必要があります。生成された connection metadata は、同じ machine 上で信頼できる client にのみ渡してください。secret を入手した人は、利用可能な MCP capability を通じて操作できる可能性があります。connection file は機密性のある local state として扱い、その内容をコピー、記録、共有、同期、公開しないでください。
+
+## local client を接続する
+
+1. 利用可能な Preview build を開始し、その build の案内に従って first-party MCP plugin を有効化または開きます。
+2. 信頼できる local MCP client で、plugin が示す loopback endpoint への Streamable HTTP connection を作成します。
+3. その connection に bearer secret を送るよう client を設定します。
+4. client に `initialize` を送らせ、session 中は返された `MCP-Session-Id` を保持します。
+5. 初期化後、MCP で必要な initialized notification を送り、その Preview build が公開する operation だけを使用します。
+
+endpoint、secret、利用可能な operation、client compatibility は Preview と capability に依存します。client がこの順序を完了できない場合、loopback または authentication control を迂回しないでください。
+
+## 拡張パスを分けて考える
+
+外部 client が制御された local connection を必要とする場合に MCP を使用します。プロセス内の SDK lifecycle と service には Java plugin を使用します。[GraalJS スクリプト](./graaljs-scripts)は、Java caller が `PluginContext.scripts()` と `ScriptService.run` を通じて制限付き script を明示的に実行する場合にのみ使用します。
+
+ACP は fx とともに内部でのみ使用されます。MCP endpoint でも、Turboism を拡張する別の方法でもありません。
+
+[SCREENSHOT PLACEHOLDER — 信頼できる local MCP client の接続。利用可能な候補 build から手動で撮影します。]

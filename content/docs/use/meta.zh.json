@@ -1,0 +1,14 @@
+{
+  "title": "建模者",
+  "pagesIndex": "overview",
+  "pages": [
+    "installation",
+    "installer-modes",
+    "quick-start",
+    "plugin-management",
+    "first-party-plugins",
+    "update-policy",
+    "uninstall",
+    "downgrade-recovery"
+  ]
+}

@@ -1,0 +1,24 @@
+---
+title: インストーラーモード
+description: 将来の公開インストールフロー向けの候補 Managed Runtime モードの意味。
+---
+
+このページは公開待ちの候補ドキュメントです。これらのモード名は候補 Managed Runtime を説明するものであり、インストーラー、plugin directory、またはいずれかのモードが公開済みであることを示しません。
+
+## 候補モード
+
+- **Full** — agent と完全な候補 first-party plugin set です。サポート対象の Linux および macOS Java Full インストールでは、対応する managed fx component も含まれます。
+- **Thin** — agent と同じ候補 first-party plugin set を含みますが、managed fx component は含みません。サポート対象の system では、その操作が提供される場合に managed fx component を明示的に**Install**または**Repair**できます。
+- **Lite** — agent と common file のみです。optional plugin JAR も managed fx component も含みません。
+
+## プラットフォームの条件
+
+Windows Java Full は提供されません。Windows Java Thin では候補 plugin set をインストールできますが、関連 capability を使うには、信頼できる fx executable をユーザー自身で用意する必要があります。モード名だけで host support、特定の plugin、または managed component が保証されるわけではありません。
+
+正確な availability、内容、選択 UI、compatibility は保留中であり、Preview build ごとに異なる場合があります。これらのラベルから公開済みまたは deployment が可能であると推測しないでください。
+
+## 選択前に
+
+候補インストーラーが Preview build とともに提供された場合は、付属の案内を読み、重要な configuration と data を保持し、モードを変更する前に[更新ポリシー](./update-policy)と[ダウングレードと復旧](./downgrade-recovery)を確認してください。
+
+[SCREENSHOT PLACEHOLDER — インストーラーモードの選択。利用可能な候補インストーラーから手動で撮影します。]

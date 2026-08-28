@@ -1,34 +1,24 @@
 ---
 title: 生成的 API 参考
-description: 当前 Turboism SDK 的源代码生成 HTML Javadoc。
+description: 候选重新生成 SDK Javadoc 参考的状态。
 ---
 
-当前 SDK HTML 参考由 Java 源代码通过 JDK 17 Javadoc 工具生成。
+本页是待发布的候选文档。当前托管的 Javadoc 已陈旧，不得将其视为当前公共 API 契约。
 
-- [打开 SDK HTML API 参考](/api/sdk/index.html)
-- [阅读 SDK 指南概览](./sdk-api)
-- [构建插件](../build-a-plugin/quick-start)
+## 重新生成状态
 
-## 范围
+候选重新生成目前受以下三项问题阻塞：
 
-托管的参考覆盖 `dev.turboism.sdk.*`，这是面向插件的唯一公共依赖。
+- 某个生成类型虽然在候选输出中可公开搜索，但其自述为内部且非稳定。
+- 某个生成服务仍标记为 Preview，其公开参考策略仍需确认。
+- 候选输出仍带有 `0.42.0-SNAPSHOT` 版本标识。
 
-Runtime、Bootstrap、test-framework 以及第一方插件实现包不会合并到公共参考中。保持分离可以维护插件契约与宿主实现之间的架构边界。
+在这些阻塞问题解决之前，托管的 HTML 参考仍然过时。不要依赖它来作出发布、部署或兼容性声明。
 
-## Preview 状态
+## 谨慎使用可用指南
 
-HTML 页面由当前开发源代码生成。它们不能替代有版本标识的发布契约。
+- 请阅读 [SDK API 指南](./sdk-api) 以了解精选边界。
+- 请阅读[构建插件](../build-a-plugin/overview)以了解候选扩展路径。
+- 请将每项当前 API 说明视为与 Preview 和 capability 相关。
 
-部分公共声明仍缺少完整的说明性注释，因此 Javadoc 构建在生成有效 HTML 的同时，可能报告 missing-comment、`@param` 或 `@return` 警告。源项目保持启用 JDK doclint，而不是隐藏无效标记或链接。
-
-## 维护者同步
-
-在文档仓库中，使用以下命令重新生成并复制 SDK 参考：
-
-```bash
-npm run sync:sdk-api -- /path/to/Turboism
-```
-
-同步命令会运行源代码仓库的 `sdkApiDocs` Gradle task，并用生成的输出替换 `public/api/sdk/`。
-
-源代码仓库的二进制 API 基线和模块边界检查仍然是兼容性的权威依据。Javadoc 生成不能替代这些检查。
+本页不提供本地重新生成流程。刷新后的生成参考资料仍待发布。

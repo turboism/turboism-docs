@@ -1,34 +1,24 @@
 ---
 title: 生成済み API リファレンス
-description: 現在の Turboism SDK のソースから生成された HTML Javadoc。
+description: 候補 SDK Javadoc リファレンスの再生成状況。
 ---
 
-現在の SDK HTML reference は、JDK 17 Javadoc tool によって Java source から生成されています。
+このページは公開待ちの候補ドキュメントです。現在ホストされている Javadoc は古く、現在の public API contract として扱ってはいけません。
 
-- [SDK HTML API reference を開く](/api/sdk/index.html)
-- [SDK のガイド付き概要を読む](./sdk-api)
-- [プラグインを作る](../build-a-plugin/quick-start)
+## 再生成の状況
 
-## 対象範囲
+候補の再生成は、現在次の 3 つの問題によりブロックされています。
 
-公開されている reference は、plugin にとって唯一の public dependency である `dev.turboism.sdk.*` を対象とします。
+- 候補 output で public に検索できる生成型の 1 つが、自身を internal かつ non-stable と説明しています。
+- 生成された service の 1 つが引き続き Preview とマークされており、public reference の方針を確定する必要があります。
+- 候補 output にはまだ `0.42.0-SNAPSHOT` の version identifier が含まれています。
 
-Runtime、Bootstrap、test-framework、first-party plugin の implementation package は public reference にまとめられていません。分離しておくことで、plugin contract と host implementation の architecture boundary を維持しています。
+これらの blocker が解消されるまで、ホストされている HTML reference は古いままです。release、deployment、compatibility に関する主張の根拠にしないでください。
 
-## Preview status
+## 利用可能なガイドを慎重に使う
 
-HTML page は現在の development source から生成されています。versioned release contract の代替ではありません。
+- 厳選された boundary については[SDK API ガイド](./sdk-api)を読んでください。
+- 候補の拡張パスについては[プラグインを作る](../build-a-plugin/overview)を読んでください。
+- 現在の API に関する記述はすべて Preview かつ capability-sensitive として扱います。
 
-一部の public declaration には説明コメントがまだ不完全なため、Javadoc build は valid HTML を生成しながら missing-comment、`@param`、`@return` warning を報告することがあります。source project では、無効な markup や link を隠すのではなく、JDK doclint を有効にしたままにしています。
-
-## Maintainer sync
-
-documentation repository から、次のコマンドで SDK reference を再生成して copy します。
-
-```bash
-npm run sync:sdk-api -- /path/to/Turboism
-```
-
-sync command は source repository の `sdkApiDocs` Gradle task を実行し、`public/api/sdk/` を生成済み output に置き換えます。
-
-source repository の binary API baseline と module-boundary check が、compatibility に関する authoritative な情報です。Javadoc generation はそれらを置き換えません。
+このページでは local regeneration procedure を提供しません。更新された生成 reference material の公開は保留中です。

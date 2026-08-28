@@ -1,0 +1,38 @@
+---
+title: GraalJS Scripts
+description: Candidate instructions for explicitly invoked, limited GraalJS scripts.
+---
+
+This page is candidate documentation for publication pending. GraalJS scripts are not Java plugins and do not establish a released scripting surface.
+
+## Package a script
+
+A script package uses a `script.json` descriptor with schema version `2` and `language` set to `js`. The descriptor identifies the script entry with `entry`, identifies the source with `sourceSha256`, and declares requested `permissions`. Keep the descriptor and source together as the Java plugin that uses them expects.
+
+```json
+{
+  "schemaVersion": 2,
+  "language": "js",
+  "entry": "main.js",
+  "sourceSha256": "<SHA-256 of the source>",
+  "permissions": []
+}
+```
+
+This is a field-level outline, not a complete permission catalogue. Use only permissions supported by the build you are targeting; availability and exact semantics remain capability-sensitive.
+
+## Discovery is not execution
+
+Making a script discoverable does not run it. A Java plugin must explicitly obtain scripts through `PluginContext.scripts()` and explicitly invoke one with `ScriptService.run`. There is no automatic discovery-and-execution lifecycle, and a script cannot substitute for a Java plugin’s manifest, lifecycle, permissions, or services.
+
+## Execution boundary
+
+Scripts run in a restricted JavaScript environment with only the values and operations their Java caller supplies. They receive a limited Cubism bridge rather than the complete Java SDK. Treat bridge operations, resource limits, and available permissions as build-specific; they may constrain what a script can read, change, or request. Design scripts to handle unavailable operations and execution failure without assuming ambient host access.
+
+Use the Java path for a process-resident plugin with SDK lifecycle and services. Use [MCP](./mcp) when an external client needs authenticated loopback Streamable HTTP. ACP, used only with fx internally, is not a scripting or extension path.
+
+## Current status
+
+Script availability, exposed bridge operations, execution limits, and publication details remain pending and may differ by Preview build.
+
+[SCREENSHOT PLACEHOLDER — explicit script invocation; capture manually from an available candidate build.]

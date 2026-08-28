@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "index",
+    "use",
+    "build-a-plugin",
+    "concepts",
+    "reference",
+    "introduction",
+    "troubleshooting",
+    "development-status",
+    "documentation-preview"
+  ]
+}

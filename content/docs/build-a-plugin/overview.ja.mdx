@@ -1,28 +1,30 @@
 ---
 title: プラグインを作る
-description: 現在の Turboism Developer Preview 向けに、SDK のみに依存する Java プラグインを作成する。
+description: Turboism への contribution と拡張のための開発者向け候補入口。
 ---
 
-Turboism plugin は Runtime がロードする Java 17 JAR です。各 plugin は Turboism SDK のみに依存し、manifest v2 で identity、entrypoint、compatibility、resource、dependency、permission を宣言します。
+これは公開待ちの候補ドキュメントです。リリース済みの拡張プログラムではなく、現在の Preview の境界を説明します。
 
-プラグインのリリース成果物は module JAR そのものです。`META-INF/turboism/plugin.json` を正確に 1 つ含み、直接配布します。wrapper archive や別の packaging step はありません。
+## 適切なパスを選ぶ
 
-## 推奨される進め方
+### Turboism に貢献する
 
-1. [開発者向けクイックスタート](./quick-start) — 最小 plugin を作成、build、検証、install する。
-2. [プラグインインターフェース](./plugin-interfaces) — 現在の `PluginContext` service family を理解する。
-3. [プラグインマニフェストとパッケージング](./manifest) — 複数の entrypoint、permission、resource、JAR packaging rule を宣言する。
-4. [プラグインの設計](./designing-plugins) — plugin を lifecycle-safe かつ互換性のあるものに保つ。
-5. [SDK API ガイド](../reference/sdk-api) — ガイド付き API 概要と生成済み reference を閲覧する。
+Turboism 自体を改善したい場合は[コントリビューション](./contributing)を読んでください。contribution workflow と受け入れの詳細は保留中です。
 
-## アーキテクチャ上の境界
+### Java plugin を作る
 
-```text
-Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
-```
+Java のパスには、既存の[開発者向けクイックスタート](./quick-start)、[プラグインインターフェース](./plugin-interfaces)、[プラグインマニフェストとパッケージング](./manifest)、[プラグインの設計](./designing-plugins)を使用します。Java plugin はプロセス内 SDK plugin です。Runtime にロードされる Java 17 JAR で、public SDK boundary を使用します。
 
-Plugin は Runtime、`com.live2d.*`、reflection bridge、host UI widget、native handle、host ClassLoader に直接依存してはいけません。
+### GraalJS script を追加する
 
-## 現在のリリース境界
+制限された script boundary については[GraalJS スクリプト](./graaljs-scripts)を読んでください。Java caller が `ScriptService` を通じて script を明示的に実行する必要があります。script は自動実行されず、完全な Java SDK でもありません。
 
-ソースに基づく Preview SDK と plugin loader は存在しますが、Stable な standalone starter template と公開 Maven coordinates はまだ公開されていません。現在の authoritative onboarding path は、repository 内の Gradle module flow です。
+### 外部 client を接続する
+
+外部 client には[MCP](./mcp)を読んでください。first-party Preview plugin が、authenticated loopback Streamable HTTP を提供します。MCP はプロセス内 Java plugin API ではありません。
+
+## 補助資料
+
+[LLM コーディングコンテキスト](./llm-coding-context)は理解と下書きに役立ちますが、第 4 の拡張モデルではありません。ACP は fx とともに使用される内部リンクであり、第 4 の拡張方法ではありません。
+
+[SCREENSHOT PLACEHOLDER — 開発者パスの選択。利用可能な候補 build から手動で撮影します。]

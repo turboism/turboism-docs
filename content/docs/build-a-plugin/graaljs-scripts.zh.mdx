@@ -1,0 +1,38 @@
+---
+title: GraalJS 脚本
+description: 面向显式调用的受限 GraalJS 脚本的候选说明。
+---
+
+本页是待发布的候选文档。GraalJS 脚本不是 Java 插件，也不会建立一个已发布的脚本编写接口。
+
+## 打包脚本
+
+脚本包使用 schema version 为 `2` 的 `script.json` 描述符，并将 `language` 设为 `js`。描述符使用 `entry` 标识脚本入口，使用 `sourceSha256` 标识源文件，并声明请求的 `permissions`。请让描述符和源文件保持为调用它的 Java 插件所预期的组合。
+
+```json
+{
+  "schemaVersion": 2,
+  "language": "js",
+  "entry": "main.js",
+  "sourceSha256": "<源文件的 SHA-256>",
+  "permissions": []
+}
+```
+
+这只是字段级概览，不是完整的权限清单。只使用目标构建支持的权限；可用性和准确语义仍与 capability 有关。
+
+## 发现不等于执行
+
+让脚本可被发现并不会运行它。Java 插件必须通过 `PluginContext.scripts()` 显式取得脚本，并使用 `ScriptService.run` 显式调用脚本。不存在自动发现并执行的生命周期，脚本也不能替代 Java 插件的 manifest、生命周期、权限或服务。
+
+## 执行边界
+
+脚本在受限的 JavaScript 环境中运行，只能获得 Java 调用方提供的值和操作。它们获得的是有限的 Cubism bridge，而不是完整 Java SDK。请将 bridge 操作、执行限制和可用权限视为与构建相关；它们可能限制脚本可以读取、修改或请求的内容。请让脚本能处理不可用操作和执行失败，不要假定能够访问环境中的宿主资源。
+
+如需具有 SDK 生命周期和服务的常驻进程插件，请使用 Java 路径。外部客户端需要经过认证的 loopback Streamable HTTP 时，请使用[MCP](./mcp)。ACP 仅与 fx 在内部使用，不是脚本或扩展路径。
+
+## 当前状态
+
+脚本可用性、暴露的 bridge 操作、执行限制和发布细节仍待确定，并且可能因 Preview 构建而异。
+
+[SCREENSHOT PLACEHOLDER — 显式调用脚本；从可用的候选构建中手动截图。]

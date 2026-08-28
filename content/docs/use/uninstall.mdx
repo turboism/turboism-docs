@@ -1,0 +1,26 @@
+---
+title: Uninstall
+description: Remove Turboism with its installer while deciding what personal configuration to keep.
+---
+
+This is candidate guidance for publication pending. Use the uninstaller supplied by the installer that installed your Preview build; do not remove files while Turboism or its host application is running.
+
+## Use the installer’s uninstaller
+
+1. Close Turboism and the host application normally.
+2. Open the installer’s registered uninstall entry, or use the generated uninstaller supplied with that installation.
+3. Follow the uninstaller’s confirmation steps.
+4. When asked, choose whether to keep your configuration. Keep it if you may reinstall or need the same preferences later; remove it only if you no longer need it and have saved anything important.
+5. After completion, confirm that the application no longer starts through the removed installation.
+
+[SCREENSHOT PLACEHOLDER — uninstaller confirmation and configuration-retention choice; capture manually from an available candidate installer.]
+
+## What is kept
+
+The uninstaller removes files it owns. To avoid destroying material it cannot safely identify, unknown files and third-party plugin JARs are preserved. Keeping configuration is also a deliberate choice rather than an automatic deletion.
+
+If you want to remove preserved material, review it yourself after uninstalling and back up anything you may need. Do not treat removal as a way to erase unrelated host files or projects.
+
+## Before and after
+
+Read [Update Policy](./update-policy) before replacing an installation. If an update or mode change failed, start with [Downgrade and Recovery](./downgrade-recovery) rather than assuming an older build can be safely restored.

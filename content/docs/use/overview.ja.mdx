@@ -1,37 +1,21 @@
 ---
 title: Turboism を使う
-description: インストーラー artifact で Turboism をインストールし、Cubism のインストールを変更せずにローカルプラグインを管理する。
+description: 一般的なモデラー向けの Turboism ライフサイクル候補ガイド。
 ---
 
-このセクションでは、現在実装されているインストーラーの workflow を説明します。インストーラー artifact を選び、それを実行し、ローカルプラグインを管理します。
+これは公開待ちの候補ガイドです。Turboism をソースから構築する人ではなく、一般的なモデラーを対象にしています。
 
-## 学習の流れ
+## ライフサイクル
 
-1. [インストール](./installation) — Windows `.exe` インストーラーまたはクロスプラットフォーム `.jar` インストーラーを選んで実行し、安全境界を理解する。
-2. [クイックスタート](./quick-start) — Turboism をインストールし、設定して、初回起動を確認する。
-3. [プラグイン管理](./plugin-management) — ローカルプラグイン JAR をインストール、置換、有効化、無効化、アンインストールする。
-4. [更新ポリシー](./update-policy) — JAR replacement、インストーラーの再実行、将来の automatic update system の違いを理解する。
-5. [トラブルシューティング](../troubleshooting) — manifest、lifecycle、JAR、Provider の失敗を診断する。
+1. [インストール](./installation) — 候補となるインストール境界を確認し、インストーラーは使用中の Preview build を提供したチャネルからのみ入手します。
+2. [インストーラーモード](./installer-modes) — 選択前に、候補の Full、Thin、Lite Managed Runtime を理解します。
+3. [クイックスタート](./quick-start) — 手元の Preview build の初回実行フローを完了します。
+4. [プラグイン管理](./plugin-management) — 再起動後にローカル plugin JAR を管理します。これは公開済みの plugin directory ではありません。
+5. [ファーストパーティプラグイン](./first-party-plugins) — 同梱されるファーストパーティ capability の候補概要を確認します。
+6. [更新ポリシー](./update-policy) — build を変更する前に、手動更新を計画し必要なものを保存します。
+7. [ダウングレードと復旧](./downgrade-recovery) — 以前の version への downgrade がサポートされていると仮定せず、失敗した変更から復旧します。
+8. [アンインストール](./uninstall) — インストーラーのアンインストーラーを使用し、個人の configuration を保持するか選択します。
 
-## 利用可能なインストーラー
+## このパスが約束しないこと
 
-Turboism には現在、実装済みのインストーラーが 2 つあります。
-
-- `TurboismInstaller-<version>.exe` — Windows ネイティブの NSIS インストーラー。Windows ではこちらを優先します。
-- `TurboismInstaller-<version>.jar` — Windows と macOS 向けのクロスプラットフォーム IzPack インストーラー。Java 17+ が必要です。
-
-どちらも同じステージング済み payload を共有し、Lite と Full のモードを提供します。インストーラー artifact は、そのビルドを提供した release または preview チャネルから入手する必要があります。公開ダウンロードアセットはまだ公開されていません。インストーラー JAR はプラグイン JAR とは別物で、プラグインは[プラグイン管理](./plugin-management)で管理します。
-
-## 現在の境界
-
-Turboism には現在、次のものがあります。
-
-- Windows および Windows/macOS のインストーラー実装（Lite/Full 選択対応）。
-- version-routed Runtime と SDK。
-- ローカルプラグイン JAR discovery。
-- 厳格なローカル JAR inspection と staged plugin management。
-- capability 固有の fail-closed host integration。
-
-Turboism には現在、署名・ノータリゼーション済みの公開リリースチャネル、本番利用可能なオンラインリポジトリ、自動オンライン updater、署名サービス、検証済みの macOS Cubism ホスト起動はありません。macOS Cubism ランチャーもインストールされません。
-
-署名済み Official Directory client と UI はコードベースに存在しますが、本番アクティベーションは未準備で、ライブマーケットプレイスではありません。
+公開リリース、deployment、自動更新、オンライン discovery、plugin directory はすべて保留中です。各候補ドキュメントは version と capability に依存するものとして扱い、利用できる Preview の動作が説明と異なる場合は[トラブルシューティング](../troubleshooting)を使用してください。

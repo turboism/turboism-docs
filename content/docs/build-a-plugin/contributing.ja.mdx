@@ -1,0 +1,19 @@
+---
+title: コントリビューション
+description: Turboism 自体への contribution のための候補案内。
+---
+
+このページは公開待ちの候補ドキュメントです。方向付けのためのものであり、公開済みの contribution agreement や deployment process ではありません。
+
+## Contribution の意味
+
+contribution は、別の Java plugin、GraalJS script、MCP client integration を作るのではなく、Turboism 自体を変更することです。まず[プラグインを作る](./overview)の境界と、[プラグインインターフェース](./plugin-interfaces)の public plugin contract を理解してください。
+
+## 安全に進める
+
+- 提案する変更は 1 つの user または developer need に集中させます。
+- プロセス内 plugin の Java SDK boundary を守ります。
+- host と version に依存する動作は capability-dependent として扱います。
+- 仮定と検証を明確に説明し、Preview の動作を release-ready として提示しません。
+
+review、submission、acceptance、公開リリース、deployment の詳細は保留中です。公式の contribution workflow が公開されるまでは、このページを候補の方向付けとしてのみ使用してください。

@@ -1,28 +1,30 @@
 ---
 title: Build a Plugin
-description: Create SDK-only Java plugins for the current Turboism Developer Preview.
+description: Candidate developer entry point for contributing and extending Turboism.
 ---
 
-Turboism plugins are Java 17 JARs loaded by Runtime. Each plugin depends on the Turboism SDK only and declares its identity, entrypoints, compatibility, resources, dependencies, and permissions in manifest v2.
+This is candidate documentation for publication pending. It describes current Preview boundaries rather than a released extension program.
 
-The plugin release artifact is the module JAR itself. It contains exactly one `META-INF/turboism/plugin.json` and is distributed directly; there is no wrapper archive or separate packaging step.
+## Choose the right path
 
-## Recommended path
+### Contribute to Turboism
 
-1. [Developer Quick Start](./quick-start) — create, build, validate, and install a minimal plugin.
-2. [Plugin Interfaces](./plugin-interfaces) — understand the current `PluginContext` service families.
-3. [Plugin Manifest and Packaging](./manifest) — declare multiple entrypoints, permissions, resources, and JAR packaging rules.
-4. [Designing Plugins](./designing-plugins) — keep plugins lifecycle-safe and compatible.
-5. [SDK API Guide](../reference/sdk-api) — browse the guided API overview and generated reference.
+Read [Contributing](./contributing) when you want to improve Turboism itself. Contribution workflow and acceptance details remain pending.
 
-## Architectural boundary
+### Build a Java plugin
 
-```text
-Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
-```
+Use the existing [Developer Quick Start](./quick-start), [Plugin Interfaces](./plugin-interfaces), [Plugin Manifest and Packaging](./manifest), and [Designing Plugins](./designing-plugins) pages for the Java path. A Java plugin is an in-process SDK plugin: it is a Java 17 JAR loaded by Runtime and uses the public SDK boundary.
 
-Plugins must not depend directly on Runtime, `com.live2d.*`, reflection bridges, host UI widgets, native handles, or host ClassLoaders.
+### Add a GraalJS script
 
-## Current release boundary
+Read [GraalJS Scripts](./graaljs-scripts) for a limited script boundary. A Java caller must explicitly run a script through `ScriptService`; scripts do not run automatically and are not the full Java SDK.
 
-The source-backed Preview SDK and plugin loader exist, but a stable standalone starter template and public Maven coordinates are not published yet. The in-repository Gradle module flow is the current authoritative onboarding path.
+### Connect an external client
+
+Read [MCP](./mcp) for the first-party preview plugin that offers authenticated loopback Streamable HTTP to external clients. MCP is not an in-process Java plugin API.
+
+## Supporting material
+
+[LLM Coding Context](./llm-coding-context) helps with understanding and drafting work; it is not a fourth extension model. ACP is an internal link used only with fx, not a fourth way to extend Turboism.
+
+[SCREENSHOT PLACEHOLDER — developer-path selection; capture manually from an available candidate build.]

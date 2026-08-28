@@ -1,0 +1,55 @@
+---
+title: LLM コーディングコンテキスト
+description: コーディング agent に単独で渡せる、ベンダー中立の Turboism context brief。
+---
+
+このページは公開待ちの候補ドキュメントです。これはコーディング agent 向けの handoff brief であり、拡張 mechanism、release channel、deployment surface ではありません。現在の task とこの context を agent に渡し、行動前に unknown fact を source で確認するよう求めてください。
+
+## プロジェクト境界
+
+Turboism は Java ベースの integration および plugin framework です。product documentation は runtime で application、learning、plugin project から独立させます。development または test の近道として host installation を変更しないでください。関連する source と test が確立するまで、すべての behavior を version- および capability-sensitive として扱います。
+
+## アーキテクチャと拡張パス
+
+framework には異なる 3 つの path があります。
+
+1. **Java plugin** は、Java SDK lifecycle、manifest、permission、service を持つプロセス内 plugin です。
+2. **GraalJS script** は制限付き script です。Java plugin が `PluginContext.scripts()` で検出し、`ScriptService.run` で明示的に実行します。検出だけで script が実行されることはありません。
+3. **MCP** は first-party Preview plugin であり、信頼できる local external client に認証済み loopback Streamable HTTP を提供します。
+
+ACP は fx とともに内部でのみ使用され、第 4 の拡張 path ではありません。codebase は Java 17 を対象にしています。必要な capability が近くに見えるという理由だけで、ある path を別の path の代わりに使わないでください。
+
+## 必須の確認
+
+behavior を有効化または integration を変更する前に、各 condition を独立して正確に確認します。
+
+- 正確な product と API version range。
+- operation に必要な capability または provider。
+- action に対して宣言された permission。
+- 現在の session と lifecycle state。
+
+1 つの check を通過しても、他の check を通過したことにはなりません。API が存在するだけで support を推測せず、unavailable behavior を明示して test してください。
+
+## リポジトリの概要
+
+root build configuration から始め、編集前に変更を担当する module を特定します。大まかには、framework/runtime、public SDK、plugin 関連 implementation、host integration、test 用の module があり、documentation は別の site として保守されます。この概要を directory map として信頼せず、現在の checkout で実際の module 名、ownership、public contract、既存 test を調べてください。
+
+## contribution workflow
+
+変更を focused に保ち、behavior が変わる場合は対象を絞った test を更新または追加し、適用する checkout でリポジトリに記載された Gradle check を実行します。
+
+```bash
+./gradlew focusedTest
+./gradlew devCheck
+./gradlew checkCompletedCommit
+```
+
+まず最小の関連 test を実行し、その後に変更に適したより広い check を実行します。command、task、module、または contract が存在しない場合は、代替を提案する前に source または build configuration で確認してください。
+
+## documentation rule
+
+English は body content の authoritative language です。English、中国語、日本語の page の意味を一致させてください。検証なしに public release、download、compatibility、installation step、API signature、availability を主張しないでください。適切な場合は candidate material を pending と示します。documentation site の変更では、site を runtime で関連 product から独立させ、その site に記載された check を実行します。
+
+## agent への指示
+
+ベンダー中立を保ちます。この brief は任意の coding agent に渡せます。material claim ごとに source による裏付けを述べ、verified fact と assumption を区別し、fact が unknown なら source を確認するために停止するよう求めてください。生成された変更は受け入れる前に review します。

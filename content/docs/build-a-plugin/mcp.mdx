@@ -1,0 +1,28 @@
+---
+title: MCP
+description: Connect a trusted local client to the first-party preview MCP plugin.
+---
+
+This page is candidate documentation for publication pending. MCP is provided by a first-party preview plugin, not by a released platform service or a fourth in-process extension type.
+
+## Connection requirements
+
+The plugin listens only on `127.0.0.1` and uses authenticated Streamable HTTP. A local client must send the bearer secret issued for that connection. Give the generated connection metadata only to a client you trust on the same machine: anyone who obtains the secret may be able to act through the available MCP capability. Treat the connection file as sensitive local state—do not copy, log, share, synchronize, or publish its contents.
+
+## Connect a local client
+
+1. Start the available Preview build and enable or open its first-party MCP plugin as instructed by that build.
+2. In a trusted local MCP client, create a Streamable HTTP connection to the loopback endpoint reported by the plugin.
+3. Configure the client to send the bearer secret for that connection.
+4. Have the client send `initialize` and retain the `MCP-Session-Id` returned for the session.
+5. After initialization, send the initialized notification required by MCP, then use only the operations exposed by that Preview build.
+
+The endpoint, secret, available operations, and client compatibility remain Preview- and capability-sensitive. If a client cannot complete this sequence, do not bypass loopback or authentication controls.
+
+## Keep extension paths separate
+
+Use MCP when an external client needs a controlled local connection. Use a Java plugin for process-internal SDK lifecycle and services. Use [GraalJS Scripts](./graaljs-scripts) only when a Java caller explicitly runs a limited script through `PluginContext.scripts()` and `ScriptService.run`.
+
+ACP is internal and used only with fx. It is not an MCP endpoint or another way to extend Turboism.
+
+[SCREENSHOT PLACEHOLDER — trusted local MCP client connection; capture manually from an available candidate build.]

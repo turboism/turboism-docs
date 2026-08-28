@@ -1,37 +1,21 @@
 ---
 title: 使用 Turboism
-description: 使用安装器 artifact 安装 Turboism，并在不修改 Cubism 安装的情况下管理本地插件。
+description: 面向普通建模者的 Turboism 生命周期候选指南。
 ---
 
-本节记录当前已实现的安装器工作流：选择安装器 artifact、运行它，并管理本地插件。
+这是待发布的候选指南，面向普通建模者，而非从源代码构建 Turboism 的人员。
 
-## 学习路径
+## 你的生命周期
 
-1. [安装](./installation) — 选择并运行 Windows `.exe` 安装器或跨平台 `.jar` 安装器，并了解其安全边界。
-2. [快速开始](./quick-start) — 安装 Turboism、进行配置，并验证首次运行。
-3. [插件管理](./plugin-management) — 安装、替换、启用、禁用和卸载本地插件 JAR。
-4. [更新策略](./update-policy) — 了解 JAR 替换、安装器重跑与未来自动更新系统之间的区别。
-5. [故障排查](../troubleshooting) — 诊断 manifest、生命周期、JAR 和 Provider 故障。
+1. [安装](./installation) — 了解候选安装边界，并且只从提供你的 Preview 构建的渠道取得安装器。
+2. [安装器模式](./installer-modes) — 在选择前了解候选的 Full、Thin 和 Lite Managed Runtime 选项。
+3. [快速开始](./quick-start) — 完成你所拥有的 Preview 构建的首次运行流程。
+4. [插件管理](./plugin-management) — 重启后管理本地插件 JAR；这不是已发布的插件目录。
+5. [第一方插件](./first-party-plugins) — 查看捆绑第一方能力的候选总览。
+6. [更新策略](./update-policy) — 在更换构建前规划手动更新并保存重要内容。
+7. [降级与恢复](./downgrade-recovery) — 从失败的更改中恢复，不要假定支持降级到旧版本。
+8. [卸载](./uninstall) — 使用安装器的卸载器，并选择是否保留个人配置。
 
-## 可用的安装器
+## 此路径不承诺的内容
 
-Turboism 当前有两种已实现的安装器：
-
-- `TurboismInstaller-<version>.exe` — Windows 原生的 NSIS 安装器，在 Windows 上优先使用。
-- `TurboismInstaller-<version>.jar` — 面向 Windows 和 macOS 的跨平台 IzPack 安装器，需要 Java 17+。
-
-两者共享同一个分阶段 payload，并提供 Lite 和 Full 模式。安装器 artifact 必须来自提供构建的 release 或 preview 渠道；公开下载资源尚未发布。安装器 JAR 与插件 JAR 是分开的，插件通过[插件管理](./plugin-management)管理。
-
-## 当前边界
-
-Turboism 当前具备：
-
-- Windows 以及 Windows/macOS 安装器实现，支持 Lite/Full 选择；
-- 按版本路由的 Runtime 和 SDK；
-- 本地插件 JAR 发现；
-- 严格的本地 JAR 检查和分阶段插件管理；
-- 按 capability 区分、fail-closed 的宿主集成。
-
-Turboism 当前不具备签名/公证的公开发布渠道、生产可用的在线仓库、自动在线更新器、签名服务，或经过验证的 macOS Cubism 宿主启动。macOS Cubism launcher 未安装。
-
-签名 Official Directory 客户端和 UI 已存在于代码库中，但生产激活尚未就绪，它不是实时 marketplace。
+公开发布、部署、自动更新、在线发现和插件目录仍待落实。请将每份候选文档视为与版本和能力相关；如果可用的 Preview 行为与这些说明不同，请使用[故障排查](../troubleshooting)。

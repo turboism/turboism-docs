@@ -1,0 +1,28 @@
+---
+title: MCP
+description: 将可信本地客户端连接到第一方 Preview MCP 插件。
+---
+
+本页是待发布的候选文档。MCP 由第一方 Preview 插件提供，不是已发布的平台服务，也不是第四种进程内扩展类型。
+
+## 连接要求
+
+该插件仅监听 `127.0.0.1`，并使用经过认证的 Streamable HTTP。本地客户端必须发送为该连接签发的 bearer secret。生成的连接元数据只能交给同一台机器上你信任的客户端：任何获得该 secret 的人都可能通过可用的 MCP capability 执行操作。请把连接文件视为敏感的本地状态——不要复制、记录、分享、同步或发布其中的内容。
+
+## 连接本地客户端
+
+1. 启动可用的 Preview 构建，并按该构建的说明启用或打开其第一方 MCP 插件。
+2. 在可信的本地 MCP 客户端中，创建通向该插件报告的 loopback endpoint 的 Streamable HTTP 连接。
+3. 配置客户端为该连接发送 bearer secret。
+4. 让客户端发送 `initialize`，并在会话中保留返回的 `MCP-Session-Id`。
+5. 初始化后，发送 MCP 所需的 initialized notification，然后只使用该 Preview 构建公开的操作。
+
+endpoint、secret、可用操作和客户端兼容性仍与 Preview 和 capability 相关。如果客户端无法完成此序列，不要绕过 loopback 或认证控制。
+
+## 保持扩展路径分离
+
+当外部客户端需要受控的本地连接时，请使用 MCP。进程内的 SDK 生命周期和服务请使用 Java 插件。仅当 Java 调用方通过 `PluginContext.scripts()` 和 `ScriptService.run` 显式运行受限脚本时，才使用[GraalJS 脚本](./graaljs-scripts)。
+
+ACP 仅与 fx 在内部使用。它不是 MCP endpoint，也不是另一种扩展 Turboism 的方式。
+
+[SCREENSHOT PLACEHOLDER — 可信本地 MCP 客户端连接；从可用的候选构建中手动截图。]

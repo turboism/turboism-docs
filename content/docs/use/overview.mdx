@@ -1,37 +1,21 @@
 ---
 title: Use Turboism
-description: Install Turboism with an installer artifact and manage local plugins without modifying Cubism installations.
+description: Candidate guidance for the ordinary modeler lifecycle with Turboism.
 ---
 
-This section documents the currently implemented installer workflow: choose an installer artifact, run it, and manage local plugins.
+This is candidate guidance for publication pending. It is written for ordinary modelers, not for people building Turboism from source.
 
-## Learning path
+## Your lifecycle
 
-1. [Installation](./installation) — choose and run the Windows `.exe` installer or the cross-platform `.jar` installer, and understand its safety boundary.
-2. [Quick Start](./quick-start) — install Turboism, configure it, and verify the first run.
-3. [Plugin Management](./plugin-management) — install, replace, enable, disable, and uninstall local plugin JARs.
-4. [Update Policy](./update-policy) — understand the difference between JAR replacement, installer reruns, and a future automatic update system.
-5. [Troubleshooting](../troubleshooting) — diagnose manifest, lifecycle, JAR, and Provider failures.
+1. [Installation](./installation) — review the candidate installation boundary and obtain an installer only from the channel that supplied your Preview build.
+2. [Installer Modes](./installer-modes) — understand the candidate Full, Thin, and Lite Managed Runtime choices before selecting one.
+3. [Quick Start](./quick-start) — complete the first-run workflow for the Preview build you have.
+4. [Plugin Management](./plugin-management) — manage local plugin JARs after a restart; this is not a published plugin directory.
+5. [First-party plugins](./first-party-plugins) — see the candidate overview of bundled first-party capabilities.
+6. [Update Policy](./update-policy) — plan manual updates and preserve what matters before changing builds.
+7. [Downgrade and Recovery](./downgrade-recovery) — recover from a failed change without assuming that an older-version downgrade is supported.
+8. [Uninstall](./uninstall) — use the installer’s uninstaller and choose whether to keep personal configuration.
 
-## Available installers
+## What this path does not promise
 
-Turboism currently has two implemented installers:
-
-- `TurboismInstaller-<version>.exe` — the Windows-native NSIS installer, preferred on Windows.
-- `TurboismInstaller-<version>.jar` — the cross-platform IzPack installer for Windows and macOS, requiring Java 17+.
-
-Both share the same staged payload and offer Lite and Full modes. Installer artifacts must come from the release or preview channel that provided your build; public download assets are not published yet. The installer JAR is separate from plugin JARs, which are managed through [Plugin Management](./plugin-management).
-
-## Current boundary
-
-Turboism currently has:
-
-- Windows and Windows/macOS installer implementations with Lite/Full selection;
-- a version-routed Runtime and SDK;
-- local plugin JAR discovery;
-- strict local JAR inspection and staged plugin management;
-- capability-specific fail-closed host integration.
-
-Turboism does not currently have a signed/notarized public release channel, a production-enabled online repository, an automatic online updater, a signing service, or verified macOS Cubism host launch. No macOS Cubism launcher is installed.
-
-The signed Official Directory client and UI exist in the codebase, but production activation is not ready and it is not a live marketplace.
+Public release, deployment, automatic updates, online discovery, and a plugin directory are all pending. Treat each candidate document as version- and capability-sensitive, and use [Troubleshooting](../troubleshooting) when the available Preview behavior differs from these directions.

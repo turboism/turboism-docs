@@ -1,0 +1,22 @@
+---
+title: Downgrade and Recovery
+description: Candidate recovery guidance that does not assume older-version downgrade support.
+---
+
+This is candidate guidance for publication pending. Turboism does not currently document support for downgrading to an older version. Do not treat a retained installer or plugin JAR as proof that an older version can be restored safely.
+
+## Recover from a failed change
+
+1. Stop and assess the failed update, replacement, or configuration change.
+2. Preserve the configuration, data, and plugin JARs that matter before making further changes.
+3. Use the recovery information supplied with the same Preview build, if any.
+4. Reapply a known-good configuration or plugin selection only when the supplied guidance supports it.
+5. If the issue persists, use [Troubleshooting](../troubleshooting) and record the visible behavior without exposing private material.
+
+## Plugin replacements
+
+A failed staged plugin replacement may restore the immediately previous plugin files internally. That is not a user-facing historical-version feature and does not establish a general plugin downgrade workflow.
+
+## Plan before updating
+
+Read [Update Policy](./update-policy) before changing a build, and see [Installer Modes](./installer-modes) for the candidate Managed Runtime choices. Public release, deployment, automatic recovery, and a complete rollback interface remain pending.

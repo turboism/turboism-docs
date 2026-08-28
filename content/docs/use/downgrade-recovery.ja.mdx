@@ -1,0 +1,22 @@
+---
+title: ダウングレードと復旧
+description: 以前の version への downgrade を仮定しない候補復旧ガイド。
+---
+
+これは公開待ちの候補ガイドです。Turboism は現在、以前の version への downgrade をサポートしているとは記載していません。保持しているインストーラーや plugin JAR があっても、以前の version を安全に復元できる証拠として扱わないでください。
+
+## 失敗した変更から復旧する
+
+1. 失敗した更新、置換、または設定変更を止めて評価します。
+2. 追加の変更を行う前に、重要な設定、データ、plugin JAR を保存します。
+3. 同じ Preview build とともに提供された復旧情報があれば使用します。
+4. 付属の案内が許可する場合にのみ、既知の正常な設定または plugin 選択を再適用します。
+5. 問題が続く場合は[トラブルシューティング](../troubleshooting)を使用し、private material を公開せずに目に見える動作を記録します。
+
+## Plugin の置換
+
+staged plugin replacement が失敗すると、直前の plugin file が内部的に復元されることがあります。これはユーザー向けの履歴 version 機能ではなく、一般的な plugin downgrade フローがあることを意味しません。
+
+## 更新前に計画する
+
+build を変更する前に[更新ポリシー](./update-policy)を読み、候補 Managed Runtime の選択肢は[インストーラーモード](./installer-modes)で確認してください。公開リリース、deployment、自動復旧、完全な rollback interface は保留中です。

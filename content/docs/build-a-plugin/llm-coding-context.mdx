@@ -1,0 +1,55 @@
+---
+title: LLM Coding Context
+description: A vendor-neutral, self-contained context brief for a coding agent working on Turboism.
+---
+
+This page is candidate documentation for publication pending. It is a handoff brief for a coding agent, not an extension mechanism, release channel, or deployment surface. Give the agent the current task and this context, then require it to verify unknown facts in source before acting.
+
+## Project boundary
+
+Turboism is a Java-based integration and plugin framework. Keep product documentation independent from application, learning, and plugin projects at runtime. Do not alter a host installation as a shortcut for development or testing. Treat every behavior as version- and capability-sensitive until the relevant source and tests establish it.
+
+## Architecture and extension paths
+
+The framework has three distinct paths:
+
+1. **Java plugins** are in-process plugins with the Java SDK lifecycle, manifest, permissions, and services.
+2. **GraalJS scripts** are restricted scripts that a Java plugin discovers through `PluginContext.scripts()` and explicitly runs with `ScriptService.run`; discovery alone never executes a script.
+3. **MCP** is a first-party preview plugin that provides authenticated loopback Streamable HTTP to trusted local external clients.
+
+ACP is internal and only used with fx; it is not a fourth extension path. The codebase targets Java 17. Do not substitute one path for another merely because a desired capability appears adjacent.
+
+## Required checks
+
+Before enabling behavior or changing an integration, check each condition independently and precisely:
+
+- the exact product and API version range;
+- the capability or provider needed for the operation;
+- the declared permission for the action; and
+- the current session and lifecycle state.
+
+Passing one check does not imply another. Make unavailable behavior explicit and test it instead of inferring support from an API’s presence.
+
+## Repository orientation
+
+Start from the root build configuration and identify the module responsible for the change before editing. In broad terms, expect modules for the framework/runtime, public SDK, plugin-related implementation, host integration, and tests; documentation is maintained as a separate site. Inspect the actual module names, ownership, public contracts, and existing tests in the current checkout rather than relying on this orientation as a directory map.
+
+## Contribution workflow
+
+Keep changes focused, update or add targeted tests where behavior changes, and run the repository’s documented Gradle checks from the applicable checkout:
+
+```bash
+./gradlew focusedTest
+./gradlew devCheck
+./gradlew checkCompletedCommit
+```
+
+Run the smallest relevant test first, then the broader checks appropriate to the change. If a command, task, module, or contract is not present, confirm that from source or build configuration before proposing an alternative.
+
+## Documentation rules
+
+English is the authoritative body language. Keep English, Chinese, and Japanese pages semantically aligned. Do not claim public release, downloads, compatibility, installation steps, API signatures, or availability without verification. Mark candidate material as pending where appropriate. For documentation-site changes, keep the site runtime-independent from related products and run the site’s documented checks.
+
+## Agent instruction
+
+Be vendor-neutral: use this brief with any coding agent. Ask it to state what source support for each material claim, distinguish verified facts from assumptions, and stop to inspect source when facts are unknown. Review generated changes before accepting them.

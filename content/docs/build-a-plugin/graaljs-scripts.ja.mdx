@@ -1,0 +1,38 @@
+---
+title: GraalJS スクリプト
+description: 明示的に呼び出す制限付き GraalJS script の候補説明。
+---
+
+このページは公開待ちの候補ドキュメントです。GraalJS script は Java plugin ではなく、公開済みの scripting surface を確立するものでもありません。
+
+## script をパッケージ化する
+
+script package は、schema version `2` の `script.json` descriptor を使用し、`language` を `js` に設定します。descriptor は `entry` で script entry を、`sourceSha256` で source を特定し、要求する `permissions` を宣言します。descriptor と source は、それを使用する Java plugin が期待する組み合わせのままにしてください。
+
+```json
+{
+  "schemaVersion": 2,
+  "language": "js",
+  "entry": "main.js",
+  "sourceSha256": "<source の SHA-256>",
+  "permissions": []
+}
+```
+
+これは field-level の概要であり、完全な permission catalog ではありません。対象 build がサポートする permission だけを使用してください。availability と正確な意味は引き続き capability-sensitive です。
+
+## 検出は実行ではない
+
+script を検出可能にしても実行されません。Java plugin は `PluginContext.scripts()` を通じて script を明示的に取得し、`ScriptService.run` で明示的に呼び出す必要があります。自動の discovery-and-execution lifecycle はなく、script は Java plugin の manifest、lifecycle、permission、service の代わりにはなりません。
+
+## 実行の境界
+
+script は制限付き JavaScript environment で実行され、Java caller が提供する value と operation だけを受け取ります。完全な Java SDK ではなく、制限された Cubism bridge を受け取ります。bridge operation、execution limit、利用可能な permission は build 固有として扱ってください。これらは script が read、change、request できるものを制限する場合があります。ambient な host access を仮定せず、unavailable operation と execution failure を処理できるように script を設計してください。
+
+SDK lifecycle と service を持つプロセス常駐 plugin には Java のパスを使用してください。外部 client に authenticated loopback Streamable HTTP が必要な場合は[MCP](./mcp)を使用します。ACP は fx とともに内部でのみ使用され、scripting または拡張パスではありません。
+
+## 現在の状態
+
+script の availability、公開される bridge operation、execution limit、公開の詳細は保留中で、Preview build ごとに異なる場合があります。
+
+[SCREENSHOT PLACEHOLDER — 明示的な script invocation。利用可能な候補 build から手動で撮影します。]

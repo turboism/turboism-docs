@@ -1,28 +1,30 @@
 ---
 title: 构建插件
-description: 为当前 Turboism Developer Preview 创建仅依赖 SDK 的 Java 插件。
+description: 用于贡献和扩展 Turboism 的开发者候选入口。
 ---
 
-Turboism 插件是由 Runtime 加载的 Java 17 JAR。每个插件仅依赖 Turboism SDK，并在 manifest v2 中声明其身份、入口点、兼容性、资源、依赖和权限。
+这是待发布的候选文档，描述当前 Preview 的边界，而非已发布的扩展计划。
 
-插件发布产物就是模块 JAR 本身。它恰好包含一个 `META-INF/turboism/plugin.json`，并直接分发；没有 wrapper 归档或单独的打包步骤。
+## 选择正确的路径
 
-## 推荐路径
+### 参与 Turboism 贡献
 
-1. [开发者快速入门](./quick-start) — 创建、构建、验证并安装一个最小插件。
-2. [插件接口](./plugin-interfaces) — 了解当前 `PluginContext` 服务系列。
-3. [插件 Manifest 与打包](./manifest) — 声明多个入口点、权限、资源和 JAR 打包规则。
-4. [设计插件](./designing-plugins) — 保持插件生命周期安全且兼容。
-5. [SDK API 指南](../reference/sdk-api) — 浏览引导式 API 概览和生成的参考文档。
+若想改进 Turboism 本身，请阅读[参与贡献](./contributing)。贡献流程和接收细则仍待确定。
 
-## 架构边界
+### 构建 Java 插件
 
-```text
-Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
-```
+请使用现有的[开发者快速入门](./quick-start)、[插件接口](./plugin-interfaces)、[插件 Manifest 与打包](./manifest)和[设计插件](./designing-plugins)页面来走 Java 路径。Java 插件是进程内 SDK 插件：它是由 Runtime 加载的 Java 17 JAR，并使用公共 SDK 边界。
 
-插件不得直接依赖 Runtime、`com.live2d.*`、反射桥接、主机 UI 小部件、原生句柄或主机 ClassLoader。
+### 添加 GraalJS 脚本
 
-## 当前发布边界
+受限脚本边界请参阅[GraalJS 脚本](./graaljs-scripts)。Java 调用方必须通过 `ScriptService` 显式运行脚本；脚本不会自动执行，也不是完整的 Java SDK。
 
-有源代码支持的 Preview SDK 和插件加载器已经存在，但尚未发布稳定的独立入门模板和公开 Maven 坐标。仓库内 Gradle 模块流程是当前权威的上手路径。
+### 连接外部客户端
+
+请参阅[MCP](./mcp)：第一方 Preview 插件通过经过认证的 loopback Streamable HTTP 向外部客户端提供服务。MCP 不是进程内 Java 插件 API。
+
+## 辅助资料
+
+[LLM 编程上下文](./llm-coding-context)有助于理解和起草工作；它不是第四种扩展模型。ACP 是仅与 fx 一起使用的内部链路，不是第四种扩展方式。
+
+[SCREENSHOT PLACEHOLDER — 开发者路径选择；从可用的候选构建中手动截图。]
