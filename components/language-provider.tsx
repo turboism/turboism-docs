@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import type { Language } from "@/lib/i18n";
+import { createContext, useContext, useEffect } from "react";
+import { persistLanguage, type Language } from "@/lib/i18n";
 
 type Copy = {
   language: string;
@@ -86,6 +86,10 @@ export function LanguageProvider({
   language: Language;
   children: React.ReactNode;
 }) {
+  useEffect(() => {
+    persistLanguage(language);
+  }, [language]);
+
   return (
     <LanguageContext.Provider value={{ language, copy: copy[language] }}>
       {children}

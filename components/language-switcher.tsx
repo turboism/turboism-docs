@@ -3,7 +3,7 @@
 import { Check, Languages } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { languages, type Language } from "@/lib/i18n";
+import { languages, persistLanguage, type Language } from "@/lib/i18n";
 
 const labels: Record<Language, string> = {
   en: "English",
@@ -26,6 +26,7 @@ export function LanguageSwitcher({ language }: { language: Language }) {
   }, []);
 
   function changeLanguage(next: Language) {
+    persistLanguage(next);
     const segments = pathname.split("/");
     if (languages.includes(segments[1] as Language)) segments[1] = next;
     else segments.splice(1, 0, next);
