@@ -31,7 +31,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - Windows 原生的 NSIS 安装器（`TurboismInstaller-<version>.exe`），在 Windows 上优先使用；
 - Java 17 IzPack 安装器（`TurboismInstaller-<version>.jar`），实现了 Windows/macOS 安装语义。
 
-Windows EXE 覆盖按用户安装、Lite/Full 与第一方插件选择、开始菜单项和卸载。安装器 JAR 在 Windows 和 macOS 上提供相同的 Lite/Full 选择，并生成平台卸载支持。两者都不会修改 Cubism 安装文件。这些实现会为 release 或 preview 渠道产出安装器 artifact，但尚不存在签名/公证的公开渠道。
+Windows EXE 覆盖按用户安装、Lite/Full 与第一方插件选择、开始菜单项和卸载。安装器 JAR 在 Windows 和 macOS 上提供相同的 Lite/Full 选择，并生成平台卸载支持。两者都不会修改 Cubism 安装文件。这些实现会为 release 或 preview 渠道产出安装包，但尚不存在签名/公证的公开渠道。
 
 ## Cubism 和 Editor API 进展
 
@@ -78,7 +78,7 @@ SDK 包含以下契约：
 
 Turboism 当前不承诺：
 
-- 签名/公证的安装器 artifact 公开发布渠道；
+- 签名/公证的安装包公开发布渠道；
 - 经过验证的 macOS Cubism 宿主启动；
 - 自动在线更新或生产可用的 marketplace；
 - 发布者签名或撤销；

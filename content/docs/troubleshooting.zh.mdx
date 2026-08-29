@@ -7,7 +7,7 @@ description: 诊断 Preview 启动、插件 JAR、生命周期、权限和 Provi
 
 - 确认使用的是预期的 Preview 目录和 Turboism home。
 - 检查 Preview 所有或 home 所有日志目录中的 Java Agent 和 Runtime 日志。
-- 确认当前 Cubism artifact 符合受支持的 Preview 范围。
+- 确认当前 Cubism 安装符合受支持的 Preview 范围。
 - 不要替换 Cubism JAR、DLL、BAT 文件或许可组件来绕过身份验证失败。
 
 ## 插件未出现
@@ -41,14 +41,10 @@ description: 诊断 Preview 启动、插件 JAR、生命周期、权限和 Provi
 
 ## 宿主 capability 不可用
 
-这通常是有意的 fail-closed 结果，原因可能包括宿主版本、artifact identity、mapping 验证、Provider 可用性、安全模式或过时的对象 generation。
+这通常是有意的 fail-closed 结果，原因可能包括宿主版本、Cubism 文件身份、mapping 验证、Provider 可用性、安全模式或过时的对象 generation。
 
-记录确切的 Cubism 版本、artifact identity、操作和 diagnostic code。不要通过反射或直接宿主访问绕过失败。
+记录确切的 Cubism 版本、Cubism 文件身份、操作和 diagnostic code。不要通过反射或直接宿主访问绕过失败。
 
 ## 反馈
 
-文档修正和非敏感的产品讨论应提交到公共文档仓库：
-
-- https://github.com/turboism/turboism-docs
-
-功能或 Runtime 缺陷报告应包含相关 Turboism source revision、Cubism 版本、已脱敏的日志和复现步骤。不要附加专有 Cubism 二进制文件、私有资源、许可材料或用户项目。
+请通过[反馈与功能需求](./report-a-bug)，使用 Discord、GitHub 或电子邮件报告 Bug，或提出框架与插件功能需求。

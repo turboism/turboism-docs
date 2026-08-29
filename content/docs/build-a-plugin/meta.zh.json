@@ -1,5 +1,5 @@
 {
-  "title": "开发者",
+  "title": "开发",
   "pagesIndex": "overview",
   "pages": [
     "contributing",
@@ -9,6 +9,6 @@
     "designing-plugins",
     "graaljs-scripts",
     "mcp",
-    "llm-coding-context"
+    "[使用 LLM 进行开发](llm-coding-context)"
   ]
 }

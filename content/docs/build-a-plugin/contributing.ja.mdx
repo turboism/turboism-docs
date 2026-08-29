@@ -1,19 +1,29 @@
 ---
 title: コントリビューション
-description: Turboism 自体への contribution のための候補案内。
+description: Turboism とその拡張エコシステムに貢献するための原則と参加方法。
 ---
 
-このページは公開待ちの候補ドキュメントです。方向付けのためのものであり、公開済みの contribution agreement や deployment process ではありません。
+フレームワークを改善したり、拡張機能やプラグインを開発したりすることで、Turboism の改善に参加できます。より多くの人にとって信頼でき、安全で役立つ貢献にするため、以下の原則に従ってください。
 
-## Contribution の意味
+## 貢献の原則
 
-contribution は、別の Java plugin、GraalJS script、MCP client integration を作るのではなく、Turboism 自体を変更することです。まず[プラグインを作る](./overview)の境界と、[プラグインインターフェース](./plugin-interfaces)の public plugin contract を理解してください。
+- 単一の host や利用場面だけに対応する機能を追加するのではなく、汎用的なフレームワークの境界内で作業します。
+- 内部 API、host object、reflection、未サポートの integration path ではなく、public SDK を優先します。
+- 各変更は、明確に 1 つの user または developer のニーズに集中させます。
+- 対象 version との互換性、capability の利用可否、必要な permission をそれぞれ確認します。permission が許可されていても、capability が利用可能とは限りません。
+- 適切な test を追加または更新し、英語・簡体字中国語・日本語のドキュメントを同期します。public SDK またはその説明を変更した場合は、SDK Javadoc も再生成してレビューします。
+- user file、個人情報、privacy を保護します。必要な access と data だけを要求・処理し、code、log、documentation で sensitive information を公開しないでください。
 
-## 安全に進める
+## 参加方法
 
-- 提案する変更は 1 つの user または developer need に集中させます。
-- プロセス内 plugin の Java SDK boundary を守ります。
-- host と version に依存する動作は capability-dependent として扱います。
-- 仮定と検証を明確に説明し、Preview の動作を release-ready として提示しません。
+### 1. フレームワークを改善する
 
-review、submission、acceptance、公開リリース、deployment の詳細は保留中です。公式の contribution workflow が公開されるまでは、このページを候補の方向付けとしてのみ使用してください。
+フレームワークに関する作業の報告、議論、改善には [GitHub Issues](https://github.com/turboism/turboism/issues) を使用します。実装変更は [GitHub Pull Requests](https://github.com/turboism/turboism/pulls) から提案してください。
+
+### 2. 拡張機能を開発する
+
+用途に合う拡張方法を選びます。プロセス内 SDK integration には [Java plugin](./designing-plugins)、明示的に呼び出す制限付き script には [GraalJS Script](./graaljs-scripts)、信頼できるローカル client integration には [MCP](./mcp) を使用します。
+
+### 3. Plugin Directory 向けの plugin を開発する
+
+Plugin Directory での配布を想定して plugin を開発できます。ただし、Plugin Directory、その公開プロセス、公開 listing は、まだ確定または公開されていません。すでに deploy 済みであるかのように案内しないでください。現時点では、候補 plugin を [Turboism GitHub リポジトリ](https://github.com/turboism) から提出または議論してください。

@@ -1,24 +1,30 @@
 ---
 title: Generated API Reference
-description: Status of the candidate regenerated SDK Javadoc reference.
+description: SDK Javadoc generation, review, and publication status.
 ---
 
-This page is candidate documentation for publication pending. The currently hosted Javadoc is stale and must not be read as the current public API contract.
+The SDK Javadoc is generated from the matching Turboism source tree and hosted under the SDK documentation site only after review.
 
-## Regeneration status
+## Documentation update workflow
 
-Candidate regeneration is blocked by three current issues:
+When the public SDK, its documentation, or its version changes:
 
-- A generated type describes itself as internal and non-stable, even though it is publicly searchable in the candidate output.
-- A generated service remains marked Preview, so its public-reference policy still needs a decision.
-- The candidate output still carries the `0.42.0-SNAPSHOT` version identifier.
+1. generate Javadoc with the source repository's `:sdk:javadoc` Gradle task;
+2. verify the exact version and reject snapshot output;
+3. review every publicly searchable package and type;
+4. confirm that internal implementation types and unapproved Preview APIs are not presented as public contracts;
+5. check generated text for private data, local paths, credentials, host logs, or implementation-only evidence;
+6. synchronize the reviewed output to the documentation site; and
+7. run the documentation lint, type check, and production build.
 
-Until those blockers are resolved, the hosted HTML reference remains outdated. Do not rely on it for release, deployment, or compatibility claims.
+Successful generation alone does not approve publication. If the generated public surface or version is not ready, keep the hosted Javadoc unchanged and record the blocker here.
 
-## Use the available guidance carefully
+## Current status
 
-- Read the [SDK API Guide](./sdk-api) for the curated boundary.
-- Read [Build a Plugin](../build-a-plugin/overview) for the candidate extension paths.
-- Treat every current API statement as Preview and capability-sensitive.
+The latest reviewed candidate was not synchronized because:
 
-No local regeneration procedure is published on this page. Publication of refreshed generated reference material remains pending.
+- a generated type describes itself as internal and non-stable while remaining publicly searchable;
+- a generated service remains marked Preview and still needs an approved public-reference policy; and
+- the reviewed candidate used the wrong version identifier.
+
+Until those blockers are resolved, use the [SDK API Guide](./sdk-api) and the public SDK source declarations. Do not rely on the currently hosted HTML reference for release, deployment, or compatibility claims.

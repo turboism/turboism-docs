@@ -1,20 +1,38 @@
 ---
 title: 文档
-description: 面向使用 Turboism 的建模者和开发者的候选文档。
+description: Turboism 项目简介、基本使用与开发文档。
 ---
 
-# Turboism 文档
+Turboism 是面向 Live2D Cubism Editor 的开源增强工具与插件框架。它通过公共 SDK、权限和版本适配边界，为 Cubism 增加可选功能，并保持 Cubism 本身独立安装和授权。
 
-这些是仍待发布的候选文档，说明当前 Preview 的方向，而不是发布承诺。
+## 文档结构
 
-## 选择你的路径
+### 基本
 
-### 我想建模
+从[基本](./use/overview)开始，查看安装、初次使用、插件管理、第一方插件教程、更新、卸载与恢复。
 
-请沿着[建模者](./use/overview)路径了解候选安装流程、开始使用 Turboism、管理本地插件，以及规划更新或恢复。可从[安装](./use/installation)和[快速开始](./use/quick-start)开始。
+### 开发
 
-### 我想构建或扩展
+前往[开发](./build-a-plugin/overview)参与 Turboism 开发，或使用三种开发方式之一：
 
-请沿着[开发者](./build-a-plugin/overview)路径参与贡献、构建进程内 Java SDK 插件、了解受限的 GraalJS 脚本边界，或通过 Preview MCP 插件连接外部客户端。[LLM 编程上下文](./build-a-plugin/llm-coding-context)是辅助资料，并非另一种扩展方式。
+1. Java 插件；
+2. 由 Java 调用方显式运行的 GraalJS 脚本；
+3. 通过 MCP 进行外部自动化。
 
-有关准备状态和发布范围，请参阅[开发状态](./development-status)和[文档 Preview](./documentation-preview)。
+### 概念
+
+[概念](./concepts/architecture)介绍 Turboism 的架构、映射层和自动化边界。
+
+### 参考
+
+[参考](./reference/overview)汇总 SDK 指南和生成的 API 文档状态。
+
+### 安全与反馈
+
+请阅读[安全与权利说明](./safety-and-rights)，了解项目独立性、第三方权利、用户资料保护、开源许可与商业使用建议。
+
+如需报告 Bug，或提出框架与插件功能需求，请查看[反馈与功能需求](./report-a-bug)，选择 Discord、GitHub 或电子邮件渠道。
+
+如需帮助维护框架、文档、测试和社区，请查看[支持我们](./support-us)。经过核实的正式赞助入口开通后，也会在该页面列出。
+
+有关当前准备状态，请参阅[开发状态](./development-status)。

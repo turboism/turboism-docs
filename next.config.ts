@@ -3,7 +3,7 @@ import { createMDX } from "fumadocs-mdx/next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  allowedDevOrigins: ["localhost", ".trycloudflare.com"],
+  allowedDevOrigins: ["localhost", "*.trycloudflare.com"],
   turbopack: { root: __dirname },
 };
 

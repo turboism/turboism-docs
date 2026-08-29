@@ -1,6 +1,6 @@
 ---
 title: SDK API ガイド
-description: 現在の Turboism plugin SDK の entrypoint、service、object model、lifecycle、capability boundary。
+description: 現在の Turboism プラグイン SDK のエントリーポイント、サービス、オブジェクトモデル、ライフサイクル、機能境界。
 ---
 
 Turboism SDK は plugin にとって唯一の public dependency です。新しい API はデフォルトで Preview です。利用可能性は、次の 4 つの事実に分かれます。
@@ -10,9 +10,9 @@ Turboism SDK は plugin にとって唯一の public dependency です。新し�
 3. Runtime に対応する capability Provider がある。
 4. active Cubism version と object generation がサポートされている。
 
-生成済み type と method の index については、[SDK HTML API reference](/api/sdk/index.html) を開いてください。
+生成済み type と method の index については、[SDK HTML API リファレンス](/api/sdk/index.html) を開いてください。
 
-## Plugin lifecycle
+## プラグインのライフサイクル
 
 すべての entrypoint は `TurboismPlugin` または `CubismPlugin` などの subinterface を実装します。
 
@@ -59,7 +59,7 @@ public interface TurboismPlugin {
 
 一部の default service は `UnsupportedOperationException` を throw し、他は explicit unavailable implementation を返します。plugin は unavailable capability family を処理し、迂回してはいけません。
 
-## Registration と cleanup
+## 登録とクリーンアップ
 
 多くの registry は `Registration` を返します。これは `AutoCloseable` handle です。
 
@@ -72,7 +72,7 @@ scope は registration を reverse order で閉じます。Runtime が plugin Cl
 
 Cubism lifecycle hook は callback registration bus ではなく、entrypoint interface から検出されます。
 
-## Action、menu、event
+## アクション、メニュー、イベント
 
 `ActionRegistry.Action` は ID、label、handler を提供します。`ActionContext` は typed UI action event または generation-bound context-menu selection を運べます。
 
@@ -93,7 +93,7 @@ record MyEvent(String value) implements EventBus.TurboismEvent {}
 
 Event は immutable な plugin- または SDK-owned value にしてください。raw host object、Swing widget、native handle、host ClassLoader を event に入れないでください。
 
-## Snapshot と query API
+## スナップショットとクエリ API
 
 `CubismFacade` は引き続き immutable runtime snapshot を提供します。
 
@@ -114,7 +114,7 @@ boolean hostPresent = context.cubism().isHostPresent();
 
 Snapshot と query value は immutable DTO であり、host object reference ではありません。
 
-## 統合 Cubism object graph
+## 統合された Cubism オブジェクトグラフ
 
 新しい plugin code では unified object API を優先してください。
 
@@ -132,7 +132,7 @@ Strong ID には `ProjectId`、`DocumentId`、`ModelId`、`ModelObjectId`、`Par
 
 model とその child は generation-bound です。document switch、reload、deletion、plugin disablement、Provider replacement、その他の invalidating lifecycle event の後は、reference が fail closed します。
 
-## Operation lifecycle hook
+## 操作ライフサイクルフック
 
 `CubismPlugin` は Parameter、Part、Drawable、Deformer、Model hook family をまとめます。
 
@@ -149,18 +149,18 @@ public final class ClampPlugin implements CubismPlugin {
         float oldValue,
         float newValue
     ) {
-        // Runs only after authoritative state changed.
+        // 権威ある状態が変わった後にのみ実行されます。
     }
 
     @Override
     public void afterSetParameterValue(Parameter parameter, float value) {
-        // Observe normal completion; do not perform a second mutation.
+        // 正常完了を観測します。二度目の変更は行わないでください。
     }
 }
 ```
 
 ```text
-before -> canonical operation -> authoritative state probe -> on(changed only) -> after(normal completion)
+before -> 正規操作 -> 権威状態の確認 -> on（変更時のみ）-> after（正常完了時）
 ```
 
 - `before` は同期的かつ順序付きで、argument を書き換えられます。
@@ -169,7 +169,7 @@ before -> canonical operation -> authoritative state probe -> on(changed only) -
 - observe と intercept の permission は別々です。
 - plugin が bytecode transformer を直接登録することはできません。
 
-## Configuration
+## 設定
 
 Typed configuration は schema、codec、sequential migration、asynchronous read、revision-based compare-and-set write をサポートします。
 
@@ -195,7 +195,7 @@ context.config().write(enabled, true, expectedRevision);
 
 Runtime は plugin settings を `config/<pluginId>/` に保存します。plugin は `turboism.home` の下に自分で path を構築してはいけません。
 
-## Plugin storage と user file
+## プラグインストレージとユーザーファイル
 
 `PluginStorage` は 3 つの root の下で atomic read、write、copy、move、list、delete operation を提供します。
 
@@ -211,7 +211,7 @@ context.storage().readUtf8(path, 256 * 1024);
 
 path は normalized relative path でなければなりません。user-selected external file には `UserFileAccessService` と scoped `UserFileHandle` object を使います。user file は unrestricted filesystem capability ではありません。
 
-## Task と asynchronous read
+## タスクと非同期読み取り
 
 管理されていない thread、executor、timer を所有する代わりに `PluginTaskScheduler` を使います。
 
@@ -230,7 +230,7 @@ Task は typed な submission、cancellation、completion、timeout、rejection�
 
 `AsyncHostReadService` は意図的に小さな intent set を持ちます。現在の SDK に存在する intent だけを使い、将来の parameter、mesh、PSD intent を仮定しないでください。
 
-## UI API
+## ユーザーインターフェース API
 
 UI API は Swing/AWT や host widget ではなく SDK DTO を使います。現在の family には次が含まれます。
 
@@ -244,7 +244,7 @@ UI API は Swing/AWT や host widget ではなく SDK DTO を使います。現�
 
 各 UI family には独立した capability と Provider evidence があります。ある family が利用可能でも、他の family がすべて有効になるわけではありません。
 
-## Permission、capability、operation
+## 権限、機能、操作
 
 - **permission** は risk boundary を越えることを認可します。
 - **capability** は現在の Provider と host version が feature family をサポートすることを示します。
@@ -252,7 +252,7 @@ UI API は Swing/AWT や host widget ではなく SDK DTO を使います。現�
 
 permission は operation validation を迂回せず、欠けている Provider を作りません。
 
-## Version と readiness の注意
+## バージョンと準備状況に関する注意
 
 - Parameter authoring write には検証済みの Cubism 5.3.02 path がありますが、caller は引き続き unavailable と stale target を処理しなければなりません。
 - Part display-name write には 5.2.03 と 5.3.02 で実ホストの証拠があります。

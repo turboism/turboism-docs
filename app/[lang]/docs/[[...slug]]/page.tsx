@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { ComponentType } from "react";
+import type { MDXComponents } from "mdx/types";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
 import { SidebarTrigger } from "fumadocs-ui/layouts/docs/slots/sidebar";
 import { PanelLeft } from "lucide-react";
+import { getMDXComponents } from "@/components/mdx";
 import { source } from "@/lib/source";
 import { isLanguage } from "@/lib/i18n";
 
@@ -48,7 +50,9 @@ export default async function DocumentationPage({
   const page = source.getPage(slug ?? [], lang);
   if (!page) notFound();
 
-  const MDX = page.data._exports.default as ComponentType;
+  const MDX = page.data._exports.default as ComponentType<{
+    components?: MDXComponents;
+  }>;
 
   return (
     <DocsPage
@@ -60,10 +64,10 @@ export default async function DocumentationPage({
       <SidebarTrigger className="flex size-11 items-center justify-center self-start rounded-lg border border-slate-200/70 bg-white/70 text-slate-600 shadow-sm backdrop-blur-md transition-colors hover:bg-white/90 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 md:hidden">
         <PanelLeft className="size-5" />
       </SidebarTrigger>
-      <DocsTitle>{page.data.title}</DocsTitle>
+      <DocsTitle className="text-blue-600">{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody className="[&_a]:text-blue-600">
-        <MDX />
+        <MDX components={getMDXComponents()} />
       </DocsBody>
     </DocsPage>
   );

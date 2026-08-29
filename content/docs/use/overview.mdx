@@ -1,21 +1,32 @@
 ---
-title: Use Turboism
-description: Candidate guidance for the ordinary modeler lifecycle with Turboism.
+title: Basics
+description: Basic guidance for installing and using Turboism.
 ---
 
-This is candidate guidance for publication pending. It is written for ordinary modelers, not for people building Turboism from source.
+## Get started
 
-## Your lifecycle
+- [Installation](./installation) — install the Preview build supplied through a trusted channel.
+- [Installer Modes](./installer-modes) — compare the candidate Full, Thin, and Lite choices.
+- [Quick Start](./quick-start) — start Turboism for the first time.
 
-1. [Installation](./installation) — review the candidate installation boundary and obtain an installer only from the channel that supplied your Preview build.
-2. [Installer Modes](./installer-modes) — understand the candidate Full, Thin, and Lite Managed Runtime choices before selecting one.
-3. [Quick Start](./quick-start) — complete the first-run workflow for the Preview build you have.
-4. [Plugin Management](./plugin-management) — manage local plugin JARs after a restart; this is not a published plugin directory.
-5. [First-party plugins](./first-party-plugins) — see the candidate overview of bundled first-party capabilities.
-6. [Update Policy](./update-policy) — plan manual updates and preserve what matters before changing builds.
-7. [Downgrade and Recovery](./downgrade-recovery) — recover from a failed change without assuming that an older-version downgrade is supported.
-8. [Uninstall](./uninstall) — use the installer’s uninstaller and choose whether to keep personal configuration.
+## Plugins
 
-## What this path does not promise
+- [Plugin Management](./plugin-management) — manage local plugin JARs.
+- [First-party Plugins](./first-party-plugins) — find the separate guides for candidate first-party features.
 
-Public release, deployment, automatic updates, online discovery, and a plugin directory are all pending. Treat each candidate document as version- and capability-sensitive, and use [Troubleshooting](../troubleshooting) when the available Preview behavior differs from these directions.
+## Maintain or remove Turboism
+
+- [Update Policy](./update-policy) — prepare for a manual update.
+- [Uninstall](./uninstall) — remove Turboism and choose whether to keep configuration.
+- [Downgrade and Recovery](./downgrade-recovery) — recover when an update or installation change fails.
+
+## Related sites
+
+- [SDK documentation](https://docs.turboism.dev/api/sdk/index.html) — generated Java API documentation for plugin development. Check the [API publication status](../reference/generated-api) before relying on it as the current public contract.
+- [Plugin site](https://plugin.turboism.dev) — information about Turboism plugins and the planned Plugin Directory. Public listings and publication remain subject to the site's current status.
+- [Learning site](https://learn.turboism.dev) — tutorials and learning materials for using Turboism and related workflows.
+- [Chat](https://chat.turboism.dev) — community conversation and help.
+- [GitHub](https://github.com/turboism) — source code, issues, pull requests, and project development.
+- [Main website](https://www.turboism.dev) — project overview and links to Turboism services.
+
+Public release, automatic updates, online discovery, and a public plugin directory remain pending. If the available Preview behaves differently, use [Troubleshooting](../troubleshooting).

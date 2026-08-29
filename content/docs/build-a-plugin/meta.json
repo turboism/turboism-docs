@@ -1,5 +1,5 @@
 {
-  "title": "Developers",
+  "title": "Development",
   "pagesIndex": "overview",
   "pages": [
     "contributing",
@@ -9,6 +9,6 @@
     "designing-plugins",
     "graaljs-scripts",
     "mcp",
-    "llm-coding-context"
+    "[Developing with LLMs](llm-coding-context)"
   ]
 }

@@ -1,20 +1,38 @@
 ---
 title: Documentation
-description: Candidate documentation for modelers and developers using Turboism.
+description: An introduction to Turboism, basic use, and development documentation.
 ---
 
-# Turboism documentation
+Turboism is an open-source enhancement tool and plugin framework for Live2D Cubism Editor. It adds optional features through a public SDK, permissions, and version-specific integration boundaries while keeping Cubism separately installed and licensed.
 
-These are candidate documents for a publication that is still pending. They describe the current Preview direction, not a release promise.
+## Documentation structure
 
-## Choose your path
+### Basics
 
-### I want to model
+Start with [Basics](./use/overview) for installation, first use, plugin management, first-party plugin guides, updates, uninstall, and recovery.
 
-Follow the [Modelers](./use/overview) path to understand the candidate installation flow, start with Turboism, manage local plugins, and plan updates or recovery. Start with [Installation](./use/installation) and [Quick Start](./use/quick-start).
+### Development
 
-### I want to build or extend
+Go to [Development](./build-a-plugin/overview) to contribute to Turboism or work with one of the three supported development approaches:
 
-Follow the [Developers](./build-a-plugin/overview) path to contribute, build an in-process Java SDK plugin, learn the limited GraalJS scripting boundary, or connect an external client through the preview MCP plugin. [LLM coding context](./build-a-plugin/llm-coding-context) is supporting material, not another extension model.
+1. Java plugins;
+2. GraalJS scripts explicitly run by a Java caller; or
+3. external automation through MCP.
 
-For readiness and publication scope, see [Development Status](./development-status) and [Documentation Preview](./documentation-preview).
+### Concepts
+
+[Concepts](./concepts/architecture) explains Turboism architecture, the mapping layer, and automation boundaries.
+
+### Reference
+
+[Reference](./reference/overview) collects the SDK guide and the status of generated API documentation.
+
+### Safety and feedback
+
+Read [Safety and Rights](./safety-and-rights) for project independence, third-party rights, user-data safeguards, licensing, and commercial-use guidance.
+
+To report a bug or request a framework or plugin feature, see [Feedback and Requests](./report-a-bug) for Discord, GitHub, and email options.
+
+To help maintain the framework, documentation, testing, and community, see [Support Us](./support-us). Official sponsorship destinations will be listed there after they are available and verified.
+
+For current readiness, see [Development Status](./development-status).

@@ -7,7 +7,7 @@ description: Preview の起動、プラグイン JAR、ライフサイクル、�
 
 - 意図した Preview directory と Turboism home を使用していることを確認します。
 - Preview が所有する、または home が所有する log directory にある Java Agent と Runtime のログを確認します。
-- 有効な Cubism artifact がサポート対象の Preview envelope と一致することを確認します。
+- 使用中の Cubism インストールがサポート対象の Preview envelope と一致することを確認します。
 - identity failure を回避するために Cubism JAR、DLL、BAT ファイル、ライセンスコンポーネントを置き換えないでください。
 
 ## プラグインが表示されない
@@ -43,14 +43,10 @@ descriptor の ID/version/API 不一致、コピーされた SDK/Runtime/Live2D 
 
 ## ホスト capability が利用できない
 
-これは多くの場合、host version、artifact identity、mapping verification、Provider availability、safe mode、stale object generation が原因で意図的に fail-closed になった結果です。
+これは多くの場合、host version、Cubism ファイルの識別情報、mapping verification、Provider availability、safe mode、stale object generation が原因で意図的に fail-closed になった結果です。
 
-正確な Cubism version、artifact identity、operation、diagnostic code を記録してください。リフレクションやホストへの直接アクセスで失敗を迂回しないでください。
+正確な Cubism version、Cubism ファイルの識別情報、operation、diagnostic code を記録してください。リフレクションやホストへの直接アクセスで失敗を迂回しないでください。
 
 ## フィードバック
 
-ドキュメントの修正と、機密情報を含まない製品に関する議論は、公開ドキュメントリポジトリで扱います。
-
-- https://github.com/turboism/turboism-docs
-
-機能や Runtime の不具合には、関連する Turboism source revision、Cubism version、サニタイズ済みログ、再現手順を含めてください。プロプライエタリな Cubism binary、private resource、ライセンス資料、ユーザープロジェクトは添付しないでください。
+[フィードバックと機能要望](./report-a-bug)から、Discord、GitHub、メールでバグを報告したり、フレームワークやプラグインの機能を提案したりできます。

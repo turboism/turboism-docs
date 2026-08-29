@@ -3,15 +3,15 @@ title: Installation
 description: Install Turboism with the Windows .exe installer or the cross-platform .jar installer without modifying a Cubism installation.
 ---
 
-Turboism is installed with an installer artifact. Two installers exist: the Windows-native `TurboismInstaller-<version>.exe` and the cross-platform `TurboismInstaller-<version>.jar`, which installs on Windows and macOS with a Java 17+ runtime. Ordinary users install with one of these artifacts; building from source is developer and maintainer work.
+Turboism is installed with an installer package. Two installers exist: the Windows-native `TurboismInstaller-<version>.exe` and the cross-platform `TurboismInstaller-<version>.jar`, which installs on Windows and macOS with a Java 17+ runtime. Ordinary users install with one of these installer packages; building from source is developer and maintainer work.
 
 Neither installer modifies Cubism JARs, DLLs, official launcher files, licensing state, or existing projects.
 
 ## Choose an installer
 
 - On Windows, use the `.exe` installer. It is the native path: per-user, no administrator rights, with the Windows configurator and Start Menu integration.
-- On Windows or macOS, use the `.jar` installer when you prefer one artifact across platforms. It requires Java 17+ and runs with `java -jar TurboismInstaller-<version>.jar`.
-- Installer artifacts must come from the release or preview channel that provided your build. Turboism does not currently publish public download assets for these installers.
+- On Windows or macOS, use the `.jar` installer when you prefer one installer file across platforms. It requires Java 17+ and runs with `java -jar TurboismInstaller-<version>.jar`.
+- Installer files must come from the release or preview channel that provided your build. Turboism does not currently publish public download assets for these installers.
 - The installer JAR is separate from plugin JARs. Plugins are managed through [Plugin Management](./plugin-management), not through this installer.
 
 ## Windows `.exe` installer
@@ -67,12 +67,12 @@ The uninstaller removes installer-owned files and the runtime `logs`, `state`, a
 
 ## Developers and maintainers
 
-Building Turboism from source and building installer artifacts is developer and maintainer work. Source, framework, and installer builds belong to developer or maintainer workflows and are intentionally excluded from this user guide.
+Building Turboism from source and building installer packages is developer and maintainer work. Source, framework, and installer builds belong to developer or maintainer workflows and are intentionally excluded from this user guide.
 
 ## Current limitations
 
 - macOS Cubism host launch is not verified, and no macOS Cubism launcher is installed.
-- Installer artifacts are not yet signed or notarized, and there is no public download channel.
+- Installer packages are not yet signed or notarized, and there is no public download channel.
 - There is no automatic online updater: updating means rerunning a newer installer.
 - Failed plugin replacements are protected by internal backup/restore, but a complete user-facing repair or history UI does not exist yet.
 - Feature readiness remains capability- and version-specific.

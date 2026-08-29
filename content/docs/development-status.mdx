@@ -31,7 +31,7 @@ Two installer implementations exist and share one staged payload and the Lite/Fu
 - the Windows-native NSIS installer (`TurboismInstaller-<version>.exe`), preferred on Windows;
 - the Java 17 IzPack installer (`TurboismInstaller-<version>.jar`), implemented for Windows/macOS install semantics.
 
-The Windows EXE covers per-user install, Lite/Full and first-party plugin selection, Start Menu entries, and uninstall. The installer JAR covers the same Lite/Full selection on Windows and macOS and generates platform uninstall support. Neither modifies Cubism installation files. The implementations produce installer artifacts for a release or preview channel, but no signed/notarized public channel exists yet.
+The Windows EXE covers per-user install, Lite/Full and first-party plugin selection, Start Menu entries, and uninstall. The installer JAR covers the same Lite/Full selection on Windows and macOS and generates platform uninstall support. Neither modifies Cubism installation files. The implementations produce installer packages for a release or preview channel, but no signed/notarized public channel exists yet.
 
 ## Cubism and Editor API progress
 
@@ -78,7 +78,7 @@ A built-in signed Official Directory client and UI are implemented, but producti
 
 Turboism does not currently promise:
 
-- a signed/notarized public release channel for installer artifacts;
+- a signed/notarized public release channel for installer packages;
 - verified macOS Cubism host launch;
 - automatic online updates or a production-enabled marketplace;
 - publisher signing or revocation;

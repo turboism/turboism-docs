@@ -1,42 +1,56 @@
 ---
-title: LLM Coding Context
-description: A vendor-neutral, self-contained context brief for a coding agent working on Turboism.
+title: Developing with LLMs
+description: A vendor-neutral, copyable development context for using LLMs with Turboism.
 ---
 
-This page is candidate documentation for publication pending. It is a handoff brief for a coding agent, not an extension mechanism, release channel, or deployment surface. Give the agent the current task and this context, then require it to verify unknown facts in source before acting.
+When asking an LLM to help with Turboism development, the developer remains responsible for code quality, verification, and the final result. Follow these requirements before opening and copying the complete Markdown context.
 
-## Project boundary
+## Developer requirements
 
-Turboism is a Java-based integration and plugin framework. Keep product documentation independent from application, learning, and plugin projects at runtime. Do not alter a host installation as a shortcut for development or testing. Treat every behavior as version- and capability-sensitive until the relevant source and tests establish it.
+### Follow the code standards
 
-## Architecture and extension paths
+- Read and follow the current repository's contribution guidance, module conventions, and existing code style. Do not let an LLM assume the standards.
+- Personally review all code that you write, modify, or accept, and confirm that it respects public SDK, permission, security, and version boundaries.
+- Before submitting, run the formatting checks, static checks, tests, and builds required by the project. An LLM's explanation is not a substitute for their results.
 
-The framework has three distinct paths:
+### Complete real-environment testing
+
+- Test the code you write or accept in a real environment. Changes involving plugins, the runtime, or host integration must be verified in an authorized environment that matches the target version; simulation, successful compilation, or an LLM's assessment alone is not enough.
+- Use dedicated test data and verify loading, primary behavior, failure handling, and cleanup. Do not test with user data without authorization.
+- Record the test environment, relevant versions, steps, and observed results. If real-environment testing is incomplete, state that clearly and do not claim the change is ready to use.
+
+````markdown title="Complete LLM development context" lines="59"
+# Turboism development context
+
+## Role and scope
+
+You are assisting with development for Turboism, a Java-based integration and plugin framework. Treat LLM output as a draft, not as verified code, documentation, or a completed contribution. Verify unknown facts in the current source, build configuration, tests, and documentation before acting.
+
+Keep product documentation runtime-independent from application, learning, and plugin projects. Do not modify a host installation as a shortcut for development or testing. Identify the responsible module, its public contracts, and existing tests before editing.
+
+## Extension boundaries
+
+Turboism has three distinct extension paths:
 
 1. **Java plugins** are in-process plugins with the Java SDK lifecycle, manifest, permissions, and services.
-2. **GraalJS scripts** are restricted scripts that a Java plugin discovers through `PluginContext.scripts()` and explicitly runs with `ScriptService.run`; discovery alone never executes a script.
-3. **MCP** is a first-party preview plugin that provides authenticated loopback Streamable HTTP to trusted local external clients.
+2. **GraalJS scripts** are restricted scripts that a Java plugin discovers through `PluginContext.scripts()` and explicitly runs with `ScriptService.run`; discovery alone does not execute a script.
+3. **MCP** is a first-party Preview plugin that provides authenticated loopback Streamable HTTP to trusted local external clients.
 
-ACP is internal and only used with fx; it is not a fourth extension path. The codebase targets Java 17. Do not substitute one path for another merely because a desired capability appears adjacent.
+ACP is internal and used only with fx; it is not a fourth extension path. The codebase targets Java 17. Preserve these Java, GraalJS, MCP, and ACP boundaries. Do not substitute one path for another just because a nearby capability appears useful.
 
-## Required checks
+## Development principles
 
-Before enabling behavior or changing an integration, check each condition independently and precisely:
+- Start by reading the relevant code and checking existing issues and plugins. Avoid duplicate development and reuse established behavior where it fits.
+- Prefer a general framework capability or public SDK when it can serve the need. A plugin should provide an independent function rather than duplicate shared functionality.
+- Check the exact version range, required capability or provider, declared permission, and current session and lifecycle state separately. Passing one check does not establish any other check.
+- Protect user data. Do not expose private materials, credentials, personal data, or other confidential content to an LLM or in a contribution.
+- Remain vendor-neutral. Do not bind the design or documentation to a particular LLM provider or model without a separately verified project decision.
 
-- the exact product and API version range;
-- the capability or provider needed for the operation;
-- the declared permission for the action; and
-- the current session and lifecycle state.
+## Contribution and verification
 
-Passing one check does not imply another. Make unavailable behavior explicit and test it instead of inferring support from an API’s presence.
+Keep changes focused and add or update targeted tests when behavior changes. Before submitting a contribution, the developer must personally read the diff, inspect the changes, and check and test the result. Do not rely only on an LLM's claim that work is correct, complete, or tested.
 
-## Repository orientation
-
-Start from the root build configuration and identify the module responsible for the change before editing. In broad terms, expect modules for the framework/runtime, public SDK, plugin-related implementation, host integration, and tests; documentation is maintained as a separate site. Inspect the actual module names, ownership, public contracts, and existing tests in the current checkout rather than relying on this orientation as a directory map.
-
-## Contribution workflow
-
-Keep changes focused, update or add targeted tests where behavior changes, and run the repository’s documented Gradle checks from the applicable checkout:
+Run the smallest relevant test first. When the current repository provides these commands, run the focused test, `devCheck`, and `checkCompletedCommit`:
 
 ```bash
 ./gradlew focusedTest
@@ -44,12 +58,25 @@ Keep changes focused, update or add targeted tests where behavior changes, and r
 ./gradlew checkCompletedCommit
 ```
 
-Run the smallest relevant test first, then the broader checks appropriate to the change. If a command, task, module, or contract is not present, confirm that from source or build configuration before proposing an alternative.
+For documentation-site changes, also run the documentation lint, type check, and production build:
 
-## Documentation rules
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
 
-English is the authoritative body language. Keep English, Chinese, and Japanese pages semantically aligned. Do not claim public release, downloads, compatibility, installation steps, API signatures, or availability without verification. Mark candidate material as pending where appropriate. For documentation-site changes, keep the site runtime-independent from related products and run the site’s documented checks.
+If a command, task, module, or contract is not present, confirm that from the current source or build configuration before proposing an alternative.
 
-## Agent instruction
+## Project content standards
 
-Be vendor-neutral: use this brief with any coding agent. Ask it to state what source support for each material claim, distinguish verified facts from assumptions, and stop to inspect source when facts are unknown. Review generated changes before accepting them.
+These standards apply to content designed or submitted for this project and its community; they do not govern private use outside the project.
+
+- Do not duplicate content.
+- Do not design or submit political propaganda, pornographic content, or sensitive content unsuitable for the project community, including hateful, harassing, unlawful, or privacy-invading material.
+- Keep English, Chinese, and Japanese documentation semantically aligned. Do not claim release status, downloads, compatibility, installation steps, API signatures, or availability without verification.
+
+## Working instruction
+
+State the source support for each material claim, distinguish verified facts from assumptions, and stop to inspect source when facts are unknown. Preserve existing boundaries and conventions, then present changes for human review.
+````

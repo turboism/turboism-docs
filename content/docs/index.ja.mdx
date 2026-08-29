@@ -1,20 +1,38 @@
 ---
 title: ドキュメント
-description: Turboism を使うモデラーと開発者のための候補ドキュメント。
+description: Turboism の概要、基本利用、開発に関するドキュメント。
 ---
 
-# Turboism ドキュメント
+Turboism は Live2D Cubism Editor 向けのオープンソース拡張ツールおよびプラグインフレームワークです。Cubism を別途インストールしてライセンスを管理したまま、public SDK、権限、バージョン別の連携境界を通じてオプション機能を追加します。
 
-これは公開待ちの候補ドキュメントです。現在の Preview の方向を説明するものであり、リリースの約束ではありません。
+## ドキュメント構成
 
-## パスを選ぶ
+### 基本
 
-### モデリングしたい
+[基本](./use/overview)では、インストール、初回利用、プラグイン管理、ファーストパーティプラグインのガイド、更新、アンインストール、復旧を確認できます。
 
-[モデラー](./use/overview)のパスで、候補となるインストールの流れ、Turboism の開始、ローカル plugin の管理、更新または復旧の計画を確認します。[インストール](./use/installation)と[クイックスタート](./use/quick-start)から始めてください。
+### 開発
 
-### 構築または拡張したい
+[開発](./build-a-plugin/overview)では、Turboism への貢献、または次の 3 つの開発方法を確認できます。
 
-[開発者](./build-a-plugin/overview)のパスで、contribution、プロセス内 Java SDK plugin の構築、制限された GraalJS script の境界、または Preview MCP plugin を介した外部 client の接続を確認します。[LLM コーディングコンテキスト](./build-a-plugin/llm-coding-context)は補助資料であり、別の拡張方式ではありません。
+1. Java プラグイン
+2. Java の呼び出し元が明示的に実行する GraalJS スクリプト
+3. MCP を使った外部自動化
 
-準備状況と公開範囲については、[開発状況](./development-status)と[ドキュメント Preview](./documentation-preview)を確認してください。
+### 概念
+
+[概念](./concepts/architecture)では、Turboism のアーキテクチャ、マッピング層、自動化の境界を説明します。
+
+### リファレンス
+
+[リファレンス](./reference/overview)では、SDK ガイドと生成済み API ドキュメントの状況を確認できます。
+
+### 安全性とフィードバック
+
+[安全性と権利について](./safety-and-rights)では、プロジェクトの独立性、第三者の権利、ユーザーデータの保護、ライセンス、商用利用に関する案内を確認できます。
+
+バグ報告やフレームワーク・プラグインの機能要望は、[フィードバックと機能要望](./report-a-bug)で Discord、GitHub、メールの連絡方法を確認してください。
+
+フレームワーク、ドキュメント、テスト、コミュニティの維持に協力する方法は、[プロジェクトを支援する](./support-us)で確認できます。検証済みの公式スポンサー窓口を開設した場合も、このページに掲載します。
+
+現在の準備状況については、[開発状況](./development-status)を確認してください。

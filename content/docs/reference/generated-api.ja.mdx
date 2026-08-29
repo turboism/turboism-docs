@@ -1,24 +1,30 @@
 ---
 title: 生成済み API リファレンス
-description: 候補 SDK Javadoc リファレンスの再生成状況。
+description: SDK Javadoc の生成、レビュー、公開状況。
 ---
 
-このページは公開待ちの候補ドキュメントです。現在ホストされている Javadoc は古く、現在の public API contract として扱ってはいけません。
+SDK Javadoc は対応する Turboism ソースから生成し、レビューが完了した後にのみ SDK ドキュメントサイトへ同期します。
 
-## 再生成の状況
+## ドキュメント更新手順
 
-候補の再生成は、現在次の 3 つの問題によりブロックされています。
+public SDK、その説明、またはバージョンが変更された場合は、次の手順を行います。
 
-- 候補 output で public に検索できる生成型の 1 つが、自身を internal かつ non-stable と説明しています。
-- 生成された service の 1 つが引き続き Preview とマークされており、public reference の方針を確定する必要があります。
-- 候補 output にはまだ `0.42.0-SNAPSHOT` の version identifier が含まれています。
+1. ソースリポジトリの `:sdk:javadoc` Gradle タスクで Javadoc を生成する。
+2. 正確なバージョンを確認し、snapshot 表示を含む出力を拒否する。
+3. public に検索できるすべてのパッケージと型をレビューする。
+4. 内部実装型や未承認の Preview API が public contract として表示されていないことを確認する。
+5. 生成された文章に、非公開データ、ローカルパス、認証情報、ホストログ、内部実装だけで使う検証情報が含まれていないことを確認する。
+6. レビュー済みの出力をドキュメントサイトへ同期する。
+7. ドキュメントの lint、型チェック、本番ビルドを実行する。
 
-これらの blocker が解消されるまで、ホストされている HTML reference は古いままです。release、deployment、compatibility に関する主張の根拠にしないでください。
+生成に成功しただけでは公開を承認したことになりません。生成された public surface またはバージョンの準備ができていない場合は、現在ホストされている Javadoc を変更せず、このページに問題を記録します。
 
-## 利用可能なガイドを慎重に使う
+## 現在の状況
 
-- 厳選された boundary については[SDK API ガイド](./sdk-api)を読んでください。
-- 候補の拡張パスについては[プラグインを作る](../build-a-plugin/overview)を読んでください。
-- 現在の API に関する記述はすべて Preview かつ capability-sensitive として扱います。
+直近でレビューした候補は、次の理由により同期していません。
 
-このページでは local regeneration procedure を提供しません。更新された生成 reference material の公開は保留中です。
+- 生成型の 1 つが自身を internal かつ non-stable と説明している一方、public に検索できる状態になっている。
+- 生成された service の 1 つが Preview のままで、public reference の方針が承認されていない。
+- レビューした候補が誤ったバージョン表示を使用していた。
+
+これらの問題が解決するまでは、[SDK API ガイド](./sdk-api)と public SDK のソース宣言を使用してください。現在ホストされている HTML リファレンスを release、deployment、compatibility の根拠にしないでください。

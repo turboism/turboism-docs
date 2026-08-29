@@ -7,7 +7,7 @@ description: Diagnose Preview startup, plugin JAR, lifecycle, permission, and Pr
 
 - Confirm you are using the intended Preview directory and Turboism home.
 - Check the Java Agent and Runtime logs in Preview-owned or home-owned log directories.
-- Verify that the active Cubism artifact matches the supported Preview envelope.
+- Verify that the active Cubism installation matches the supported Preview envelope.
 - Do not replace Cubism JARs, DLLs, BAT files, or licensing components to bypass an identity failure.
 
 ## A plugin does not appear
@@ -43,14 +43,10 @@ Plugin install, replacement, enable, disable, and uninstall operations apply aft
 
 ## A host capability is unavailable
 
-This is often a deliberate fail-closed result caused by host version, artifact identity, mapping verification, Provider availability, safe mode, or stale object generation.
+This is often a deliberate fail-closed result caused by host version, Cubism file identity, mapping verification, Provider availability, safe mode, or stale object generation.
 
-Record the exact Cubism version, artifact identity, operation, and diagnostic code. Do not bypass the failure with reflection or direct host access.
+Record the exact Cubism version, Cubism file identity, operation, and diagnostic code. Do not bypass the failure with reflection or direct host access.
 
 ## Feedback
 
-Documentation corrections and non-sensitive product discussion belong in the public documentation repository:
-
-- https://github.com/turboism/turboism-docs
-
-Feature/runtime defects should include the relevant Turboism source revision, Cubism version, sanitized logs, and reproduction steps. Do not attach proprietary Cubism binaries, private resources, licensing material, or user projects.
+Use [Feedback and Requests](./report-a-bug) to report bugs or request framework and plugin features through Discord, GitHub, or email.

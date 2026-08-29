@@ -1,19 +1,29 @@
 ---
 title: Contributing
-description: Candidate orientation for contributing to Turboism itself.
+description: Principles and ways to contribute to Turboism and its extension ecosystem.
 ---
 
-This page is candidate documentation for publication pending. It is an orientation, not a published contribution agreement or deployment process.
+Help strengthen Turboism by improving the framework or by building extensions and plugins. Use the following principles to make contributions reliable, safe, and useful to more people.
 
-## What contribution means
+## Contribution principles
 
-Contributing changes Turboism itself rather than creating a separate Java plugin, GraalJS script, or MCP client integration. Start by understanding the boundaries in [Build a Plugin](./overview) and the public plugin contract in [Plugin Interfaces](./plugin-interfaces).
+- Work within the general framework boundary rather than adding behavior for a single host or use case.
+- Prefer the public SDK over internal APIs, host objects, reflection, or unsupported integration paths.
+- Keep each change focused on one clear user or developer need.
+- Verify target-version compatibility, capability availability, and required permissions separately. A granted permission does not prove that a capability is available.
+- Add or update appropriate tests, keep the English, Simplified Chinese, and Japanese documentation in sync, and regenerate and review SDK Javadoc whenever the public SDK or its documentation changes.
+- Protect user files, personal data, and privacy. Request and handle only the access and data that are necessary; do not expose sensitive information in code, logs, or documentation.
 
-## Work safely
+## Ways to participate
 
-- Keep a proposed change focused on one user or developer need.
-- Preserve the Java SDK boundary for in-process plugins.
-- Treat host- and version-sensitive behavior as capability-dependent.
-- Describe assumptions and validation clearly without presenting Preview behavior as release-ready.
+### 1. Improve the framework
 
-Review, submission, acceptance, public release, and deployment details are pending. Use this page only as candidate orientation until an official contribution workflow is published.
+Use [GitHub Issues](https://github.com/turboism/turboism/issues) to report, discuss, or refine framework work. Propose implementation changes through [GitHub Pull Requests](https://github.com/turboism/turboism/pulls).
+
+### 2. Build an extension
+
+Use the extension path that fits the job: build [Java plugins](./designing-plugins) for in-process SDK integration, use [GraalJS Scripts](./graaljs-scripts) for explicitly invoked limited scripts, or use [MCP](./mcp) for trusted local client integration.
+
+### 3. Build a plugin for the Plugin Directory
+
+Develop plugins with Plugin Directory distribution in mind. The Plugin Directory, its publication workflow, and its public listings are not yet finalized or live, so they must not be presented as deployed. For now, submit or discuss candidate plugins through the [Turboism GitHub repository](https://github.com/turboism).

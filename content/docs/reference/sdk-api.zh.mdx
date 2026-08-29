@@ -10,7 +10,7 @@ Turboism SDK 是插件唯一的公开依赖项。新 API 默认处于 Preview �
 3. Runtime 具有匹配的能力 Provider；
 4. 支持当前启用的 Cubism 版本和对象世代。
 
-如需查看生成的类型和方法索引，请打开 [SDK HTML API reference](/api/sdk/index.html)。
+如需查看生成的类型和方法索引，请打开 [SDK HTML API 文档](/api/sdk/index.html)。
 
 ## 插件生命周期
 
@@ -149,18 +149,18 @@ public final class ClampPlugin implements CubismPlugin {
         float oldValue,
         float newValue
     ) {
-        // Runs only after authoritative state changed.
+        // 仅在权威状态变更后运行。
     }
 
     @Override
     public void afterSetParameterValue(Parameter parameter, float value) {
-        // Observe normal completion; do not perform a second mutation.
+        // 观察正常完成；请勿执行第二次变更。
     }
 }
 ```
 
 ```text
-before -> canonical operation -> authoritative state probe -> on(changed only) -> after(normal completion)
+before -> 规范操作 -> 权威状态探测 -> on（仅发生变更时）-> after（正常完成时）
 ```
 
 - `before` 同步、有序，并且可以改写参数。
@@ -230,7 +230,7 @@ TaskSubmission submission = context.tasks().submit(
 
 `AsyncHostReadService` 的意图集经过刻意收窄。仅使用当前 SDK 中存在的意图；不要假定未来会提供 parameter、mesh 或 PSD 意图。
 
-## UI API
+## 用户界面 API
 
 UI API 使用 SDK DTO，而不是 Swing/AWT 或主机小部件。当前族包括：
 

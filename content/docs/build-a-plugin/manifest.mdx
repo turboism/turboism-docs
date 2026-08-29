@@ -1,6 +1,6 @@
 ---
 title: Plugin Manifest and Packaging
-description: Define a manifest v2 plugin JAR and distribute it as the release artifact.
+description: Define a manifest v2 plugin JAR and distribute it as the release file.
 ---
 
 Every Turboism plugin JAR contains exactly one descriptor at:
@@ -128,7 +128,7 @@ For an in-repository plugin module:
   --no-daemon --console=plain
 ```
 
-The repository uses Java 17 and writes module artifacts under:
+The repository uses Java 17 and writes module build results under:
 
 ```text
 build/worktree/<worktreeId>/<module>/libs/
@@ -136,7 +136,7 @@ build/worktree/<worktreeId>/<module>/libs/
 
 ## Strict JAR validation
 
-The JAR itself is the install artifact. Runtime treats a selected JAR as untrusted local input and validates:
+The JAR itself is the installation file. Runtime treats a selected JAR as untrusted local input and validates:
 
 - a regular file with no symbolic link in the source chain, capped at 16 MiB;
 - exactly one `META-INF/turboism/plugin.json`;

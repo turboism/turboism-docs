@@ -1,30 +1,26 @@
 ---
-title: Build a Plugin
-description: Candidate developer entry point for contributing and extending Turboism.
+title: Development
+description: Contribute to Turboism or develop with Java, GraalJS, and MCP.
 ---
 
-This is candidate documentation for publication pending. It describes current Preview boundaries rather than a released extension program.
+This is candidate documentation for publication pending. It describes current Preview boundaries.
 
-## Choose the right path
+## Contribute to Turboism
 
-### Contribute to Turboism
+Read [Contributing](./contributing) to work on Turboism itself.
 
-Read [Contributing](./contributing) when you want to improve Turboism itself. Contribution workflow and acceptance details remain pending.
+## Java plugins
 
-### Build a Java plugin
+Use [Quick Start](./quick-start), [Plugin Interfaces](./plugin-interfaces), [Plugin Manifest and Packaging](./manifest), and [Designing Plugins](./designing-plugins). Java plugins are Java 17 JARs loaded in process and use the public SDK lifecycle and services.
 
-Use the existing [Developer Quick Start](./quick-start), [Plugin Interfaces](./plugin-interfaces), [Plugin Manifest and Packaging](./manifest), and [Designing Plugins](./designing-plugins) pages for the Java path. A Java plugin is an in-process SDK plugin: it is a Java 17 JAR loaded by Runtime and uses the public SDK boundary.
+## GraalJS scripts
 
-### Add a GraalJS script
+Read [GraalJS Scripts](./graaljs-scripts) for restricted scripting. A Java caller must explicitly run a script through `ScriptService`; discovery does not execute it automatically, and scripts do not receive the complete Java SDK.
 
-Read [GraalJS Scripts](./graaljs-scripts) for a limited script boundary. A Java caller must explicitly run a script through `ScriptService`; scripts do not run automatically and are not the full Java SDK.
+## MCP
 
-### Connect an external client
+Read [MCP](./mcp) when a trusted external client needs authenticated loopback Streamable HTTP automation. MCP is not an in-process plugin API.
 
-Read [MCP](./mcp) for the first-party preview plugin that offers authenticated loopback Streamable HTTP to external clients. MCP is not an in-process Java plugin API.
+## Coding-agent context
 
-## Supporting material
-
-[LLM Coding Context](./llm-coding-context) helps with understanding and drafting work; it is not a fourth extension model. ACP is an internal link used only with fx, not a fourth way to extend Turboism.
-
-[SCREENSHOT PLACEHOLDER — developer-path selection; capture manually from an available candidate build.]
+[LLM Coding Context](./llm-coding-context) is a vendor-neutral project brief for coding agents. It is not another development approach. ACP is internal to Turboism with fx and is not a fourth interface.

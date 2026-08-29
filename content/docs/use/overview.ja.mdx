@@ -1,21 +1,32 @@
 ---
-title: Turboism を使う
-description: 一般的なモデラー向けの Turboism ライフサイクル候補ガイド。
+title: 基本
+description: Turboism のインストールと利用に関する基本ガイド。
 ---
 
-これは公開待ちの候補ガイドです。Turboism をソースから構築する人ではなく、一般的なモデラーを対象にしています。
+## はじめに
 
-## ライフサイクル
+- [インストール](./installation) — 信頼できる提供元から入手した Preview build をインストールします。
+- [インストーラーモード](./installer-modes) — 候補の Full、Thin、Lite を比較します。
+- [クイックスタート](./quick-start) — Turboism を初めて起動します。
 
-1. [インストール](./installation) — 候補となるインストール境界を確認し、インストーラーは使用中の Preview build を提供したチャネルからのみ入手します。
-2. [インストーラーモード](./installer-modes) — 選択前に、候補の Full、Thin、Lite Managed Runtime を理解します。
-3. [クイックスタート](./quick-start) — 手元の Preview build の初回実行フローを完了します。
-4. [プラグイン管理](./plugin-management) — 再起動後にローカル plugin JAR を管理します。これは公開済みの plugin directory ではありません。
-5. [ファーストパーティプラグイン](./first-party-plugins) — 同梱されるファーストパーティ capability の候補概要を確認します。
-6. [更新ポリシー](./update-policy) — build を変更する前に、手動更新を計画し必要なものを保存します。
-7. [ダウングレードと復旧](./downgrade-recovery) — 以前の version への downgrade がサポートされていると仮定せず、失敗した変更から復旧します。
-8. [アンインストール](./uninstall) — インストーラーのアンインストーラーを使用し、個人の configuration を保持するか選択します。
+## プラグイン
 
-## このパスが約束しないこと
+- [プラグイン管理](./plugin-management) — ローカルのプラグイン JAR を管理します。
+- [ファーストパーティプラグイン](./first-party-plugins) — 候補となるファーストパーティ機能の独立したガイド分類を確認します。
 
-公開リリース、deployment、自動更新、オンライン discovery、plugin directory はすべて保留中です。各候補ドキュメントは version と capability に依存するものとして扱い、利用できる Preview の動作が説明と異なる場合は[トラブルシューティング](../troubleshooting)を使用してください。
+## 更新と削除
+
+- [更新ポリシー](./update-policy) — 手動更新の準備をします。
+- [アンインストール](./uninstall) — Turboism を削除し、設定を保持するか選択します。
+- [ダウングレードと復旧](./downgrade-recovery) — 更新やインストール変更に失敗した場合に復旧します。
+
+## 関連サイト
+
+- [SDK ドキュメント](https://docs.turboism.dev/api/sdk/index.html) — プラグイン開発向けの Java API ドキュメントです。現在の public contract として利用する前に、[API 公開状況](../reference/generated-api)を確認してください。
+- [プラグインサイト](https://plugin.turboism.dev) — Turboism プラグインと計画中のプラグインディレクトリを紹介します。公開一覧と公開機能は、サイトの現在の状況に従います。
+- [学習サイト](https://learn.turboism.dev) — Turboism の使い方や関連ワークフローのチュートリアルと学習資料を提供します。
+- [チャット](https://chat.turboism.dev) — コミュニティでの交流やサポートに利用できます。
+- [GitHub](https://github.com/turboism) — ソースコード、Issue、Pull Request、プロジェクト開発を確認できます。
+- [メインサイト](https://www.turboism.dev) — プロジェクト概要と Turboism の各サイトへの入口です。
+
+公開、自動更新、オンライン discovery、公開 plugin directory は保留中です。利用可能な Preview の動作が説明と異なる場合は[トラブルシューティング](../troubleshooting)を確認してください。

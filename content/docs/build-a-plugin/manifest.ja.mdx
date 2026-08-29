@@ -1,6 +1,6 @@
 ---
 title: プラグインマニフェストとパッケージング
-description: Manifest v2 の plugin JAR を定義し、リリース成果物として配布する。
+description: Manifest v2 の plugin JAR を定義し、リリース用ファイルとして配布する。
 ---
 
 すべての Turboism plugin JAR には、次の場所に descriptor が正確に 1 つあります。
@@ -128,7 +128,7 @@ repository 内の plugin module では、次を実行します。
   --no-daemon --console=plain
 ```
 
-repository は Java 17 を使用し、module artifact を次の下に書き込みます。
+repository は Java 17 を使用し、module のビルド結果を次の下に書き込みます。
 
 ```text
 build/worktree/<worktreeId>/<module>/libs/

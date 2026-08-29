@@ -1,30 +1,26 @@
 ---
-title: プラグインを作る
-description: Turboism への contribution と拡張のための開発者向け候補入口。
+title: 開発
+description: Turboism への貢献、または Java、GraalJS、MCP を使った開発。
 ---
 
-これは公開待ちの候補ドキュメントです。リリース済みの拡張プログラムではなく、現在の Preview の境界を説明します。
+これは公開待ちの候補ドキュメントです。現在の Preview の境界を説明します。
 
-## 適切なパスを選ぶ
+## Turboism に貢献する
 
-### Turboism に貢献する
+Turboism 自体を改善する場合は[コントリビューション](./contributing)を確認してください。
 
-Turboism 自体を改善したい場合は[コントリビューション](./contributing)を読んでください。contribution workflow と受け入れの詳細は保留中です。
+## Java プラグイン
 
-### Java plugin を作る
+[クイックスタート](./quick-start)、[プラグインインターフェース](./plugin-interfaces)、[プラグインマニフェストとパッケージング](./manifest)、[プラグインの設計](./designing-plugins)を確認してください。Java プラグインはプロセス内で読み込まれる Java 17 JAR で、public SDK のライフサイクルとサービスを使用します。
 
-Java のパスには、既存の[開発者向けクイックスタート](./quick-start)、[プラグインインターフェース](./plugin-interfaces)、[プラグインマニフェストとパッケージング](./manifest)、[プラグインの設計](./designing-plugins)を使用します。Java plugin はプロセス内 SDK plugin です。Runtime にロードされる Java 17 JAR で、public SDK boundary を使用します。
+## GraalJS スクリプト
 
-### GraalJS script を追加する
+制限されたスクリプトについては[GraalJS スクリプト](./graaljs-scripts)を確認してください。Java の呼び出し元が `ScriptService` を通じて明示的に実行する必要があります。検出だけでは自動実行されず、完全な Java SDK も提供されません。
 
-制限された script boundary については[GraalJS スクリプト](./graaljs-scripts)を読んでください。Java caller が `ScriptService` を通じて script を明示的に実行する必要があります。script は自動実行されず、完全な Java SDK でもありません。
+## MCP
 
-### 外部 client を接続する
+信頼できる外部 client が、認証された loopback Streamable HTTP automation を必要とする場合は[MCP](./mcp)を確認してください。MCP はプロセス内 plugin API ではありません。
 
-外部 client には[MCP](./mcp)を読んでください。first-party Preview plugin が、authenticated loopback Streamable HTTP を提供します。MCP はプロセス内 Java plugin API ではありません。
+## コーディングエージェント向けコンテキスト
 
-## 補助資料
-
-[LLM コーディングコンテキスト](./llm-coding-context)は理解と下書きに役立ちますが、第 4 の拡張モデルではありません。ACP は fx とともに使用される内部リンクであり、第 4 の拡張方法ではありません。
-
-[SCREENSHOT PLACEHOLDER — 開発者パスの選択。利用可能な候補 build から手動で撮影します。]
+[LLM コーディングコンテキスト](./llm-coding-context)は、コーディングエージェント向けの vendor-neutral なプロジェクト概要です。別の開発方法ではありません。ACP は Turboism with fx の内部でのみ使用され、第 4 の interface ではありません。

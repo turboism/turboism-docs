@@ -31,7 +31,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - Windows ネイティブの NSIS インストーラー（`TurboismInstaller-<version>.exe`）。Windows ではこちらを優先します。
 - Java 17 の IzPack インストーラー（`TurboismInstaller-<version>.jar`）。Windows/macOS のインストールセマンティクス向けに実装されています。
 
-Windows EXE は、ユーザー単位のインストール、Lite/Full と first-party plugin の選択、スタートメニュー項目、アンインストールをカバーします。インストーラー JAR は Windows と macOS で同じ Lite/Full 選択を提供し、プラットフォームのアンインストールサポートを生成します。どちらも Cubism のインストールファイルを変更しません。これらの実装は、release または preview チャネル向けにインストーラー artifact を生成しますが、署名・ノータリゼーション済みの公開チャネルはまだ存在しません。
+Windows EXE は、ユーザー単位のインストール、Lite/Full と first-party plugin の選択、スタートメニュー項目、アンインストールをカバーします。インストーラー JAR は Windows と macOS で同じ Lite/Full 選択を提供し、プラットフォームのアンインストールサポートを生成します。どちらも Cubism のインストールファイルを変更しません。これらの実装は、release または preview チャネル向けにインストーラーパッケージを生成しますが、署名・ノータリゼーション済みの公開チャネルはまだ存在しません。
 
 ## Cubism と Editor API の進捗
 
@@ -78,7 +78,7 @@ SDK には次の契約が含まれます。
 
 Turboism は現在、次のものを約束していません。
 
-- 署名・ノータリゼーション済みのインストーラー artifact の公開リリースチャネル。
+- 署名・ノータリゼーション済みのインストーラーパッケージの公開リリースチャネル。
 - 検証済みの macOS Cubism ホスト起動。
 - 自動オンライン更新または本番利用可能なマーケットプレイス。
 - publisher signing または revocation。

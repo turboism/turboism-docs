@@ -1,30 +1,26 @@
 ---
-title: 构建插件
-description: 用于贡献和扩展 Turboism 的开发者候选入口。
+title: 开发
+description: 参与 Turboism 开发，或使用 Java、GraalJS 和 MCP。
 ---
 
-这是待发布的候选文档，描述当前 Preview 的边界，而非已发布的扩展计划。
+这是待发布的候选文档，说明当前 Preview 的边界。
 
-## 选择正确的路径
+## 参与 Turboism 开发
 
-### 参与 Turboism 贡献
+请阅读[参与贡献](./contributing)，了解如何改进 Turboism 本身。
 
-若想改进 Turboism 本身，请阅读[参与贡献](./contributing)。贡献流程和接收细则仍待确定。
+## Java 插件
 
-### 构建 Java 插件
+请查看[快速入门](./quick-start)、[插件接口](./plugin-interfaces)、[插件 Manifest 与打包](./manifest)和[设计插件](./designing-plugins)。Java 插件是在进程内加载的 Java 17 JAR，使用公共 SDK 生命周期与服务。
 
-请使用现有的[开发者快速入门](./quick-start)、[插件接口](./plugin-interfaces)、[插件 Manifest 与打包](./manifest)和[设计插件](./designing-plugins)页面来走 Java 路径。Java 插件是进程内 SDK 插件：它是由 Runtime 加载的 Java 17 JAR，并使用公共 SDK 边界。
+## GraalJS 脚本
 
-### 添加 GraalJS 脚本
+请阅读[GraalJS 脚本](./graaljs-scripts)。Java 调用方必须通过 `ScriptService` 显式运行脚本；发现脚本不会自动执行，脚本也不会获得完整 Java SDK。
 
-受限脚本边界请参阅[GraalJS 脚本](./graaljs-scripts)。Java 调用方必须通过 `ScriptService` 显式运行脚本；脚本不会自动执行，也不是完整的 Java SDK。
+## MCP
 
-### 连接外部客户端
+当可信外部客户端需要通过经过认证的 loopback Streamable HTTP 自动化时，请阅读[MCP](./mcp)。MCP 不是进程内插件 API。
 
-请参阅[MCP](./mcp)：第一方 Preview 插件通过经过认证的 loopback Streamable HTTP 向外部客户端提供服务。MCP 不是进程内 Java 插件 API。
+## 编程代理上下文
 
-## 辅助资料
-
-[LLM 编程上下文](./llm-coding-context)有助于理解和起草工作；它不是第四种扩展模型。ACP 是仅与 fx 一起使用的内部链路，不是第四种扩展方式。
-
-[SCREENSHOT PLACEHOLDER — 开发者路径选择；从可用的候选构建中手动截图。]
+[LLM 编程上下文](./llm-coding-context)是面向编程代理、供应商中立的项目说明，不是另一种开发方式。ACP 仅供 Turboism with fx 内部使用，不是第四种接口。

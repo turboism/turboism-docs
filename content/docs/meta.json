@@ -5,9 +5,10 @@
     "build-a-plugin",
     "concepts",
     "reference",
-    "introduction",
+    "safety-and-rights",
+    "report-a-bug",
+    "support-us",
     "troubleshooting",
-    "development-status",
-    "documentation-preview"
+    "development-status"
   ]
 }

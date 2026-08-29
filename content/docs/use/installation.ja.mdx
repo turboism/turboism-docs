@@ -3,15 +3,15 @@ title: インストール
 description: Windows .exe インストーラーまたはクロスプラットフォーム .jar インストーラーで、Cubism のインストールを変更せずに Turboism をインストールする。
 ---
 
-Turboism はインストーラー artifact を使ってインストールします。インストーラーには、Windows ネイティブの `TurboismInstaller-<version>.exe` と、クロスプラットフォームの `TurboismInstaller-<version>.jar`（Windows と macOS にインストールでき、Java 17+ ランタイムが必要）の 2 種類があります。一般ユーザーはどちらかのインストーラーでインストールします。ソースからのビルドは開発者・メンテナー向けの作業です。
+Turboism のインストールにはインストーラーを使用します。インストーラーには、Windows ネイティブの `TurboismInstaller-<version>.exe` と、クロスプラットフォームの `TurboismInstaller-<version>.jar`（Windows と macOS にインストールでき、Java 17+ ランタイムが必要）の 2 種類があります。一般ユーザーはどちらかのインストーラーでインストールします。ソースからのビルドは開発者・メンテナー向けの作業です。
 
 どちらのインストーラーも、Cubism JAR、DLL、公式 launcher file、licensing state、既存 project を変更しません。
 
 ## インストーラーを選ぶ
 
 - Windows では `.exe` インストーラーを使用します。ネイティブ経路であり、ユーザー単位でインストールされ、管理者権限は不要で、Windows 設定ツールとスタートメニュー連携を含みます。
-- Windows または macOS で、プラットフォームをまたいで 1 つの artifact を使いたい場合は `.jar` インストーラーを使用します。Java 17+ が必要で、`java -jar TurboismInstaller-<version>.jar` で実行します。
-- インストーラー artifact は、そのビルドを提供した release または preview チャネルから入手する必要があります。Turboism は現在、これらのインストーラーの公開ダウンロードアセットを提供していません。
+- Windows または macOS で、プラットフォームをまたいで 1 つのインストーラーファイルを使いたい場合は `.jar` インストーラーを使用します。Java 17+ が必要で、`java -jar TurboismInstaller-<version>.jar` で実行します。
+- インストーラーファイルは、そのビルドを提供した release または preview チャネルから入手する必要があります。Turboism は現在、これらのインストーラーの公開ダウンロードアセットを提供していません。
 - インストーラー JAR はプラグイン JAR とは別物です。プラグインはこのインストーラーではなく[プラグイン管理](./plugin-management)で管理します。
 
 ## Windows `.exe` インストーラー
@@ -67,12 +67,12 @@ java -jar <home>\Uninstaller\uninstaller.jar
 
 ## 開発者とメンテナー
 
-ソースからの Turboism のビルドとインストーラー artifact のビルドは、開発者・メンテナー向けの作業です。ソース、フレームワーク、インストーラーのビルドは開発者・メンテナーのワークフローであり、このユーザーガイドには意図的に含めていません。
+ソースからの Turboism のビルドとインストーラーパッケージのビルドは、開発者・メンテナー向けの作業です。ソース、フレームワーク、インストーラーのビルドは開発者・メンテナーのワークフローであり、このユーザーガイドには意図的に含めていません。
 
 ## 現在の制限
 
 - macOS Cubism ホストの起動は未検証で、macOS Cubism ランチャーもインストールされません。
-- インストーラー artifact はまだ署名・ノータリゼーションされておらず、公開ダウンロードチャネルもありません。
+- インストーラーパッケージはまだ署名・ノータリゼーションされておらず、公開ダウンロードチャネルもありません。
 - 自動オンラインアップデーターはありません。更新は新しいインストーラーの再実行を意味します。
 - プラグイン置換の失敗は内部の backup/restore で保護されますが、完全なユーザー向け修復・履歴 UI はまだ存在しません。
 - feature readiness は capability と version に依存します。

@@ -1,42 +1,56 @@
 ---
-title: LLM コーディングコンテキスト
-description: コーディング agent に単独で渡せる、ベンダー中立の Turboism context brief。
+title: LLM を使った開発
+description: LLM にそのまま渡せる、ベンダー中立の Turboism 開発コンテキスト。
 ---
 
-このページは公開待ちの候補ドキュメントです。これはコーディング agent 向けの handoff brief であり、拡張 mechanism、release channel、deployment surface ではありません。現在の task とこの context を agent に渡し、行動前に unknown fact を source で確認するよう求めてください。
+Turboism の開発を LLM に依頼する場合も、コードの品質、検証手順、最終結果には開発者自身が責任を負います。以下の要件を守ったうえで、完全な Markdown コンテキストを開いてコピーしてください。
 
-## プロジェクト境界
+## 開発者の要件
 
-Turboism は Java ベースの integration および plugin framework です。product documentation は runtime で application、learning、plugin project から独立させます。development または test の近道として host installation を変更しないでください。関連する source と test が確立するまで、すべての behavior を version- および capability-sensitive として扱います。
+### コード規約を守る
 
-## アーキテクチャと拡張パス
+- 現在のリポジトリにあるコントリビューションガイド、モジュールごとの規約、既存のコードスタイルを読み、従ってください。LLM に規約を推測させてはいけません。
+- 自分で作成、変更、採用したすべてのコードを開発者自身がレビューし、公開 SDK、権限、セキュリティ、バージョンの境界に適合することを確認してください。
+- 提出前に、プロジェクトが求めるフォーマットチェック、静的チェック、テスト、ビルドを実行してください。LLM の説明は、その実行結果の代わりにはなりません。
 
-framework には異なる 3 つの path があります。
+### 実環境でテストする
+
+- 自分で作成または採用したコードを実環境でテストしてください。プラグイン、ランタイム、ホスト連携に関わる変更は、使用許可があり、対象バージョンと一致する実際の環境で検証する必要があります。シミュレーション、コンパイル成功、LLM の判断だけでは不十分です。
+- 専用のテストデータを使用し、読み込み、主要な動作、失敗時の処理、クリーンアップの結果を確認してください。許可なくユーザーデータをテストに使用してはいけません。
+- テスト環境、関連バージョン、手順、実際の結果を記録してください。実環境でのテストが完了していない場合は、その事実を明記し、利用可能であると主張してはいけません。
+
+````markdown title="完全な LLM 開発コンテキスト"
+# Turboism 開発コンテキスト
+
+## 役割と範囲
+
+あなたは Java ベースの integration および plugin framework である Turboism の開発を支援しています。LLM の出力は draft であり、検証済みの code、documentation、完了した contribution ではありません。行動する前に、現在の source、build configuration、test、documentation で unknown fact を確認してください。
+
+product documentation は runtime で application、learning、plugin project から独立させます。development または test の近道として host installation を変更しないでください。編集前に、変更を担当する module、その public contract、既存の test を特定してください。
+
+## 拡張の境界
+
+Turboism には異なる 3 つの extension path があります。
 
 1. **Java plugin** は、Java SDK lifecycle、manifest、permission、service を持つプロセス内 plugin です。
 2. **GraalJS script** は制限付き script です。Java plugin が `PluginContext.scripts()` で検出し、`ScriptService.run` で明示的に実行します。検出だけで script が実行されることはありません。
 3. **MCP** は first-party Preview plugin であり、信頼できる local external client に認証済み loopback Streamable HTTP を提供します。
 
-ACP は fx とともに内部でのみ使用され、第 4 の拡張 path ではありません。codebase は Java 17 を対象にしています。必要な capability が近くに見えるという理由だけで、ある path を別の path の代わりに使わないでください。
+ACP は fx とともに内部でのみ使用され、第 4 の extension path ではありません。codebase は Java 17 を対象にしています。Java、GraalJS、MCP、ACP の境界を維持してください。近くにある capability が便利に見えるという理由だけで、ある path を別の path の代わりに使わないでください。
 
-## 必須の確認
+## 開発原則
 
-behavior を有効化または integration を変更する前に、各 condition を独立して正確に確認します。
+- 最初に関連する code を読み、既存の issue と plugin を確認してください。重複開発を避け、適切な場合は確立済みの behavior を再利用します。
+- 一般的な framework capability または public SDK で要件を満たせる場合は、それを優先します。plugin は共有機能を重複させず、独立した機能を提供するものにしてください。
+- 正確な version range、必要な capability または provider、宣言済みの permission、現在の session と lifecycle state を別々に確認してください。1 つの check を通過しても、他の check が成立することにはなりません。
+- user data を保護してください。private material、credential、personal data、その他の confidential content を LLM や contribution に公開しないでください。
+- ベンダー中立を保ってください。別途検証された project decision がない限り、design または documentation を特定の LLM provider や model に結び付けないでください。
 
-- 正確な product と API version range。
-- operation に必要な capability または provider。
-- action に対して宣言された permission。
-- 現在の session と lifecycle state。
+## contribution と検証
 
-1 つの check を通過しても、他の check を通過したことにはなりません。API が存在するだけで support を推測せず、unavailable behavior を明示して test してください。
+変更を focused に保ち、behavior が変わる場合は対象を絞った test を追加または更新してください。contribution を提出する前に、developer 自身が diff を読み、変更を確認し、結果を確認および test する必要があります。作業が正しい、完了した、または test 済みであるという LLM の主張だけに頼ってはいけません。
 
-## リポジトリの概要
-
-root build configuration から始め、編集前に変更を担当する module を特定します。大まかには、framework/runtime、public SDK、plugin 関連 implementation、host integration、test 用の module があり、documentation は別の site として保守されます。この概要を directory map として信頼せず、現在の checkout で実際の module 名、ownership、public contract、既存 test を調べてください。
-
-## contribution workflow
-
-変更を focused に保ち、behavior が変わる場合は対象を絞った test を更新または追加し、適用する checkout でリポジトリに記載された Gradle check を実行します。
+最小の関連 test を最初に実行してください。現在の repository に次の command がある場合は、focused test、`devCheck`、`checkCompletedCommit` を実行します。
 
 ```bash
 ./gradlew focusedTest
@@ -44,12 +58,25 @@ root build configuration から始め、編集前に変更を担当する module
 ./gradlew checkCompletedCommit
 ```
 
-まず最小の関連 test を実行し、その後に変更に適したより広い check を実行します。command、task、module、または contract が存在しない場合は、代替を提案する前に source または build configuration で確認してください。
+documentation site の変更では、documentation の lint、typecheck、production build も実行します。
 
-## documentation rule
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
 
-English は body content の authoritative language です。English、中国語、日本語の page の意味を一致させてください。検証なしに public release、download、compatibility、installation step、API signature、availability を主張しないでください。適切な場合は candidate material を pending と示します。documentation site の変更では、site を runtime で関連 product から独立させ、その site に記載された check を実行します。
+command、task、module、または contract が存在しない場合は、代替を提案する前に現在の source または build configuration で確認してください。
 
-## agent への指示
+## project content standard
 
-ベンダー中立を保ちます。この brief は任意の coding agent に渡せます。material claim ごとに source による裏付けを述べ、verified fact と assumption を区別し、fact が unknown なら source を確認するために停止するよう求めてください。生成された変更は受け入れる前に review します。
+これらの standard は、この project とその community 向けに設計または提出する content に適用されます。project 外での private use を規律するものではありません。
+
+- content を重複させないでください。
+- political propaganda、pornographic content、または hate、harassment、unlawful、privacy-invading な material を含む、project community に適さない sensitive content を設計または提出しないでください。
+- English、中国語、日本語の documentation の意味を一致させてください。検証なしに release status、download、compatibility、installation step、API signature、availability を主張しないでください。
+
+## 作業指示
+
+material claim ごとに source による裏付けを述べ、verified fact と assumption を区別し、fact が unknown なら停止して source を確認してください。既存の境界と convention を維持し、変更を human review に回してください。
+````

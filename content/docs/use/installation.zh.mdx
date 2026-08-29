@@ -3,15 +3,15 @@ title: 安装
 description: 使用 Windows .exe 安装器或跨平台 .jar 安装器安装 Turboism，不修改 Cubism 安装。
 ---
 
-Turboism 通过安装器 artifact 安装。现有两种安装器：Windows 原生 `TurboismInstaller-<version>.exe`，以及跨平台 `TurboismInstaller-<version>.jar`（在 Windows 和 macOS 上安装，需要 Java 17+ 运行时）。普通用户使用其中一种安装器安装；从源码构建是开发者和维护者的工作。
+Turboism 通过安装包安装。现有两种安装器：Windows 原生 `TurboismInstaller-<version>.exe`，以及跨平台 `TurboismInstaller-<version>.jar`（在 Windows 和 macOS 上安装，需要 Java 17+ 运行时）。普通用户使用其中一种安装包安装；从源码构建是开发者和维护者的工作。
 
 两种安装器都不会修改 Cubism JAR、DLL、官方 launcher 文件、许可状态或现有项目。
 
 ## 选择安装器
 
 - 在 Windows 上，使用 `.exe` 安装器。这是原生路径：按用户安装、无需管理员权限，并包含 Windows 配置器和开始菜单集成。
-- 在 Windows 或 macOS 上，如果希望跨平台使用同一个 artifact，请使用 `.jar` 安装器。它需要 Java 17+，通过 `java -jar TurboismInstaller-<version>.jar` 运行。
-- 安装器 artifact 必须来自提供构建的 release 或 preview 渠道。Turboism 目前不公开提供这些安装器的下载资源。
+- 在 Windows 或 macOS 上，如果希望跨平台使用同一个安装包，请使用 `.jar` 安装器。它需要 Java 17+，通过 `java -jar TurboismInstaller-<version>.jar` 运行。
+- 安装包必须来自提供构建的 release 或 preview 渠道。Turboism 目前不公开提供这些安装器的下载资源。
 - 安装器 JAR 与插件 JAR 是分开的。插件通过[插件管理](./plugin-management)管理，而不是通过本安装器。
 
 ## Windows `.exe` 安装器
@@ -67,12 +67,12 @@ java -jar <home>\Uninstaller\uninstaller.jar
 
 ## 开发者和维护者
 
-从源码构建 Turboism 和构建安装器 artifact 是开发者和维护者的工作。源码、框架和安装器构建都属于开发者或维护者工作流，有意不包含在本用户指南中。
+从源码构建 Turboism 和构建安装包是开发者和维护者的工作。源码、框架和安装器构建都属于开发者或维护者工作流，有意不包含在本用户指南中。
 
 ## 当前限制
 
 - macOS Cubism 宿主启动尚未验证，且未安装 macOS Cubism launcher。
-- 安装器 artifact 尚未签名或公证，也没有公开下载渠道。
+- 安装包尚未签名或公证，也没有公开下载渠道。
 - 没有自动在线更新器：更新意味着重新运行更新的安装器。
 - 失败的插件替换由内部 backup/restore 保护，但完整的用户面向修复或历史 UI 尚不存在。
 - 功能就绪性仍然取决于 capability 和版本。
