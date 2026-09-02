@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 
 const audienceLinks = [
-  { key: "use", href: "/docs/use/overview", title: "useTurboismTitle", description: "useTurboismDescription", icon: BookOpen },
-  { key: "plugin", href: "/docs/build-a-plugin/overview", title: "buildPluginTitle", description: "buildPluginDescription", icon: Blocks },
+  { key: "use", href: "/use/overview", title: "useTurboismTitle", description: "useTurboismDescription", icon: BookOpen },
+  { key: "plugin", href: "/build-a-plugin/overview", title: "buildPluginTitle", description: "buildPluginDescription", icon: Blocks },
 ] as const;
 
 type Copy = ReturnType<typeof useLanguage>["copy"];

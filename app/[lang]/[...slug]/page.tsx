@@ -1,12 +1,73 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import type { ComponentType } from "react";
+import type { MDXComponents } from "mdx/types";
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
+import { SidebarTrigger } from "fumadocs-ui/layouts/docs/slots/sidebar";
+import { PanelLeft } from "lucide-react";
+import { getMDXComponents } from "@/components/mdx";
+import { source } from "@/lib/source";
 import { isLanguage } from "@/lib/i18n";
 
-export default async function LegacyDocsRedirect({
+export function generateStaticParams() {
+  return source.generateParams().filter((params) => params.slug?.length);
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string; slug: string[] }>;
+}): Promise<Metadata> {
+  const { lang, slug } = await params;
+  if (!isLanguage(lang)) return {};
+  const page = source.getPage(slug, lang);
+  if (!page) return {};
+
+  const path = `/docs/${lang}/${slug.join("/")}`;
+
+  return {
+    title: page.data.title,
+    description: page.data.description,
+    alternates: {
+      canonical: `/docs${page.url}`,
+      languages: {
+        en: path.replace(`/docs/${lang}/`, "/docs/en/"),
+        zh: path.replace(`/docs/${lang}/`, "/docs/zh/"),
+        ja: path.replace(`/docs/${lang}/`, "/docs/ja/"),
+      },
+    },
+  };
+}
+
+export default async function DocumentationPage({
   params,
 }: {
   params: Promise<{ lang: string; slug: string[] }>;
 }) {
   const { lang, slug } = await params;
-  if (!isLanguage(lang) || !slug.length) notFound();
-  redirect(`/${lang}/docs/${slug.join("/")}`);
+  if (!isLanguage(lang)) notFound();
+  const page = source.getPage(slug, lang);
+  if (!page) notFound();
+
+  const MDX = page.data._exports.default as ComponentType<{
+    components?: MDXComponents;
+  }>;
+
+  return (
+    <DocsPage
+      full={page.data.full}
+      toc={page.data.toc}
+      className="rounded-3xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-md"
+      tableOfContent={{ container: { className: "border-s border-slate-200/60 bg-white/50 backdrop-blur-md" } }}
+    >
+      <SidebarTrigger className="flex size-11 items-center justify-center self-start rounded-lg border border-slate-200/70 bg-white/70 text-slate-600 shadow-sm backdrop-blur-md transition-colors hover:bg-white/90 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 md:hidden">
+        <PanelLeft className="size-5" />
+      </SidebarTrigger>
+      <DocsTitle className="text-blue-600">{page.data.title}</DocsTitle>
+      <DocsDescription>{page.data.description}</DocsDescription>
+      <DocsBody className="[&_a]:text-blue-600">
+        <MDX components={getMDXComponents()} />
+      </DocsBody>
+    </DocsPage>
+  );
 }

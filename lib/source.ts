@@ -7,7 +7,7 @@ const docs = defineDocs({
 });
 
 export const source = loader({
-  baseUrl: "/docs",
+  baseUrl: "/",
   i18n,
   source: docs.toFumadocsSource(),
 });

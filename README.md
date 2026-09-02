@@ -1,6 +1,6 @@
 # Turboism Docs
 
-The documentation site for Turboism, served at `docs.turboism.dev`.
+The authoritative Turboism documentation, canonically served at [`turboism.dev/docs`](https://turboism.dev/docs) while remaining independently deployed.
 
 ## Local development
 
@@ -9,16 +9,49 @@ npm install
 npm run dev
 ```
 
-Before a production preview, run:
+Before a local production preview, run:
 
 ```bash
-npm run lint
-npm run typecheck
+npm run release:check
 npm run build
 ```
 
 English is the authoritative source. Keep the Simplified Chinese and Japanese
 pages semantically aligned with every documentation change.
+
+## Deployment
+
+Install the pinned provider CLI with `npm install --global vercel@59.10.0`,
+then link the checkout once with `vercel link`. The generated `.vercel/`
+directory stays local and must not be committed.
+
+For a CLI preview deployment:
+
+```bash
+vercel pull --yes --environment=preview
+npm run release:build
+DEPLOYMENT_URL="$(vercel deploy --prebuilt)"
+npm run verify:deployment -- "$DEPLOYMENT_URL"
+```
+
+For production, use the production environment for both build and deployment,
+then verify the deployment and canonical alias:
+
+```bash
+vercel pull --yes --environment=production
+npm run release:build -- --prod
+DEPLOYMENT_URL="$(vercel deploy --prebuilt --prod)"
+npm run verify:deployment -- "$DEPLOYMENT_URL"
+npm run verify:production
+```
+
+`.github/workflows/deploy.yml` applies the same flow to trusted branch pushes:
+non-`main` branches create previews and `main` deploys production. Configure the
+repository secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID`;
+the IDs come from the local `.vercel/project.json` created by `vercel link`.
+Vercel Git deployments are disabled in `vercel.json` to prevent duplicate
+provider and GitHub Actions deployments. Keep the token in GitHub secrets or a
+protected environment, never in the repository.
 
 ## SDK Javadoc update workflow
 
@@ -72,8 +105,7 @@ output without the explicit public-surface approval flag.
 After syncing, review the generated-file diff and run:
 
 ```bash
-npm run lint
-npm run typecheck
+npm run release:check
 npm run build
 ```
 

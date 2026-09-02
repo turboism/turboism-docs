@@ -12,7 +12,7 @@ const geistSans = Geist({ variable: "--font-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://docs.turboism.dev"),
+  metadataBase: new URL("https://turboism.dev"),
   title: { default: "Turboism Docs", template: "%s · Turboism Docs" },
   description: "The authoritative product and developer documentation for Turboism.",
 };

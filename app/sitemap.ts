@@ -3,7 +3,7 @@ import { source } from "@/lib/source";
 import { languages } from "@/lib/i18n";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://docs.turboism.dev";
+  const baseUrl = "https://turboism.dev/docs";
   return [
     ...languages.map((lang) => ({ url: `${baseUrl}/${lang}`, lastModified: new Date() })),
     ...languages.flatMap((lang) =>

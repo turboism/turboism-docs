@@ -1,0 +1,86 @@
+name: Deploy to Vercel
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || !github.event.deleted
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Validate deployment configuration
+        shell: bash
+        run: |
+          : "${VERCEL_TOKEN:?Set the VERCEL_TOKEN repository secret}"
+          : "${VERCEL_ORG_ID:?Set the VERCEL_ORG_ID repository secret}"
+          : "${VERCEL_PROJECT_ID:?Set the VERCEL_PROJECT_ID repository secret}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@59.10.0
+
+      - name: Pull Vercel project settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          else
+            vercel pull --yes --environment=preview --git-branch="$GITHUB_REF_NAME" --token="$VERCEL_TOKEN"
+          fi
+
+      - name: Build release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            npm run release:build -- --prod --token="$VERCEL_TOKEN"
+          else
+            npm run release:build -- --token="$VERCEL_TOKEN"
+          fi
+
+      - name: Deploy release
+        id: deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            deployment_url="$(vercel deploy --prebuilt --prod --yes --no-color --token="$VERCEL_TOKEN")"
+          else
+            deployment_url="$(vercel deploy --prebuilt --yes --no-color --token="$VERCEL_TOKEN")"
+          fi
+          printf 'url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
+          printf '### Vercel deployment\n\n%s\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify deployment
+        run: npm run verify:deployment -- "${{ steps.deploy.outputs.url }}" --token="$VERCEL_TOKEN"
+
+      - name: Verify production alias
+        if: github.ref == 'refs/heads/main'
+        run: npm run verify:production -- --token="$VERCEL_TOKEN"

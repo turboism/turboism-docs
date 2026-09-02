@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useLanguage } from "@/components/language-provider";
+import { ThanksStarLink } from "@/components/thanks-star-link";
 
-const DOCS_BASE = "https://docs.turboism.dev";
+const DOCS_BASE = "https://turboism.dev/docs";
 const SDK_HREF = `${DOCS_BASE}/api/sdk/index.html`;
 const DOWNLOAD_HREF = "https://github.com/turboism/turboism/releases";
 const GITHUB_HREF = "https://github.com/turboism";
@@ -16,11 +17,11 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   const navItems = [
-    { label: copy.nav.home, href: "https://www.turboism.dev", current: false },
-    { label: copy.nav.docs, href: `/${language}/docs`, current: true },
+    { label: copy.nav.home, href: "https://turboism.dev", current: false },
+    { label: copy.nav.docs, href: `/${language}`, current: true },
     { label: "SDK", href: SDK_HREF, current: false },
-    { label: copy.nav.plugins, href: "https://plugin.turboism.dev", current: false },
-    { label: copy.nav.learn, href: "https://learn.turboism.dev", current: false },
+    { label: copy.nav.plugins, href: "https://turboism.dev/plugins", current: false },
+    { label: copy.nav.learn, href: "https://turboism.dev/learn", current: false },
     { label: copy.nav.chat, href: "https://chat.turboism.dev", current: false },
     { label: copy.nav.download, href: DOWNLOAD_HREF, current: false },
     { label: copy.nav.github, href: GITHUB_HREF, current: false },
@@ -36,6 +37,7 @@ export function SiteHeader() {
           >
             Turboism
           </Link>
+          <ThanksStarLink />
         </div>
 
         <nav className="hidden min-w-0 flex-1 items-center justify-center gap-5 md:flex lg:gap-6">

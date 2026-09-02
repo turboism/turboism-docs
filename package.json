@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "release:check": "npm run lint && npm run typecheck",
+    "release:build": "npm run release:check && vercel build",
+    "verify:deployment": "vercel inspect --wait --timeout=5m",
+    "verify:production": "npm run verify:deployment -- https://docs.turboism.dev",
     "generate:sdk-api": "node scripts/sync-sdk-api.mjs",
     "sync:sdk-api": "node scripts/sync-sdk-api.mjs --sync"
   },

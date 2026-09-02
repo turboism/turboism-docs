@@ -13,7 +13,7 @@ export function SiteFooter() {
       <div className="container mx-auto px-6 max-w-7xl">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3 text-sm text-slate-500/80">
-            <Link href="https://www.turboism.dev" className="font-sans font-medium text-slate-600 hover:text-slate-900 transition-colors">
+            <Link href="https://turboism.dev" className="font-sans font-medium text-slate-600 hover:text-slate-900 transition-colors">
               Turboism
             </Link>
             <span className="text-slate-300">|</span>
