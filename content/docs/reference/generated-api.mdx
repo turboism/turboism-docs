@@ -21,10 +21,12 @@ Successful generation alone does not approve publication. If the generated publi
 
 ## Current status
 
-The latest reviewed candidate was not synchronized because:
+The `0.43.3` release-mode candidate has been generated and reviewed. Its version is correct and does not contain a snapshot marker, but it was not synchronized because:
 
-- a generated type describes itself as internal and non-stable while remaining publicly searchable;
-- a generated service remains marked Preview and still needs an approved public-reference policy; and
-- the reviewed candidate used the wrong version identifier.
+- `ActiveReadProjections` remains publicly searchable while its own documentation says that it is an internal helper outside the stable plugin API;
+- the generated constant-values page contains a broken local anchor; and
+- several public types still use Preview API language and need an approved public-reference policy.
+
+The update script now detects the version automatically, scans generated output for blocked material and broken local links, requires explicit approval for Preview API language, and validates the documentation site after synchronization.
 
 Until those blockers are resolved, use the [SDK API Guide](./sdk-api) and the public SDK source declarations. Do not rely on the currently hosted HTML reference for release, deployment, or compatibility claims.
