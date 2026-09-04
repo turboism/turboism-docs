@@ -8,7 +8,7 @@ import { useLanguage } from "@/components/language-provider";
 import { ThanksStarLink } from "@/components/thanks-star-link";
 
 const DOCS_BASE = "https://turboism.dev/docs";
-const SDK_HREF = `${DOCS_BASE}/api/sdk/index.html`;
+const SDK_HREF = `${DOCS_BASE}/sdk/index.html`;
 const DOWNLOAD_HREF = "https://github.com/turboism/turboism/releases";
 const GITHUB_HREF = "https://github.com/turboism";
 

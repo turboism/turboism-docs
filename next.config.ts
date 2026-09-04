@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
   basePath: "/docs",
   reactStrictMode: true,
   allowedDevOrigins: ["localhost", "*.trycloudflare.com"],
+  async rewrites() {
+    return [
+      {
+        source: "/sdk/:path*",
+        destination: "/api/sdk/:path*",
+      },
+    ];
+  },
   async redirects() {
     const legacyRequest = {
       type: "host" as const,
@@ -24,8 +32,28 @@ const nextConfig: NextConfig = {
 
     return [
       {
-        source: "/",
+        source: "/sdk",
+        destination: "/sdk/index.html",
+        permanent: true,
+      },
+      {
+        source: "/api/sdk/:path*",
+        destination: "/sdk/:path*",
+        permanent: true,
+      },
+      {
+        source: "/api/sdk/:path*",
+        destination: "https://turboism.dev/docs/sdk/:path*",
+        ...legacyConditions,
+      },
+      {
+        source: "/docs",
         destination: "https://turboism.dev/docs",
+        ...legacyConditions,
+      },
+      {
+        source: "/docs/:path*",
+        destination: "https://turboism.dev/docs/:path*",
         ...legacyConditions,
       },
       {
@@ -49,13 +77,8 @@ const nextConfig: NextConfig = {
         ...legacyConditions,
       },
       {
-        source: "/docs",
+        source: "/",
         destination: "https://turboism.dev/docs",
-        ...legacyConditions,
-      },
-      {
-        source: "/docs/:path*",
-        destination: "https://turboism.dev/docs/en/:path*",
         ...legacyConditions,
       },
       {
