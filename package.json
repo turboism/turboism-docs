@@ -6,14 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "node --test tests/**/*.test.mjs",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "release:check": "npm run lint && npm run typecheck",
+    "release:check": "npm test && npm run lint && npm run typecheck",
     "release:build": "npm run release:check && vercel build",
     "verify:deployment": "vercel inspect --wait --timeout=5m",
     "verify:production": "npm run verify:deployment -- https://docs.turboism.dev",
     "generate:sdk-api": "node scripts/sync-sdk-api.mjs",
-    "sync:sdk-api": "node scripts/sync-sdk-api.mjs --sync"
+    "generate:sdk-api:git": "node scripts/generate-sdk-api-from-git.mjs",
+    "sync:sdk-api": "node scripts/sync-sdk-api.mjs --sync",
+    "sync:sdk-api:git": "node scripts/generate-sdk-api-from-git.mjs --sync"
   },
   "dependencies": {
     "fumadocs-core": "^16.14.0",

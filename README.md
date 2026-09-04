@@ -67,6 +67,14 @@ Pass the source checkout explicitly or set `TURBOISM_SOURCE_ROOT`:
 npm run generate:sdk-api -- ../turboism
 ```
 
+To fetch and generate directly from the current remote `main` without keeping a local Turboism checkout:
+
+```bash
+npm run generate:sdk-api:git
+```
+
+Use `-- --ref=<branch-tag-or-sha>` to select a different immutable source. The helper resolves the ref in a temporary checkout and removes it after validation.
+
 This runs the real Gradle task, `:sdk:javadoc`, in release-version mode. It does
 not overwrite the hosted reference.
 
@@ -97,6 +105,15 @@ npm run sync:sdk-api -- ../turboism \
   --approved-public-surface
 ```
 
+The Git-backed equivalent defaults to the latest remote `main`:
+
+```bash
+npm run sync:sdk-api:git -- \
+  --expected-version=<version> \
+  --approved-public-surface \
+  --approved-preview-surface
+```
+
 The script refuses to sync snapshot output, output with the wrong version, or
 output without the explicit public-surface approval flag.
 
@@ -111,3 +128,14 @@ npm run build
 
 Do not treat successful generation as approval to publish. Generation, public API
 review, synchronization, and site validation are separate required steps.
+
+### Automated release synchronization
+
+`.github/workflows/update-sdk-api.yml` supports two paths:
+
+- manual `workflow_dispatch` against `main`, a tag, or an exact commit, in either `validate` or `sync` mode;
+- `sdk-release-published` repository dispatches from the protected Turboism release publisher.
+
+Release dispatches always check out the exact released source SHA, verify its version and tag, regenerate the Javadoc, run the same publication checks, validate the documentation build, and commit only `public/api/sdk/` when the generated output changed. Manual sync requires the confirmation value `sync-sdk-api`.
+
+The Turboism repository requires a `DOCS_RELEASE_DISPATCH_TOKEN` secret that can dispatch this repository. This docs repository must allow GitHub Actions to write `main`; its normal Vercel deployment secrets remain required for the resulting push to deploy.

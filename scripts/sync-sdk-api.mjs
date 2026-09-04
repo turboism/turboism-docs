@@ -8,7 +8,7 @@ import {
   rmSync,
   statSync,
 } from "node:fs";
-import { dirname, extname, join, resolve } from "node:path";
+import { basename, dirname, extname, join, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
 import { fileURLToPath } from "node:url";
 
@@ -111,6 +111,7 @@ execFileSync(
     ":sdk:javadoc",
     "-PturboismRelease=true",
     "--no-daemon",
+    "--no-watch-fs",
     "--console=plain",
   ],
   {
@@ -262,7 +263,11 @@ for (const htmlFile of htmlFiles) {
         );
         continue;
       }
-      if (!idsFor(target).has(fragment)) {
+      const ids = idsFor(target);
+      const generatedConstantGroup =
+        basename(target) === "constant-values.html" &&
+        [...ids].some((id) => id.startsWith(`${fragment}.`));
+      if (!ids.has(fragment) && !generatedConstantGroup) {
         brokenLinks.push(`${htmlFile.slice(generated.length + 1)} -> ${reference}`);
       }
     }
