@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/api/sdk/:path*",
-        destination: "https://turboism.dev/docs/sdk/:path*",
+        destination: "https://turboism.dev/sdk/:path*",
         ...legacyConditions,
       },
       {

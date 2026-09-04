@@ -12,6 +12,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: new Date(),
       })),
     ),
-    { url: `${baseUrl}/sdk/index.html`, lastModified: new Date() },
+    { url: "https://turboism.dev/sdk/index.html", lastModified: new Date() },
   ];
 }
