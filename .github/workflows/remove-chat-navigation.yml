@@ -20,28 +20,21 @@ jobs:
         run: |
           node --input-type=module <<'JS'
           import assert from 'node:assert/strict';
-          import {readFileSync as read,writeFileSync as write,existsSync as exists} from 'node:fs';
+          import {readFileSync as read,writeFileSync as write} from 'node:fs';
           import {spawnSync} from 'node:child_process';
-          const dir=exists('src/brand/navigation.json')?'src/brand':'brand';
-          const test=`import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport {readFileSync} from 'node:fs';\nconst nav=JSON.parse(readFileSync(new URL('./navigation.json',import.meta.url),'utf8'));\ntest('retired chat is absent from public navigation',()=>{assert.ok(!JSON.stringify(nav).includes('chat.turboism.dev'),'retired chat link is present');assert.deepEqual(nav.links.map(([key])=>key),['home','docs','sdk','plugins','learn','thanks','download']);for(const labels of Object.values(nav.labels))assert.ok(!Object.hasOwn(labels,'chat'));});\n`;
-          write(dir+'/retired-chat.test.mjs',test);
+          const dir='brand';
+          write(dir+'/retired-chat.test.mjs',`import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport {readFileSync} from 'node:fs';\nconst nav=JSON.parse(readFileSync(new URL('./navigation.json',import.meta.url),'utf8'));\ntest('retired chat is absent from public navigation',()=>{assert.ok(!JSON.stringify(nav).includes('chat.turboism.dev'),'retired chat link is present');assert.deepEqual(nav.links.map(([key])=>key),['home','docs','sdk','plugins','learn','thanks','download']);for(const labels of Object.values(nav.labels))assert.ok(!Object.hasOwn(labels,'chat'));});\n`);
           const red=spawnSync('node',['--test',dir+'/retired-chat.test.mjs'],{encoding:'utf8'});
           process.stdout.write(red.stdout);assert.equal(red.status,1);assert.match(red.stdout,/retired chat link is present/);
           const nav=JSON.parse(read(dir+'/navigation.json','utf8'));nav.links=nav.links.filter(([key])=>key!=='chat');for(const labels of Object.values(nav.labels))delete labels.chat;
           write(dir+'/navigation.json',JSON.stringify(nav)+'\n');
-          const edit=(path,fn)=>write(path,fn(read(path,'utf8')));
-          edit(dir+'/shell.tsx',s=>s.replace(" | 'chat'",''));
-          edit(dir+'/brand.test.mjs',s=>s.replace("'learn','chat','thanks'","'learn','thanks'"));
-          if(exists('src/data/site.ts'))edit('src/data/site.ts',s=>s.replace(/^\s*chat: "https:\/\/chat\.turboism\.dev",\n/m,''));
-          if(exists('placeholder/index.html'))edit('placeholder/index.html',s=>s.replace(/^.*<a[^>]+href="https:\/\/chat\.turboism\.dev\/"[^>]*>.*<\/a>\s*$/m,''));
-          if(exists('README.md'))edit('README.md',s=>s.replace(/^- Chat:.*chat\.turboism\.dev.*\n/gm,''));
+          for(const [file,from,to] of [['shell.tsx'," | 'chat'",''],['brand.test.mjs',"'learn','chat','thanks'","'learn','thanks'"]])write(dir+'/'+file,read(dir+'/'+file,'utf8').replace(from,to));
           JS
-      - name: Install and run all release checks
-        run: |
-          corepack enable
-          if [ -f package-lock.json ]; then npm ci; npm run release:check; npm run build; else corepack pnpm install --frozen-lockfile; corepack pnpm release:check; corepack pnpm release:build; fi
-          if [ -d src/brand ]; then node --test src/brand/*.test.mjs; else node --test brand/*.test.mjs; fi
-      - name: Verify real desktop and mobile navigation
+      - run: npm ci
+      - run: npm run release:check
+      - run: npm run build
+      - run: node --test brand/*.test.mjs
+      - name: Verify real desktop and mobile navigation and every generated SDK page
         env:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/retirement-qa/node_modules/playwright
           BRAND_SITE: docs
@@ -54,7 +47,10 @@ jobs:
           node brand/verify-browser.mjs
           node --input-type=module <<'JS'
           import {readdirSync,readFileSync} from 'node:fs';import assert from 'node:assert/strict';
-          for(const name of readdirSync('public/sdk',{recursive:true}).filter(n=>n.endsWith('.html')))assert.ok(!readFileSync('public/sdk/'+name,'utf8').includes('https://chat.turboism.dev'),name);
+          const root='public/api/sdk',pages=readdirSync(root,{recursive:true}).filter(n=>n.endsWith('.html'));
+          assert.ok(pages.length>0,'SDK scan must not silently pass without any generated pages');
+          for(const name of pages)assert.ok(!readFileSync(root+'/'+name,'utf8').includes('https://chat.turboism.dev'),name);
+          console.log(`Verified ${pages.length} generated SDK pages contain no retired chat links.`);
           JS
       - name: Save only verified source on the isolated branch
         run: |
