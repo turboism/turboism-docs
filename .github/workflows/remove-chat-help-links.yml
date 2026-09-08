@@ -1,0 +1,70 @@
+name: Remove obsolete chat help links
+on:
+  push:
+    branches: [ops/remove-chat-help-links]
+    paths: [.github/workflows/remove-chat-help-links.yml]
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ops/remove-chat-help-links
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '22'
+      - name: Add the failing regression and remove only obsolete help bullets
+        run: |
+          cat > tests/retired-help.test.mjs <<'JS'
+          import test from 'node:test';
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          test('all guide locales remove the retired chat help destination',()=>{
+            for(const suffix of ['','.zh','.ja'])assert.doesNotMatch(readFileSync(`content/docs/use/overview${suffix}.mdx`,'utf8'),/chat\.turboism\.dev/);
+            const nav=JSON.parse(readFileSync('brand/navigation.json','utf8'));
+            assert.ok(nav.links.some(([key])=>key==='sponsor'));
+            assert.ok(nav.links.every(([key])=>key!=='chat'));
+          });
+          JS
+          if node --test tests/retired-help.test.mjs; then echo 'Expected obsolete guide links to fail the regression'; exit 1; fi
+          python3 - <<'PY'
+          from pathlib import Path
+          for suffix in ['', '.zh', '.ja']:
+              p=Path(f'content/docs/use/overview{suffix}.mdx')
+              lines=p.read_text().splitlines(keepends=True)
+              removed=[line for line in lines if 'chat.turboism.dev' in line]
+              assert len(removed)==1 and removed[0].startswith('- '),p
+              p.write_text(''.join(line for line in lines if 'chat.turboism.dev' not in line))
+          PY
+          node --test tests/retired-help.test.mjs
+          git add tests/retired-help.test.mjs content/docs/use/overview*.mdx
+      - name: Checks and production build including generated SDK
+        run: |
+          npm ci
+          npm run release:check
+          npm run build
+      - name: Verify the shared navigation in real browsers
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/nav-qa/node_modules/playwright
+          BRAND_SITE: docs
+          BRAND_ROUTE: /docs/en
+          BRAND_SDK_ROUTE: /docs/sdk/index.html
+        run: |
+          npm install --prefix "$RUNNER_TEMP/nav-qa" playwright@1.61.1
+          "$RUNNER_TEMP/nav-qa/node_modules/.bin/playwright" install --with-deps chromium
+          npm start > "$RUNNER_TEMP/site.log" 2>&1 &
+          node brand/verify-browser.mjs
+      - name: Push only verified changes
+        run: |
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs: remove retired chat help links in every locale'
+          git rev-parse HEAD > artifacts/brand/tested-commit.txt
+          git push origin HEAD:refs/heads/ops/remove-chat-help-links
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: retired-help-links-checks
+          path: artifacts/brand
