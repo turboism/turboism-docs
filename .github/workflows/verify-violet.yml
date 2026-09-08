@@ -1,7 +1,7 @@
 name: Verify Violet integration
 on:
   push:
-    branches: ['style/violet-unified-20260908']
+    branches: [style/violet-unified-20260908, style/all-sites-20260908]
   pull_request:
     branches: [main]
 permissions:
@@ -19,3 +19,19 @@ jobs:
       - run: npm ci
       - run: npm run release:check
       - run: npm run build
+      - name: Verify common navigation in real browsers
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/brand-qa/node_modules/playwright
+          BRAND_SITE: docs
+          BRAND_ROUTE: /docs/en
+          BRAND_SDK_ROUTE: /docs/sdk/index.html
+        run: |
+          npm install --prefix "$RUNNER_TEMP/brand-qa" playwright@1.61.1
+          "$RUNNER_TEMP/brand-qa/node_modules/.bin/playwright" install --with-deps chromium
+          npm start > "$RUNNER_TEMP/site.log" 2>&1 &
+          node brand/verify-browser.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: unified-brand-checks
+          path: artifacts/brand
