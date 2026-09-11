@@ -1,0 +1,82 @@
+---
+title: LLM으로 개발하기
+description: LLM을 Turboism과 함께 사용하기 위한 벤더 중립적이고 복사 가능한 개발 컨텍스트입니다.
+---
+
+LLM에게 Turboism 개발을 도와 달라고 요청할 때에도 코드 품질, 검증 및 최종 결과에 대한 책임은 개발자에게 있습니다. 전체 Markdown 컨텍스트를 열고 복사하기 전에 다음 요구 사항을 따르세요.
+
+## 개발자 요구 사항
+
+### 코드 표준 준수
+
+- 현재 저장소의 기여 지침, 모듈 규칙 및 기존 코드 스타일을 읽고 따르세요. LLM이 표준을 추측하도록 두지 마세요.
+- 직접 작성, 수정 또는 수용한 모든 코드를 직접 검토하고, 공개 SDK, 권한, 보안 및 버전 경계를 준수하는지 확인하세요.
+- 제출하기 전에 프로젝트가 요구하는 포맷 검사, 정적 검사, 테스트 및 빌드를 실행하세요. LLM의 설명은 그 결과를 대신할 수 없습니다.
+
+### 실제 환경 테스트 완료
+
+- 직접 작성하거나 수용한 코드를 실제 환경에서 테스트하세요. 플러그인, 런타임 또는 호스트 통합과 관련된 변경은 대상 버전(Windows x64의 Cubism Editor 5.2.03, 5.3.02 또는 5.3.03)에 맞는 권한이 있는 환경에서 검증해야 하며, 시뮬레이션, 컴파일 성공 또는 LLM의 평가만으로는 충분하지 않습니다.
+- 전용 테스트 데이터를 사용하고 로딩, 기본 동작, 실패 처리 및 정리를 검증하세요. 권한 없이 사용자 데이터로 테스트하지 마세요.
+- 테스트 환경, 관련 버전, 단계 및 관찰된 결과를 기록하세요. 실제 환경 테스트가 완료되지 않았다면 이를 명확히 밝히고 변경 사항이 사용 준비되었다고 주장하지 마세요.
+
+````markdown title="Complete LLM development context" lines="59"
+# Turboism development context
+
+## Role and scope
+
+You are assisting with development for Turboism, a Java-based integration and plugin framework. Treat LLM output as a draft, not as verified code, documentation, or a completed contribution. Verify unknown facts in the current source, build configuration, tests, and documentation before acting.
+
+Keep product documentation runtime-independent from application, learning, and plugin projects. Do not modify a host installation as a shortcut for development or testing. Identify the responsible module, its public contracts, and existing tests before editing.
+
+## Extension boundaries
+
+Turboism has three distinct extension paths:
+
+1. **Java plugins** are in-process plugins with the Java SDK lifecycle, manifest, permissions, and services.
+2. **GraalJS scripts** are restricted scripts that a Java plugin discovers through `PluginContext.scripts()` and explicitly runs with `ScriptService.run`; discovery alone does not execute a script.
+3. **MCP** is a bundled first-party plugin that provides authenticated loopback Streamable HTTP to trusted local external clients.
+
+ACP is internal and used only with fx; it is not a fourth extension path. The codebase targets Java 17. Preserve these Java, GraalJS, MCP, and ACP boundaries. Do not substitute one path for another just because a nearby capability appears useful.
+
+## Development principles
+
+- Start by reading the relevant code and checking existing issues and plugins. Avoid duplicate development and reuse established behavior where it fits.
+- Prefer a general framework capability or public SDK when it can serve the need. A plugin should provide an independent function rather than duplicate shared functionality.
+- Check the exact version range, required capability or provider, declared permission, and current session and lifecycle state separately. Passing one check does not establish any other check.
+- Protect user data. Do not expose private materials, credentials, personal data, or other confidential content to an LLM or in a contribution.
+- Remain vendor-neutral. Do not bind the design or documentation to a particular LLM provider or model without a separately verified project decision.
+
+## Contribution and verification
+
+Keep changes focused and add or update targeted tests when behavior changes. Before submitting a contribution, the developer must personally read the diff, inspect the changes, and check and test the result. Do not rely only on an LLM's claim that work is correct, complete, or tested.
+
+Run the smallest relevant test first. When the current repository provides these commands, run the focused test, `devCheck`, and `checkCompletedCommit`:
+
+```bash
+./gradlew focusedTest
+./gradlew devCheck
+./gradlew checkCompletedCommit
+```
+
+For documentation-site changes, also run the documentation lint, type check, and production build:
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
+
+If a command, task, module, or contract is not present, confirm that from the current source or build configuration before proposing an alternative.
+
+## Project content standards
+
+These standards apply to content designed or submitted for this project and its community; they do not govern private use outside the project.
+
+- Do not duplicate content.
+- Do not design or submit political propaganda, pornographic content, or sensitive content unsuitable for the project community, including hateful, harassing, unlawful, or privacy-invading material.
+- Keep the English, Chinese, Japanese, and Korean documentation semantically aligned. Do not claim release status, downloads, compatibility, installation steps, API signatures, or availability without verification.
+
+## Working instruction
+
+State the source support for each material claim, distinguish verified facts from assumptions, and stop to inspect source when facts are unknown. Preserve existing boundaries and conventions, then present changes for human review.
+````

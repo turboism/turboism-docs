@@ -1,0 +1,116 @@
+---
+title: 플러그인 인터페이스
+description: PluginContext를 통해 사용할 수 있는 현재 Preview SDK 인터페이스 계열입니다.
+---
+
+현재 Turboism 플러그인 경계는 Java 기반이며 소스에 근거합니다. 플러그인은 `TurboismPlugin` 또는 그 하위 인터페이스를 구현하고 런타임에서 `PluginContext`를 받습니다.
+
+시그니처와 자세한 의미는 [SDK API 가이드](../reference/sdk-api)와 [생성된 HTML 레퍼런스](https://turboism.dev/sdk/index.html)를 사용하세요.
+
+## 수명 주기
+
+```java
+public interface TurboismPlugin {
+    default void init(PluginContext context) throws Exception {}
+    default void enable() throws Exception {}
+    default void disable() throws Exception {}
+    default void shutdown() throws Exception {}
+}
+```
+
+`init`은 컨텍스트와 구성 설정에, `enable`은 활성 등록에, `disable`은 동작 중지에, `shutdown`은 플러그인 전용 정리에 사용하세요.
+
+## 컨텍스트 서비스 계열
+
+| 계열 | 현재 진입점 | 일반적인 용도 |
+| --- | --- | --- |
+| 메타데이터 | `descriptor()` | 현재 JAR 수준 디스크립터 조회 |
+| 로깅 | `logger()` | 플러그인 범위 진단 출력 |
+| 경로 | `paths()` | 플러그인이 소유한 config/data/cache/state/log 네임스페이스 접근 |
+| 현지화 | `localization()` | 매니페스트에 선언된 현지화 텍스트 읽기 |
+| 작업 | `tasks()` | 범위가 제한된 취소 가능 작업 제출 |
+| 호스트 읽기 | `hostReads()` | 범위가 제한된 비동기 호스트 스냅샷 요청 |
+| 저장소 | `storage()` | 플러그인이 소유한 데이터 읽기 및 원자적 쓰기 |
+| 사용자 파일 | `userFiles()` | 사용자가 허용한 외부 파일 핸들 사용 |
+| Cubism | `cubism()` | 스냅샷 읽기 및 통합 오브젝트 그래프 사용 |
+| 쿼리 | `parameterQuery()`, `selectionQuery()`, `modelHierarchyQuery()` | 범위가 좁은 타입 지정 쿼리 |
+| 이벤트 | `eventBus()` | 변경 불가능한 타입 지정 이벤트 게시 및 구독 |
+| 액션 | `actions()` | 재사용 가능한 플러그인 액션 등록 |
+| 메뉴 및 UI | `menus()`, 도구 모음/컨텍스트 메뉴 레지스트리, `uiHost()` | 툴킷 중립적 UI 디스크립터 기여 |
+| 구성 | `config()` | 타입 지정 스키마 등록, 값 읽기 및 compare-and-set 쓰기 |
+| 진단 | `diagnostics()` | 구조화된 런타임 진단 조회 |
+| 정리 | `disposableScope()` | 닫을 수 있는 수명 주기 리소스 등록 |
+
+특정 런타임/호스트 조합에서는 서비스를 사용할 수 없을 수 있습니다. 런타임을 우회하지 말고 명시적인 사용 불가 결과나 예외를 처리하세요.
+
+## 액션과 메뉴
+
+동작을 액션으로 한 번 등록하고 UI 기여를 그 ID에 바인딩하세요.
+
+```java
+var action = context.actions().register("hello.show", new ActionRegistry.Action() {
+    @Override public String id() { return "hello.show"; }
+    @Override public String label() { return "Hello"; }
+    @Override public Consumer<ActionRegistry.ActionContext> handler() {
+        return ignored -> context.logger().info("Hello from Turboism");
+    }
+});
+context.disposableScope().register(action);
+```
+
+메뉴, 도구 모음, 패널 및 컨텍스트 메뉴 기여는 SDK 디스크립터를 사용합니다. 호스트 위젯을 노출하지 않습니다.
+
+## 이벤트
+
+```java
+record HelloEvent(String message) implements EventBus.TurboismEvent {}
+
+var subscription = context.eventBus().subscribe(
+    HelloEvent.class,
+    event -> context.logger().info(event.message())
+);
+context.disposableScope().register(subscription);
+context.eventBus().publish(new HelloEvent("enabled"));
+```
+
+구독 권한과 게시 권한은 별개입니다. 이벤트에는 원시 호스트 상태가 포함되어서는 안 됩니다.
+
+## Cubism 오브젝트 API
+
+```java
+CubismModel model = context.cubism().model().active();
+Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
+float current = parameter.getValue();
+```
+
+쓰기에는 일치하는 권한과 프로바이더가 필요합니다. 인터페이스 메서드가 있다고 해서 모든 Cubism 버전에서 지원되는 것은 아닙니다.
+
+## 훅
+
+작업 수명 주기 관찰이나 가로채기를 위해 `CubismPlugin` 또는 특정 훅 인터페이스를 구현하세요.
+
+```java
+public final class HelloHooks implements CubismPlugin {
+    @Override
+    public void onParameterValueChanged(
+        Parameter parameter,
+        float oldValue,
+        float newValue
+    ) {
+        // Bounded observation only.
+    }
+}
+```
+
+훅은 `before -> operation -> changed-only on -> after` 순서를 따릅니다. 플러그인은 바이트코드 트랜스포머를 등록할 수 없습니다.
+
+## 구성, 저장소 및 작업
+
+- 설정에는 타입이 지정된 `PluginConfigRegistry`를 사용하세요.
+- DATA, STATE 및 CACHE에는 `PluginStorage`를 사용하세요.
+- 사용자가 선택한 외부 파일에는 `UserFileAccessService`를 사용하세요.
+- 관리되지 않는 스레드, 실행기 또는 타이머 대신 `PluginTaskScheduler`를 사용하세요.
+
+## 정리 규칙
+
+현재 메서드보다 오래 살아남을 수 있는 모든 반환된 등록이나 핸들은 명시적으로 닫거나 `context.disposableScope()`에 등록해야 합니다.

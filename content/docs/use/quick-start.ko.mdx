@@ -1,0 +1,105 @@
+---
+title: 빠른 시작
+description: 공개된 Turboism 패키지를 설치하고 구성한 뒤 첫 실행을 검증합니다.
+---
+
+이 빠른 시작은 [설치](./installation)에서 설명한 공개 릴리스 패키지에서 시작합니다. 패키지와 적법한 라이선스를 취득해 설치된 Cubism Editor가 필요합니다.
+
+## 1. 안전하게 준비하기
+
+- Windows x64가 지원되는 Cubism 호스트 플랫폼입니다. 지원되는 Editor 버전은 5.2.03, 5.3.02, 5.3.03입니다.
+- `.jar` 설치 프로그램에는 Java 17 이상 런타임이 필요합니다.
+- 열어 볼 프로젝트를 백업하거나 일회용 복사본을 사용하세요.
+- Turboism home을 Cubism 설치와 분리해 유지하세요.
+- Cubism JAR, DLL, BAT 파일 또는 라이선스 상태를 편집하지 마세요.
+
+## 2. 다운로드 및 검증
+
+1. [turboism.dev/download](https://turboism.dev/download)를 열고 채널을 선택하세요: **Stable**, **Beta** 또는 **Nightly**.
+2. 패키지 하나와 그에 맞는 `.sha256` 파일을 다운로드하세요.
+3. 예를 들어 PowerShell에서 파일 해시를 검증하세요:
+
+   ```powershell
+   Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
+   ```
+
+설치 프로그램에는 서명이 없으므로 체크섬이 직접 수행할 수 있는 무결성 검사입니다.
+
+## 3. 설치
+
+### Windows `.exe` 설치 프로그램
+
+1. `TurboismInstaller-<version>.exe`를 실행하세요.
+2. 설치 프로그램 언어(영어, 중국어 간체, 일본어 또는 한국어)를 선택하세요.
+3. 라이선스를 읽고 네 가지 필수 확인 항목을 모두 확인하세요.
+4. **Full** 또는 **Lite**를 선택한 다음 설치 디렉터리를 선택하세요(기본값 `%LOCALAPPDATA%\Turboism`). Full 모드에서는 개별 플러그인을 선택 해제할 수 있습니다.
+5. 선택적 관리형 GraalVM 구성 요소를 다운로드할지 결정하세요.
+6. 설치 프로그램이 `configure_turboism.ps1`을 열면 사용할 Cubism 설치를 선택하고 저장하세요. 설정 도구를 취소하면 유효한 프레임워크 전용 설치가 남습니다.
+7. Cubism 루트에 맞는 관리형 런처(`launch-cubism-turboism.bat`)를 통해 Cubism을 시작하세요.
+
+### 크로스 플랫폼 `.jar` 설치 프로그램
+
+1. 설치 프로그램을 실행하세요:
+
+   ```bash
+   java -jar TurboismInstaller-<version>.jar
+   ```
+
+   `-language eng|chn|jpn|kor`를 전달하면 설치 프로그램 언어를 미리 선택합니다.
+2. 선언을 완료하고 **Full**, **Thin** 또는 **Lite**를 선택한 다음 대상 디렉터리를 선택하세요.
+3. Windows에서는 설치된 `configure_turboism.ps1`을 실행하고 Cubism 설치를 선택한 뒤 관리형 런처로 실행하세요. macOS에서는 설치 프로그램이 설치와 제거만 담당합니다. macOS Cubism 호스트 지원은 검증되지 않았고 macOS 런처는 설치되지 않습니다.
+
+### 이식 가능한 ZIP
+
+1. 압축 파일 전체를 별도 폴더에 풀어 주세요.
+2. 해당 폴더에서 `configure_turboism.ps1`을 실행하고 Cubism 설치를 선택하세요.
+3. 생성된 바로 가기 또는 `launch-cubism-turboism.bat`으로 Cubism을 시작하세요.
+
+설치 프로그램 언어는 설치 프로그램에만 영향을 줍니다. Turboism이 실행 시 사용하는 언어는 런타임 `locale` 설정에서 결정되며, 플러그인 인터페이스 언어는 Cubism Editor의 **File → Environment Settings → General → Language**를 따릅니다.
+
+## 4. 첫 실행 검증
+
+다음을 확인하세요:
+
+- Cubism이 정상적으로 시작됩니다;
+- Turboism 런타임이 시작을 보고합니다;
+- 런타임이 의도한 Turboism home을 사용합니다;
+- 설치된 플러그인이 플러그인 관리자와 런타임 진단에 나타납니다;
+- 사용할 수 없는 호스트 기능은 Cubism을 충돌시키지 않고 안전하게 실패합니다;
+- Cubism을 닫으면 플러그인 스코프와 프레임워크가 소유한 실행기가 해제됩니다.
+
+## 5. 플러그인 추가
+
+Full 선택은 이미 검토된 기본 제공 플러그인 번들을 설치합니다. 로컬 플러그인 JAR을 추가하려면:
+
+1. Turboism을 열고 **플러그인 관리**(Plugin Management)를 선택하세요.
+2. **JAR에서 설치…**(Install from JAR…)를 선택하세요.
+3. 로컬 `.jar` 파일을 선택하세요.
+4. JAR을 로컬/검증되지 않은 소스로 표시하는 대화 상자를 확인하세요.
+5. 작업이 대기 중으로 표시되면 Cubism을 재시작하세요.
+
+JAR은 확인 후 스테이징되며 재시작 후에 적용됩니다. 플러그인 변경은 현재 로드된 플러그인 인스턴스를 핫 스왑하지 않습니다. 플러그인 JAR은 Turboism 설치 프로그램 JAR과 별개입니다.
+
+### 수동 대안
+
+고급 대체 경로로 — 예를 들어 로컬에서 빌드한 JAR을 테스트하기 위해 — 플러그인 JAR을 직접 배치할 수 있습니다:
+
+1. Cubism과 Turboism을 완전히 종료하세요.
+2. 신뢰하는 플러그인 JAR을 `<turboism.home>/plugins/`의 루트에 직접 복사하세요.
+3. 플러그인 ID마다 JAR을 최대 하나만 유지하세요.
+4. 같은 Turboism home으로 재시작하세요.
+5. 플러그인 상태와 런타임 로그를 확인하세요.
+
+수동 설치는 관리형 안전 장치를 우회합니다. 전체 절차는 [플러그인 관리](./plugin-management)를 참고하세요.
+
+## 6. 로그 찾기
+
+설치된 Turboism home의 `logs/` 디렉터리를 사용하세요. 시작, JAR, 종속성, 권한 또는 프로바이더 실패를 보고할 때는 로그를 보관하세요.
+
+## 다음 단계
+
+- [플러그인 관리](./plugin-management)
+- [기본 제공 플러그인](./first-party-plugins)
+- [문제 해결](../troubleshooting)
+- [개발 상태](../development-status)
+- [플러그인 개발](../build-a-plugin/quick-start)

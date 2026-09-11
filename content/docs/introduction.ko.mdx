@@ -1,0 +1,39 @@
+---
+title: 소개
+description: Turboism이 무엇이고 플러그인 경계가 어떻게 동작하는지, 그리고 이 문서를 읽는 방법을 설명합니다.
+---
+
+Turboism은 Live2D Cubism Editor를 위한 런타임 향상 도구이자 플러그인 프레임워크입니다.
+
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
+
+플러그인은 Turboism SDK에만 의존합니다. 호스트 접근, 수명 주기, 안전, 스레딩, 트랜잭션, 진단, 호환성 및 버전 차이는 런타임이 담당합니다.
+
+## 플러그인 작성자에게 이는 무엇을 의미하는가
+
+- `com.live2d.*` 클래스 대신 Turboism이 소유한 Java 타입을 사용합니다;
+- 구성, 저장소, 사용자 파일, 작업, UI, 이벤트 및 Cubism 접근에는 `PluginContext`를 사용합니다;
+- 닫을 수 있는 리소스는 `DisposableScope`에 등록합니다;
+- 지원되는 플러그인 메타데이터 스키마 버전과 플러그인이 사용하는 정확한 권한을 선언합니다;
+- 프로바이더 또는 호스트 버전을 사용할 수 없는 상황을 명시적으로 처리합니다;
+- 리플렉션, 원시 호스트 위젯, 네이티브 핸들 또는 바이트코드 트랜스포머로 런타임을 우회하지 않습니다.
+
+## 문서 범위
+
+Turboism은 하나의 공개 SDK 등급을 제공합니다. 소스 저장소의 검토된 바이너리 API 기준선이 호환성 게이트이며, [SDK API 가이드](./reference/sdk-api)에서 현재 표면을 설명합니다.
+
+이 문서 전체에 두 가지 제한이 적용됩니다:
+
+- SDK에 API가 존재한다고 해서 지원되는 모든 Cubism Editor 버전에서 실행할 수 있는 것은 아닙니다;
+- Editor 버전이 지원된다고 해서 모든 플러그인 기능을 그 버전에서 사용할 수 있는 것은 아닙니다.
+
+지원되는 호스트 플랫폼은 Windows x64이며, Cubism Editor 5.2.03, 5.3.02, 5.3.03이 정확한 버전으로 허용됩니다. 지원되지 않는 조합은 검증되지 않은 경로로 대체하지 않고 안전하게 실패합니다.
+
+이어서 읽기:
+
+- [Turboism 사용하기](./use/overview)
+- [플러그인 개발](./build-a-plugin/overview)
+- [SDK API 가이드](./reference/sdk-api)
+- [개발 상태](./development-status)
