@@ -1,30 +1,57 @@
 ---
 title: 第一方插件
-description: 面向独立分类第一方插件集的候选能力家族。
+description: Full 安装中包含的已审查插件捆绑包。
 ---
 
-本页是待发布的候选总览。第一方插件是独立的分类，不表示捆绑包、部署、公开插件目录或详细教程页面已经发布。
+Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与第三方插件相同的公共 SDK 边界，每个插件都是独立 JAR，可以在安装期间取消勾选。
 
-## 候选能力家族
+单个功能的可用性仍取决于 Cubism Editor 版本以及该版本公开的能力 Provider。随包提供某个插件并不代表每个功能在每个受支持的版本上都可用。
 
-候选第一方插件集可能包括以下插件家族：
+## 建模
 
-- 参数批量操作；
-- 网格镜像；
-- 剪贴蒙版；
-- 调色板、场景和纹理图集；
-- 物理；
-- 备份；
-- 性能；以及
-- 主题。
+| 插件 | 功能 |
+| --- | --- |
+| MaxRects-BSSF Layout Algorithm | 注册一个带并行搜索的 MaxRects-BSSF texture-atlas 打包算法。 |
+| Mesh Edit Mirror Axis Enhance | 为 mesh 编辑添加镜像轴旋转，以及与主机镜像工具完全一致的行为。 |
+| Parameter Batch Transfer | 将一个 ArtMesh 或 Deformer 的 parameter bindings 批量转移到其他 parameter，并可选择取反。 |
+| Physics Editor | 为 Physics Settings 组添加全选，以及在重新打开后保留。 |
 
-这些是能力家族，而不是发布承诺。其确切集合、可用性、行为和兼容性仍待确定，并且可能因 Preview 构建而异。详细教程页将后续单独提供；不要推断插件目录已经包含这些插件。
+## 工作流
 
-## 如何使用此总览
+| 插件 | 功能 |
+| --- | --- |
+| Cubism Tab Filter | 为 Parameter、Deformer、Scene 和 Log 调色板标签页添加关键词筛选框。 |
+| PSD Clip Mask Import | 将有序的 PSD 剪贴关系导入为 ArtMesh 剪贴蒙版分配，并提供明确的覆盖策略。 |
+| History Panel | 将活动文档的原生 Undo 历史投影为 Photoshop 风格的面板，并提供绑定快照的 Undo/Redo 导航。 |
+| Recent Preview | 在“最近使用的文件”悬停弹窗中为最近的项目文件截取有界的预览缩略图。 |
+| WebDAV Auto-Backup Sync | 使用 JDK HTTP client 将 Cubism 自动备份产物上传到 WebDAV endpoint。 |
 
-- 在[安装器模式](./installer-modes)中查看候选选择语义。
-- 对于你的构建可用的本地插件生命周期，请使用[插件管理](./plugin-management)。
-- 更改选择前请阅读[更新策略](./update-policy)。
-- 如果更改未如预期工作，请使用[降级与恢复](./downgrade-recovery)。
+## 分析与性能
 
-[SCREENSHOT PLACEHOLDER — 候选第一方插件选择或列表；在可用的候选构建中手动截图。]
+| 插件 | 功能 |
+| --- | --- |
+| Clip Mask Viewer | 只读的剪贴蒙版重复检查与可视化工具，带图形/表格检查器和编辑器选择高亮。 |
+| Texture Atlas Statistics | 在原生 texture-atlas 编辑器窗口中显示模型图像总数和当前纹理计数。 |
+| Performance Statistics | 以嵌入式面板和独立窗口提供实时 CPU、FPS 和 JVM 内存图表。 |
+
+## 外观
+
+| 插件 | 功能 |
+| --- | --- |
+| UI Theme | 兼容旧版的主题包、内置主题、主题管理器工作流，以及确切版本的 Cubism 外观应用。 |
+| Palette Label Style | 为 Deformer、Part 和 Parameter 调色板项设置标签文字和背景颜色。 |
+| Scene Palette Enhancer | 对 Cubism Scene 调色板中的项目进行排序和手动重排。 |
+
+## 集成与系统
+
+| 插件 | 功能 |
+| --- | --- |
+| Turboism MCP Server | 提供类型化 Cubism 检查、编辑、历史和 Editor 命令工作流的 loopback Model Context Protocol server。需要 bearer 认证；请参阅 [MCP](../build-a-plugin/mcp)。 |
+| Turboism Core | 内置且不可移除的 Turboism 菜单、工具栏、设置、标签页和插件管理器。无法被禁用或卸载。 |
+
+## 如何管理它们
+
+- 在 Full 或 Thin 模式下运行安装器时取消勾选单个插件。
+- 从插件管理中启用或禁用已安装的插件；更改会在 Cubism 重启后生效。
+- [插件管理](./plugin-management)涵盖安装、替换、启用/禁用、卸载，以及每个插件保留的数据。
+- [更新策略](./update-policy)涵盖更新的捆绑包如何到达现有安装。

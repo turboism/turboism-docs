@@ -92,9 +92,10 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 
 - [ ] 插件有一个明确用途。
 - [ ] 生产代码仅依赖 SDK。
-- [ ] Manifest v2 声明准确的入口点、资源、依赖和最低权限。
+- [ ] 插件描述符声明受支持的 schema 版本、准确的入口点、资源、依赖和最低权限。
 - [ ] 注册项和句柄可关闭且受 scope 管理。
 - [ ] 不可用的 Provider 以有用诊断信息安全地失败关闭。
+- [ ] 插件为其声称支持的每种 locale 提供本地化目录。
 - [ ] 配置、存储和用户文件使用正确的服务。
 - [ ] 不存在不受管理的线程、executor、定时器、主机对象或反射桥接。
 - [ ] 写入保持 Editor 所有权和 Undo 语义。

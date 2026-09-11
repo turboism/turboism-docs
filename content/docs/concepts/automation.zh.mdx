@@ -1,8 +1,36 @@
 ---
 title: 自动化
-description: 面向可重复 Editor 工作流的 Preview 概念。
+description: Turboism 支持的扩展路径，以及它们共同遵循的安全边界。
 ---
 
-Turboism 可能会探索 Editor 工作流的自动化和重放。任何此类能力都可能影响项目状态，并需要明确的安全边界。
+Turboism 支持三条扩展路径，以及第一方插件在这些路径之上构建的自动化。
 
-自动化是一项实验性概念，而非可用功能。请勿依赖本页面了解 API 形态、可用性或操作行为。
+## 1. Java 插件
+
+进程内的 Java 17 JAR，具有 SDK 生命周期、插件描述符、已声明的权限和 `PluginContext` 服务。这是完整的扩展路径，凡参与 Editor 自身状态的工作都应使用它。
+
+## 2. GraalJS 脚本
+
+受限的 JavaScript，由 Java 插件通过 `PluginContext.scripts()` 发现，并通过 `ScriptService.run` 显式运行。发现永远不会执行脚本，脚本获得的是有限的 bridge，而不是完整的 Java SDK。请参阅 [GraalJS 脚本](../build-a-plugin/graaljs-scripts)。
+
+## 3. MCP
+
+随包提供的 Turboism MCP Server 插件为可信的本地外部客户端公开经过认证的 loopback Streamable HTTP endpoint。它是供你自行运行的工具使用的集成路径，而不是进程内 API。请参阅 [MCP](../build-a-plugin/mcp)。
+
+ACP 仅供 Turboism 与 fx 内部使用，不是第四条扩展路径。
+
+## 基于这些路径构建的自动化
+
+第一方插件已经自动化了若干工作流，例如将 Cubism 自动备份产物上传到 WebDAV endpoint、将有序的 PSD 剪贴关系导入为 ArtMesh 剪贴蒙版，以及通过 MCP 公开类型化的 Cubism 检查、编辑和历史操作。
+
+## 安全边界
+
+自动化可能改变项目内容，因此无论走哪条路径都遵循同一边界：
+
+- 必须由某个操作或用户的明确许可启动工作；
+- 写入文件、创建备份或连接网络服务的操作始终保持可见并受权限控制；
+- 在操作声明具备相应能力时，写入操作通过 Editor 拥有的事务进行，并处理 Undo 和脏状态；
+- 插件不能注册字节码转换器，脚本也不能超出其调用方提供的 bridge 范围；
+- 不支持或未经验证的能力会安全地失败关闭。
+
+在启用会改变内容的自动化之前，请为重要项目保留独立备份。请参阅[安全与权利](../safety-and-rights)和[开发状态](../development-status)。

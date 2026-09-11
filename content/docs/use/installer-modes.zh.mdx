@@ -1,24 +1,37 @@
 ---
 title: 安装器模式
-description: 面向未来公开安装流程的候选 Managed Runtime 模式语义。
+description: 比较 Full、Thin 和 Lite 安装选项以及可选的托管 GraalVM 组件。
 ---
 
-本页是待发布的候选文档。这些模式名称描述的是候选 Managed Runtime；它们并不表示安装器、插件目录或任何模式已经公开发布。
+Turboism 安装器和便携归档随附相同的 runtime，但插件选择不同。模式选择的是文件；它绝不会更改你的 Cubism 安装。
 
-## 候选模式
+## 模式
 
-- **Full** — 包含 agent 和完整的候选第一方插件集。在受支持的 Linux 和 macOS Java Full 安装中，还包含相应的受管 fx component。
-- **Thin** — 包含 agent 和相同的候选第一方插件集，但不包含受管 fx component。在受支持的系统上，如提供该操作，可显式**安装**或**修复**受管 fx component。
-- **Lite** — 仅包含 agent 和通用文件：没有可选插件 JAR，也没有受管 fx component。
+- **Full** — agent 加上已审查的第一方插件捆绑包。安装器会预先选中所有已批准的发行插件，并允许取消勾选单个插件。
+- **Thin** — 相同的已批准插件清单，但不包含额外的托管原生 runtime payload。可在 Java 安装器中使用，该安装器还接受显式的自定义可执行文件路径。
+- **Lite** — 仅 agent 和公共文件。不会复制任何第一方插件 JAR。
 
-## 平台条件
+Windows `.exe` 安装器提供 **Full** 和 **Lite**。跨平台 `.jar` 安装器提供 **Full**、**Thin** 和 **Lite**。便携归档以同一 payload 的 `full` 和 `lite` 变体提供。
 
-不提供 Windows Java Full。Windows Java Thin 可以安装候选插件集，但使用相关能力需要你自行提供可信的 fx executable。模式标签本身并不保证宿主支持、某个特定插件或受管 component。
+## 可选的托管 GraalVM
 
-具体可用性、内容、选择 UI 和兼容性仍待确定，并且可能因 Preview 构建而异。不要从这些标签推断已经公开发布或可部署。
+安装器提供可选的托管 GraalVM 组件：
+
+- 它从 GraalVM 官方 GitHub release 下载固定的归档，并在使用前进行验证；
+- 不勾选它会保持安装对插件捆绑包而言有效且完整；
+- 你可以稍后从 Turboism 设置中安装它。
+
+仅用于开发的 `Turboism with fx` 插件及其托管 runtime 字节不属于任何发行安装包。
+
+## 模式不会改变什么
+
+- 每种模式下的 runtime home、配置、日志和插件数据都相同。
+- 重新运行安装器会对同一个 home 应用不同的选择，并且只更改托管的插件状态。
+- 模式变更绝不会删除未知文件和第三方插件 JAR。
+- 模式标签并不保证某个插件功能在你的 Cubism 版本上可用。可用性仍与 capability 和版本相关。
 
 ## 选择之前
 
-当候选安装器随你的 Preview 构建提供时，请阅读其随附说明，保留重要配置和数据，并在切换模式前查看[更新策略](./update-policy)和[降级与恢复](./downgrade-recovery)。
-
-[SCREENSHOT PLACEHOLDER — 安装器模式选择；在可用的候选安装器中手动截图。]
+1. 备份 `config.json` 以及任何重要的插件 `config/` 或 `data/` 内容。
+2. 查看[更新策略](./update-policy)，了解安装器重跑和发布渠道的工作方式。
+3. 如果变更的行为不符合预期，请使用[降级与恢复](./downgrade-recovery)。

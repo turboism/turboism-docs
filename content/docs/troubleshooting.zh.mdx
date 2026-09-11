@@ -1,13 +1,21 @@
 ---
 title: 故障排查与反馈
-description: 诊断 Preview 启动、插件 JAR、生命周期、权限和 Provider 故障。
+description: 诊断启动、安装器、插件 JAR、生命周期、权限和 Provider 故障。
 ---
+
+## 安装器无法启动或验证失败
+
+- 确认安装包与你的平台匹配，并且是从已发布的发行版或官方镜像下载的。
+- 使用配对的 `.sha256` 文件验证 SHA-256 校验和。不匹配意味着下载不完整或已被改动；请重新下载。
+- `.jar` 安装器需要 Java 17 或更新版本。
+- 安装器要求接受全部四项确认和完整的运行时声明，之后才会更改任何文件。
+- 安装器未签名，因此 Windows 或 macOS 可能显示未知发布者提示。不要禁用操作系统保护；请改为核对校验和。
 
 ## Turboism 未启动
 
-- 确认使用的是预期的 Preview 目录和 Turboism home。
-- 检查 Preview 所有或 home 所有日志目录中的 Java Agent 和 Runtime 日志。
-- 确认当前 Cubism 安装符合受支持的 Preview 范围。
+- 确认使用的是预期的 Turboism home，以及针对正确 Cubism 安装的托管启动器。
+- 检查 Turboism home 的 `logs/` 目录中的运行时日志，包括配置器产生的 `logs/installer/` 输出。
+- 确认当前 Cubism 安装符合受支持的范围（Windows x64 上的 Editor 5.2.03、5.3.02 或 5.3.03）。
 - 不要替换 Cubism JAR、DLL、BAT 文件或许可组件来绕过身份验证失败。
 
 ## 插件未出现
@@ -18,7 +26,7 @@ description: 诊断 Preview 启动、插件 JAR、生命周期、权限和 Provi
 - 两次启动使用同一个 Turboism home；
 - 没有同 plugin ID 的旧 JAR 残留（重复 ID 会以 `DUPLICATE_PLUGIN_ID` 失败）；
 - JAR 中恰好有一个 `META-INF/turboism/plugin.json`；
-- manifest 使用 schema version 2；
+- manifest 声明了受支持的 `schemaVersion`（2、3 或 4），并且对该版本有效；
 - entrypoint class 存在、是 public、实现 `TurboismPlugin`，并且有 public 无参构造函数；
 - Turboism API 范围和必需依赖可以解析；
 - plugin ID 未被禁用且没有重复；
@@ -26,9 +34,11 @@ description: 诊断 Preview 启动、插件 JAR、生命周期、权限和 Provi
 
 ## JAR 被拒绝
 
-受管理的 JAR 可能因符号链接或非常规源、大小超过 16 MiB 上限、路径格式错误、重复条目、特殊文件、`META-INF/turboism/plugin.json` 缺失或重复、描述符 ID/版本/API 不一致、复制的 SDK/Runtime/Live2D 类、native 或 installer payload、嵌套 JAR、缺少 entrypoint 或存在未声明资源而被拒绝。
+受管理的 JAR 可能因符号链接或非常规源、违反归档大小、条目、展开量或压缩比上限、路径格式错误、重复条目、特殊文件，或 `META-INF/turboism/plugin.json` 缺失或重复而被拒绝。
 
-请从当前插件源码重新构建 JAR。不要手动编辑归档，也不要禁用检查。上述原因描述的是托管 preflight；手动复制会跳过它，只有启动验证强制执行的违规才会出现在 Runtime 启动诊断中。
+描述符 ID/版本/API 范围不一致、复制的 SDK/Runtime/Live2D 类、native 或 installer payload、嵌套 JAR、缺少 entrypoint、未声明的资源以及未声明的 i18n catalog 也会被拒绝。
+
+请从当前插件源码重新构建 JAR。不要手动编辑归档，也不要禁用检查。上述原因描述的是托管 preflight；手动复制会跳过它，只有启动验证强制执行的违规才会出现在运行时启动诊断中。
 
 ## 操作一直处于 pending
 
@@ -36,7 +46,7 @@ description: 诊断 Preview 启动、插件 JAR、生命周期、权限和 Provi
 
 - 确认 Cubism 已完全退出并重新启动。
 - 确认两次启动使用的是同一个 `turboism.home`。
-- 检查 Runtime 状态和日志。
+- 检查运行时状态和日志。
 - Turboism 运行时不要编辑 plugin、config 和 pending-state 文件。
 
 ## 宿主 capability 不可用
@@ -45,6 +55,16 @@ description: 诊断 Preview 启动、插件 JAR、生命周期、权限和 Provi
 
 记录确切的 Cubism 版本、Cubism 文件身份、操作和 diagnostic code。不要通过反射或直接宿主访问绕过失败。
 
+## 界面语言与预期不符
+
+- 安装器语言只影响安装器。
+- 运行时语言来自运行时 `locale` 设置；显式的 `-Dturboism.locale` 或 `config.json` 中的 locale 优先于宿主。
+- 插件界面语言在其他情况下跟随 Cubism Editor 的 **File → Environment Settings → General → Language**。
+
+## Cubism 启动器集成警告
+
+如果托管启动器集成报告冲突，说明官方 BAT 文件或其备份在安装后被编辑过。清理只会恢复哈希匹配的托管文件，并保留状态以便重试。不要通过覆盖未备份的文件来解决冲突。
+
 ## 反馈
 
-请通过[反馈与功能需求](./report-a-bug)，使用 Discord、GitHub 或电子邮件报告 Bug，或提出框架与插件功能需求。
+请通过[反馈与功能需求](./report-a-bug)，使用 Discord、QQ、GitHub 或电子邮件报告 Bug，或提出框架与插件功能需求。

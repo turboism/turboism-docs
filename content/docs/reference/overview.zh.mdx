@@ -1,20 +1,25 @@
 ---
 title: 参考
-description: 当前 Turboism Preview SDK 的指南式参考和生成式参考。
+description: 公共 Turboism SDK 的指南式参考和生成式参考。
 ---
 
-参考部分记录当前面向插件的 SDK 边界。
+参考部分记录面向插件的 SDK 边界。
 
 ## 从这里开始
 
 - [SDK API 指南](./sdk-api) — 生命周期、`PluginContext`、对象 API、hooks、配置、存储、任务、UI、权限和就绪性限制。
-- [生成的 API 参考](./generated-api) — 面向 `dev.turboism.sdk.*`、由源代码生成的 JDK 17 Javadoc。
+- [生成的 API 参考](./generated-api) — 面向公共 SDK 包、由源代码生成的 JDK 17 Javadoc，以及其发布状态。
 - [打开 HTML 类型索引](https://turboism.dev/sdk/index.html) — 直接浏览包、类、record、接口和方法。
 
 ## 契约状态
 
-当前参考由开发源代码生成，描述的是 Preview API，除非某个 API 被明确记录为 Stable。
+Turboism 发布单一的公共 SDK 层级。Turboism 源代码仓库中已审查的二进制 API 基线（`sdk/api-contracts/baselines/`）是兼容性门禁：当前基线是实时确切门禁，更早的基线保留为历史审计。
 
-源代码仓库经过审查的二进制 API 基线仍然是兼容性门槛。生成的 Javadoc 是文档产物，不是独立的稳定性承诺。
+可用性仍取决于若干相互独立的事实，通过其中一项并不能确立另一项：
+
+1. SDK 中存在该 API；
+2. 插件声明了所需权限；
+3. Runtime 具有匹配的能力 Provider；
+4. 当前活动的 Cubism Editor 版本和对象 generation 受支持。
 
 内部 Runtime、Bootstrap、test-framework、mapping、Provider 以及第一方插件实现包会被有意排除在公共参考之外。

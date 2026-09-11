@@ -1,17 +1,33 @@
 ---
 title: 架构
-description: Turboism 在插件与 Cubism 之间角色的概念地图。
+description: Turboism 如何位于插件与 Live2D Cubism Editor 之间。
 ---
 
-Turboism 被设想为 Live2D Cubism Editor 内部机制与扩展代码之间的适配层。
+Turboism 是 Live2D Cubism Editor 内部机制与扩展代码之间的适配层。它为插件作者提供稳定的集成接口，而无需直接依赖主机实现细节。
 
-其目的在于为插件作者提供更高层级的集成接口，而无需直接依赖主机实现细节。
+## 依赖方向
 
-## 概念层
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
 
-1. 作为主机应用程序的 Live2D Cubism Editor。
-2. 针对主机特定符号和版本差异的适配工作。
-3. Turboism 框架服务和扩展边界。
-4. 构建于这些边界之上的官方和第三方插件。
+- **插件**描述用户工作流，且仅依赖 SDK。
+- **SDK** 公开 Turboism 自有的类型、服务和生命周期契约。
+- **Runtime** 负责主机访问、生命周期、权限、线程、事务、诊断、兼容性和版本路由。
+- **Adapter/Provider** 层按确切的 Cubism Editor 版本隔离主机特定的符号。
+- **Cubism/Editor** 仍是主机应用程序，需单独安装和授权。
 
-层名称描述的是预期架构，而不是承诺已发布 SDK 中存在相应名称的 class、服务或功能。
+## 由此得出的设计规则
+
+- 单一的公共 SDK 层级。插件永远不会接触到 `com.live2d.*` 类型、主机小部件、原生句柄、主机 ClassLoader 或 runtime 实现类型。
+- Runtime 负责执行。插件不得创建不受管理的线程、executor 或定时器，也不得注册字节码转换器。
+- 写入是由 Editor 拥有的操作，包含验证、Undo、脏状态处理和过期引用拒绝。
+- 能力会安全地失败关闭。不可用的 Provider、未经验证的主机版本或过期对象引用会产生类型化失败，而不是回退路径。
+- 验证按成本与风险分层，从聚焦测试到打包集成、发布门禁，以及明确的确切版本主机验证。
+
+## 后续阅读
+
+- [映射层](./mapping-layer) — 主机特定知识如何保持隔离。
+- [自动化](./automation) — 扩展与自动化路径。
+- [开发状态](../development-status) — 当前已实现的内容。
+- [SDK API 指南](../reference/sdk-api) — 当前面向插件的接口。

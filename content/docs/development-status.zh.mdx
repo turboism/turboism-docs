@@ -1,11 +1,11 @@
 ---
 title: 开发状态
-description: 当前 Turboism 代码库已实现的内容、仍处于 Preview 的内容，以及尚未成为产品承诺的内容。
+description: 当前 Turboism 代码库已实现的内容、仍受版本限制的内容，以及尚未成为产品承诺的内容。
 ---
 
 Turboism 是面向 Live2D Cubism Editor 的 Java 17 Runtime 增强工具和插件框架。开发围绕可用的框架与产品能力组织，而非已废弃的 M1–M16 迁移序列。
 
-本页面是当前开发分支中由源代码支持的快照，并非发布公告。
+本页面是当前开发分支中由源代码支持的快照，并非发布公告；已发布的版本请使用[发布信息源](./update-policy)。
 
 ## 当前架构
 
@@ -15,33 +15,57 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 
 插件仅依赖 Turboism SDK。Runtime 负责主机访问、生命周期、安全、线程、事务、诊断、兼容性和版本路由。
 
-## 已实现的框架基础
+## 受支持的宿主版本
+
+- Windows x64 是受支持的 Cubism 宿主平台。
+- Cubism Editor **5.2.03**、**5.3.02** 和 **5.3.03** 是已接纳的确切版本，具有按版本路由的 adapter 和 Provider。
+- 未列出的 Editor 版本不被声称为兼容，不支持或未经验证的能力会安全地失败关闭。
+- macOS 打包仅处于 preview，没有经验证的宿主支持；Linux 仅限于安装器和 payload 行为。
+
+## 发布与交付
+
+- 一个产品身份，三个渠道：`stable`、`beta` 和 `nightly`。每个渠道产出相同的四种包格式。
+- 产品发布分为只读候选构建和显式受保护的 GitHub 提升步骤。失败的候选会复用既定版本；只有提升步骤才会创建附注标签，并在不重新构建的情况下发布已验证的字节。
+- 每次构建都会嵌入全局构建身份：版本、渠道、构建号、源修订和 dirty 标记（`FrameworkBuildInfo`）。
+- `api.turboism.dev` 上的发布 API 镜像每个渠道，提供每个资产的 SHA-256 和校验和文件，解析官方镜像与 GitHub 来源，并报告每次发布的下载请求。
+- 已审查的发行说明带有简体中文和日文翻译，并以英文作为回退；摘要不再匹配确切英文段落的翻译会被拒绝，而不是被复用。
+- 安装程序提供英文、简体中文、日文和韩文。安装器语言的作用范围仅限于安装器；运行时语言来自运行时 `locale` 设置，插件界面语言跟随 Cubism 环境设置的语言。
+
+## 框架基础
 
 - Java Agent bootstrap、Runtime、SDK、第一方插件、测试框架和集成测试模块。
+- 插件元数据 schema 版本 **2**、**3**（新增必需的 `category` 和有界的 `tags`）以及 **4**（新增声明式事件导入与导出），并按版本严格校验。
 - 本地插件 JAR 发现、manifest 和 API 范围验证、依赖解析、每个插件一个 ClassLoader、生命周期执行、逆序关闭以及 scope/ClassLoader 清理。
-- 支持有序多个入口点和整个 JAR 启动回滚的插件 manifest v2。
+- 每个 JAR 支持有序的多个入口点，并支持整个 JAR 的启动回滚。
 - `PluginContext` 服务涵盖日志、路径、本地化、任务、配置、存储、用户文件、事件、操作、UI 贡献项、Cubism 访问和诊断。
-- 面向本地 JAR 安装、替换、启用、禁用和卸载操作的 Preview 托管管理。变更会写入 journal 暂存，并在 Cubism 重启后应用；核心插件受保护。
+- 托管本地 JAR 安装、替换、启用、禁用和卸载。变更会写入 journal 暂存，并在 Cubism 重启后应用；核心插件无法被禁用或卸载。
 - 启动 preflight 会在应用前重新验证暂存载荷的身份（SHA-256、大小、描述符哈希），私有 backup/restore 保护失败的替换应用。
+- 框架消息 catalog 与第一方插件遵循相同的 locale 矩阵，因此缺失的 catalog 会使构建门禁失败，而不是静默降级为英文。
 
 ## 安装器与交付
 
-现有两种安装器实现，共享同一个分阶段 payload 和 Lite/Full 模型：
+三条打包路径共享同一个分阶段 payload 和 Full/Thin/Lite 插件模型：
 
-- Windows 原生的 NSIS 安装器（`TurboismInstaller-<version>.exe`），在 Windows 上优先使用；
-- Java 17 IzPack 安装器（`TurboismInstaller-<version>.jar`），实现了 Windows/macOS 安装语义。
+- Windows 原生的 NSIS 安装器（`TurboismInstaller-<version>.exe`），提供 Full 和 Lite，以及可选的托管 GraalVM 组件；
+- Java 17 IzPack 安装器（`TurboismInstaller-<version>.jar`），提供 Full、Thin 和 Lite，可安装在 Windows、macOS 和 Linux 上；
+- 便携式 `turboism-<version>-full.zip` 和 `turboism-<version>-lite.zip` 归档。
 
-Windows EXE 覆盖按用户安装、Lite/Full 与第一方插件选择、开始菜单项和卸载。安装器 JAR 在 Windows 和 macOS 上提供相同的 Lite/Full 选择，并生成平台卸载支持。两者都不会修改 Cubism 安装文件。这些实现会为 release 或 preview 渠道产出安装包，但尚不存在签名/公证的公开渠道。
+两个安装器都会在通过四项必需确认和完整的本地化运行时声明之后才进行安装。两者都不会修改 Cubism 安装文件。`config.json` 有明确的更新归属：对于现有的有效文档，安装器只更改托管的插件选择；被识别的旧 schema 会在任何 payload 变更之前完成迁移和验证。Windows 配置器只列出确切受支持的 Cubism 安装，并将 Turboism 自有的快捷方式与可选的、带哈希保护的官方 BAT 集成分开。
 
 ## Cubism 和 Editor API 进展
 
-- 统一的 Preview 对象图覆盖 Canvas、Parameters、Parameter Groups、Parts、Drawables、Deformers、Glue 和 parameter bindings。
-- Cubism 5.2 和 5.3.02 的 Core 支持读取使用不可变复制数据、版本规范化、绑定 generation 的过期引用拒绝和固定 digest 的 resolver 证据。
-- Cubism 5.3.02 parameter 创作路径将 `Parameter.setValue` 连接到 Editor 操作、权限检查、Undo、脏状态处理、刷新和过期目标拒绝。
-- Part 显示名称写入在 5.2.03 和 5.3.02 上具有真实主机证据。
-- Part opacity 创作写入在 5.3.02 上具有证据。由于观察到的求值 setter 未参与原生 Part Undo，5.2.03 上此功能有意不可用。
+- 统一的对象图覆盖 Canvas、Parameters、Parameter Groups、Parts、Drawables、Deformers、Warp 和 Rotation Deformers、Glue、parameter bindings 以及 texture atlases。
+- Core 支持的读取使用不可变复制数据、版本规范化、绑定 generation 的过期引用拒绝和固定 digest 的 resolver 证据。
+- parameter 创作路径将 `Parameter.setValue` 连接到 Editor 操作、权限检查、Undo、脏状态处理、刷新和过期目标拒绝。
+- Part 显示名称写入在 5.2.03 和 5.3.02 上具有真实主机证据。Part opacity 创作写入在 5.3.02 上具有证据，并且在 5.2.03 上有意不可用，因为观察到的求值 setter 未参与原生 Part Undo。
+- Cubism 5.3.03 拥有其已接纳的 texture-atlas 创作 provider、selector 契约和 layout provider，以及针对 physics、performance metrics、project lifecycle、model statistics 和 startup suppression 的确切版本 profile。
 - Parameter 生命周期 hooks 支持有序的同步 `before` 重写、仅变更时的 `on`、正常完成后的 `after`、递归拒绝、有界的观察工作和卸载清理。
-- 第一方 Parameter CSV 工作流现在使用统一的 `CubismModel` 和 `Parameter` API。
+- History 现在会投影不可变的语义细节：`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`，并对目标、坐标和分组进行有界验证。这些值不授予任何主机写入权限。
+- 当前页面的 texture-atlas layout 契约被绑定为已审查的 SDK 兼容性基线（v8），并对保留的构造函数设有链接门禁。
+
+## 第一方插件
+
+已审查的捆绑包包含十七个插件：texture-atlas 打包、mesh 镜像轴编辑、parameter 批量传输、physics 编辑、调色板标签页过滤器、PSD 剪贴蒙版导入、历史面板、最近预览缩略图、WebDAV 自动备份同步、剪贴蒙版查看器、texture-atlas 统计、性能统计、UI 主题、调色板标签样式、场景调色板增强器、loopback MCP server，以及内置核心插件。请参阅[第一方插件](./use/first-party-plugins)。
 
 ## 共享插件服务和 UI
 
@@ -61,6 +85,21 @@ SDK 包含以下契约：
 
 当匹配的 Provider 或已验证的主机能力不可用时，主机和 UI 系列会安全地失败关闭。伪造或静态测试不会自动证明已为真实主机做好准备。
 
+## 验证模型
+
+验证按成本与风险分层，而不是作为单一未加区分的门禁运行：
+
+```text
+focused verification      smallest affected compile or test selection
+devCheck                  production compilation plus structural boundaries
+checkIntegration          packaged runtime, plugin, bundle, and cross-module behavior
+checkCompletedCommit      full automated repository gate for a coherent change
+checkRelease              completed-commit plus supply-chain, historical, and installer-artifact checks
+host validation           explicit exact-version Cubism execution for the affected feature
+```
+
+宿主验证通过受监督的本地队列运行：构建和准备工作可以并行运行，但单个宿主准入锁会串行化真实的 Cubism 会话；完成需要匹配的结构化生命周期和清理证据；归属未知时会将宿主隔离以便检查，而不是终止无关会话。
+
 ## Official Directory 状态
 
 内置的签名 Official Directory 客户端和 UI 已实现，但生产激活尚未就绪：生产密钥列表为空，实时签名 catalog 就绪性尚未建立。它不是实时 marketplace。
@@ -68,24 +107,24 @@ SDK 包含以下契约：
 ## 进行中或受版本限制
 
 - 许多统一对象写入方法仍取决于特定版本的 Provider。接口中存在方法并不意味着每个受支持的 Cubism 版本都能执行它。
-- 完整的 Cubism 5.2 Editor 创作矩阵在多个操作系列中仍不完整。
-- 项目、选择、模型树和额外的语义 Editor API 仍在演进。
-- Drawable、Deformer、Glue、mesh、PSD 和 texture-atlas 的写入与工作流需要由消费者驱动的实现和精确验证。
+- 完整的 Editor 创作矩阵在多个操作系列中仍不完整，每个系列的就绪情况记录在 [SDK API 指南](./reference/sdk-api) 中。
+- Drawable、Deformer、Glue、mesh、PSD 以及额外的 texture-atlas 工作流需要由消费者驱动的实现和精确验证。
 - 主机 UI 附加、高频 hooks 和真实主机就绪度仍是具有精确版本门槛的高风险边界。
-- 可生成 SDK HTML Javadoc 并在此托管，但许多公开声明仍需要更好的说明性注释。
+- 更新检查不属于当前稳定版本；更新需要手动重新运行安装器。
+- 可以生成 SDK HTML Javadoc 并托管在本站点上，但许多公开声明仍需要更好的说明性注释。
 
 ## 当前未作承诺
 
 Turboism 当前不承诺：
 
-- 签名/公证的安装包公开发布渠道；
-- 经过验证的 macOS Cubism 宿主启动；
-- 自动在线更新或生产可用的 marketplace；
-- 发布者签名或撤销；
-- 完整的用户面向不可变 generation 安装、修复、回滚、恢复和清除 UI；
+- 安装包的签名或公证公开发布渠道；
+- 经过验证的 macOS Cubism 宿主支持；
+- 框架或插件更新的自动下载与安装；
+- 生产可用的 marketplace、发布者签名或撤销；
+- 完整的用户面向安装、修复、回滚、恢复和清除 UI；
 - 对 Cubism launcher 的全局修改；
-- 在每个 Cubism 版本上具有一致的就绪度；
-- 仅基于 Preview、伪造、静态或单版本证据的生产就绪度。
+- 在每个 Cubism 版本上具有一致的功能就绪度；
+- 仅基于伪造、静态或单版本证据的生产就绪度。
 
 ## 近期顺序
 
@@ -94,7 +133,7 @@ Turboism 当前不承诺：
 3. 从已验证的消费者扩展具有 Undo 的 Editor 自有写入。
 4. 统一操作生命周期语义。
 5. 完成项目、选择和模型树 API。
-6. 通过仅依赖 SDK 的插件恢复第一方工作流。
+6. 通过仅依赖 SDK 的插件恢复尚余的第一方工作流。
 7. 仅当显式 API、刷新、轮询或回调不足时才添加 hooks。
 8. 强化第三方 SDK、打包和发布证据。
 
