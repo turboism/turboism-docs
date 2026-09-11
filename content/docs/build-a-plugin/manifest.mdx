@@ -1,6 +1,6 @@
 ---
 title: Plugin Manifest and Packaging
-description: Define a manifest v2 plugin JAR and distribute it as the release file.
+description: Define a plugin descriptor for schema versions 2, 3, and 4, and distribute the built JAR.
 ---
 
 Every Turboism plugin JAR contains exactly one descriptor at:
@@ -9,18 +9,28 @@ Every Turboism plugin JAR contains exactly one descriptor at:
 META-INF/turboism/plugin.json
 ```
 
-Runtime accepts schema version 2 only. Version 1 is not loaded or upgraded automatically.
+The descriptor declares `"format": "turboism.plugin.meta"` and a `schemaVersion`. Runtime accepts schema versions **2**, **3**, and **4**, validates strictly against the matching contract, and does not upgrade a descriptor automatically.
 
-## Minimal manifest
+| Version | Contract |
+| --- | --- |
+| 2 | Base lifecycle, entrypoints, API range, dependencies, permissions, resources, and localization. |
+| 3 | Adds the required `category` field and optional `tags` (v3 is what the first-party plugins use). |
+| 4 | Adds declared cross-plugin event contracts: `eventExports` and `eventImports`. |
+
+Schema version 1 is not loaded. Unknown fields are rejected rather than ignored.
+
+## Manifest example
 
 ```json
 {
   "format": "turboism.plugin.meta",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "dev.example.plugin.hello",
   "name": "Hello Plugin",
   "version": "0.1.0",
   "description": "Minimal Turboism plugin lifecycle example.",
+  "category": "workflow",
+  "tags": ["example", "lifecycle"],
   "entrypoints": [
     "dev.example.plugin.HelloPlugin"
   ],
@@ -45,6 +55,8 @@ Runtime accepts schema version 2 only. Version 1 is not loaded or upgraded autom
 }
 ```
 
+Required fields are `id`, `name`, `version`, `entrypoints`, `turboismApi`, `authors`, `website`, `resources`, and `i18n`; schema 3 additionally requires `category`.
+
 ## Entrypoint rules
 
 Each entrypoint must:
@@ -63,6 +75,12 @@ disable/shutdown:       reverse manifest order
 
 A failure during construction, initialization, or enablement rolls back the entire JAR.
 
+## Category and tags
+
+`category` must be a lowercase kebab-case token of 2–32 characters. The reviewed first-party categories are `modeling`, `workflow`, `appearance`, `analysis`, `performance`, `integration`, `system`, and `development`. A well-formed category that is not registered still loads, is presented as `other`, and emits a structured `PLUGIN_CATEGORY_UNKNOWN` diagnostic.
+
+`tags` is optional, holds at most 12 lowercase kebab-case tokens of 2–32 characters, and carries no permission or capability.
+
 ## Dependencies
 
 ```json
@@ -78,7 +96,7 @@ A failure during construction, initialization, or enablement rolls back the enti
 - `type` is `required` or `optional`.
 - `ordering` is `none`, `before`, or `after`.
 - dependency IDs use reverse-domain syntax.
-- version ranges use the current Turboism version-range grammar.
+- version ranges use the Turboism version-range grammar.
 
 A dependency record controls resolution and ordering. It does not make another plugin's private implementation package a public Java dependency.
 
@@ -94,7 +112,7 @@ Each permission record contains a known ID, `application` or `user` scope, and a
 }
 ```
 
-Declare only permissions required by the SDK services the plugin calls. Permission does not guarantee Provider availability or bypass operation validation.
+Declare only permissions required by the SDK services the plugin calls. A permission does not guarantee Provider availability and does not bypass operation validation.
 
 ## Resources and localization
 
@@ -104,7 +122,7 @@ Resource roots are normalized relative prefixes ending in `/`:
 "resources": ["icons/"],
 "i18n": {
   "baseName": "META-INF/turboism/i18n/messages",
-  "locales": ["base", "en", "zh_Hans"]
+  "locales": ["base", "en", "zh-Hans"]
 }
 ```
 
@@ -118,6 +136,36 @@ META-INF/turboism/i18n/messages_zh_Hans.properties
 ```
 
 Declared roots and catalogs must exist. Ordinary non-class resources must belong to a declared root. Path traversal, absolute paths, backslashes, empty segments, and undeclared resources are rejected.
+
+Supported runtime locales are `en`, `ja`, `ko`, `zh-Hans`, and `zh-Hant`, plus the `base` bundle. Manifest locale IDs use the scripted form (`zh-Hans`); resource bundle file names use the Java underscore form (`messages_zh_Hans.properties`).
+
+## Cross-plugin event contracts (schema 4)
+
+Schema 4 lets a plugin declare the public event types it owns and consumes, so Runtime can resolve them without ClassLoader delegation:
+
+```json
+"eventExports": [
+  {
+    "id": "dev.example.event.hello",
+    "contractVersion": "1.0.0",
+    "eventType": "dev.example.api.HelloEvent",
+    "abiSha256": "<sha256 of the event type bytes>"
+  }
+],
+"eventImports": [
+  {
+    "provider": "dev.example.plugin.base",
+    "eventId": "dev.example.event.base-status",
+    "contractVersion": "1.0.0",
+    "eventType": "dev.example.api.BaseStatusEvent",
+    "abiSha256": "<sha256 of the event type bytes>"
+  }
+]
+```
+
+An import may also carry `"required": true` to demand that its provider contract be admitted. Runtime validates the declared ABI digest for every entry, rejects duplicate export IDs or event types within a plugin, and refuses imports that do not resolve to an admitted provider contract.
+
+Plugin IDs use reverse-domain syntax with at least one dot (`dev.example.plugin.hello`); event IDs use a lowercase dot/dash token form.
 
 ## Build and validate
 
@@ -134,11 +182,13 @@ The repository uses Java 17 and writes module build results under:
 build/worktree/<worktreeId>/<module>/libs/
 ```
 
+The JAR in `libs/` is the release file. There is no wrapper archive and no separate packaging step.
+
 ## Strict JAR validation
 
 The JAR itself is the installation file. Runtime treats a selected JAR as untrusted local input and validates:
 
-- a regular file with no symbolic link in the source chain, capped at 16 MiB;
+- a regular file with no symbolic link in the source chain, under bounded raw size, per-entry size, total expansion, entry count, and compression-ratio limits;
 - exactly one `META-INF/turboism/plugin.json`;
 - descriptor ID, version, and API-range consistency;
 - no copied SDK, Runtime, test, test-framework, or Live2D classes;

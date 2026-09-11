@@ -1,27 +1,33 @@
 ---
-title: Documentation Preview
-description: What this site documents today and which product facts remain provisional.
+title: Documentation Status
+description: What this site covers, which language is authoritative, and which product facts remain provisional.
 ---
 
-This site now hosts the current Turboism user and developer documentation, including a source-generated SDK HTML reference.
+This site hosts the Turboism user and developer documentation, including a hosted SDK HTML reference.
 
-## Available now
+## What is covered
 
-- Windows `.exe` and Windows/macOS `.jar` installer documentation and Windows first-run guidance;
-- macOS installer install/uninstall guidance;
-- local plugin install, replacement, enable, disable, and uninstall behavior;
-- Java 17 plugin quick start and manifest v2 packaging;
-- current `PluginContext`, Cubism object, hook, configuration, storage, task, event, and UI API guidance;
-- generated `dev.turboism.sdk.*` Javadoc;
-- current development and readiness boundaries.
+- installation, installer modes, first run, plugin management, first-party plugins, updates, uninstall, and recovery;
+- Java 17 plugin development, plugin metadata schemas, GraalJS scripts, and the MCP integration path;
+- concepts, the SDK API guide, and the generated API reference status;
+- safety, licensing, feedback channels, and the current development status.
 
-## Still provisional or unpublished
+## Language policy
 
-- public installer packages, signing/notarization, and a public download channel — the installer implementations themselves exist;
-- stable standalone starter template and Maven coordinates;
-- online update, marketplace, signing, and revocation;
-- a complete install/repair/rollback/recovery lifecycle;
-- uniform support across all Cubism versions;
-- a versioned non-Preview SDK release contract.
+English is the authoritative language for documentation body content. Simplified Chinese, Japanese, and Korean pages are kept semantically aligned with the English source. If a translated page and the English page disagree, treat the English page as correct and report the difference.
 
-Pages distinguish implemented Preview behavior from future release promises. A method appearing in generated Javadoc does not by itself prove that every host version has a compatible Provider.
+## What remains provisional
+
+- **Generated SDK Javadoc** — see [Generated API Reference](./reference/generated-api) for the version currently hosted and any open blockers. A method appearing in generated Javadoc does not by itself prove that every host version has a compatible Provider.
+- **Third-party plugin directory** — the directory client exists, but production activation and signed catalog readiness are not established, so listings must not be treated as published.
+- **Platform coverage** — Windows x64 is the only supported Cubism host platform; macOS packaging is preview-only and Linux covers installer behavior only.
+- **Per-version readiness** — the supported Cubism Editor versions are 5.2.03, 5.3.02, and 5.3.03, but individual operations remain version-specific. Verify availability per operation rather than per framework version.
+- **Automatic updates** — not part of the current stable release; updating means rerunning an installer.
+
+## How to check a product fact
+
+- Published versions, packages, sizes, and checksums: the channel feeds described in [Update Policy](./use/update-policy).
+- Supported host versions and installer behavior: [Installation](./use/installation).
+- Implementation state that is not a release promise: [Development Status](./development-status).
+
+Do not treat this site, a changelog entry, or a generated API page as a compatibility promise on its own.

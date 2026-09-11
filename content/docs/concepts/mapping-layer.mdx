@@ -1,11 +1,27 @@
 ---
 title: Mapping layer
-description: Why host adaptation needs an explicit boundary.
+description: Why host adaptation needs an explicit boundary, and how Turboism isolates it.
 ---
 
-Host applications can change symbols and implementation details between versions.
-A mapping layer is the conceptual boundary where host-specific knowledge can be
-isolated from the extension experience.
+Host applications change symbols and implementation details between versions. A mapping layer is the boundary where that host-specific knowledge stays isolated from the plugin experience.
 
-Plugin developers should be able to target published extension points, rather than
-implement their own reflection against Cubism internals.
+## Why it exists
+
+Cubism Editor internals are not a public API. Class names, method signatures, field layouts, and evaluation behavior differ between versions, and a symbol that exists in one build may be missing, renamed, or behave differently in another.
+
+Without an explicit boundary, every plugin would have to solve that problem itself with reflection, version checks, and host-object assumptions. Plugin code would then be fragile in exactly the same way the host is, and Turboism could not fail closed on an unsupported combination.
+
+## How Turboism isolates it
+
+- Plugins target published SDK types and never load `com.live2d.*` classes.
+- Runtime selects an exact-version adapter and Provider for the detected host build.
+- Cubism Editor 5.2.03, 5.3.02, and 5.3.03 are admitted exact versions; an unlisted version is not silently treated as compatible.
+- Host member selection is recorded and pinned as reviewed evidence, so a build that does not match the pinned identity fails instead of guessing.
+- Public Cubism values are copied into immutable Turboism-owned types before they reach plugin code.
+- Model objects and references are generation-bound and become invalid after project close, document switch, model reload, object deletion, plugin disable, provider replacement, or an unsupported version transition.
+
+## What this means for plugin authors
+
+You still have to handle unavailability, but you handle it in one predictable place: a typed "unsupported" or "unavailable" result. You do not need your own reflection layer, and you should not write one — a plugin that reaches into the host directly bypasses the mapping, the permission model, and the diagnostics that make the failure understandable.
+
+See [SDK API Guide](../reference/sdk-api) for the object API and capability model, and [Development Status](../development-status) for the currently admitted versions.

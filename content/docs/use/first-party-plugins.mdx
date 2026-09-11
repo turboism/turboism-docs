@@ -1,30 +1,57 @@
 ---
 title: First-Party Plugins
-description: Candidate capability families for a separately classified first-party plugin set.
+description: The reviewed plugin bundle included in Full installations.
 ---
 
-This page is a candidate overview for publication pending. First-party plugins are a separate classification, not a claim that a bundle, deployment, public plugin directory, or detailed tutorial pages have been published.
+Full installations ship a reviewed bundle of first-party plugins. They use the same public SDK boundary as third-party plugins, and each one is an independent JAR that can be deselected during installation.
 
-## Candidate capability families
+Availability of an individual feature still depends on the Cubism Editor version and the capability Providers that version exposes. A bundled plugin is not a promise that every feature works on every supported version.
 
-The candidate first-party set may include plugin families for:
+## Modeling
 
-- bulk parameter operations;
-- mesh mirroring;
-- clipping masks;
-- palettes, scenes, and texture atlases;
-- physics;
-- backups;
-- performance; and
-- themes.
+| Plugin | What it does |
+| --- | --- |
+| MaxRects-BSSF Layout Algorithm | Registers a MaxRects-BSSF texture-atlas packing algorithm with parallel search. |
+| Mesh Edit Mirror Axis Enhance | Adds mirror-axis rotation and exact-host mirror-tool parity to mesh editing. |
+| Parameter Batch Transfer | Batch-transfers the parameter bindings of one ArtMesh or Deformer to other parameters, with optional inversion. |
+| Physics Editor | Adds Physics Settings group select-all and reopen retention. |
 
-These are capability families, not release promises. Their precise set, availability, behavior, and compatibility remain pending and can differ by Preview build. Detailed tutorial pages will follow separately; do not infer that a plugin directory already contains these plugins.
+## Workflow
 
-## How to use this overview
+| Plugin | What it does |
+| --- | --- |
+| Cubism Tab Filter | Adds keyword filter boxes to the Parameter, Deformer, Scene, and Log palette tabs. |
+| PSD Clip Mask Import | Imports ordered PSD clipping relationships into ArtMesh clip-mask assignments with an explicit overwrite policy. |
+| History Panel | Projects the active document's native Undo history into a Photoshop-style pane with snapshot-bound Undo/Redo navigation. |
+| Recent Preview | Captures bounded preview thumbnails for recent project files in the Recent Files hover popup. |
+| WebDAV Auto-Backup Sync | Uploads Cubism auto-backup artifacts to a WebDAV endpoint using the JDK HTTP client. |
 
-- Review [Installer Modes](./installer-modes) for candidate selection semantics.
-- Use [Plugin Management](./plugin-management) for the local-plugin lifecycle available with your build.
-- Read [Update Policy](./update-policy) before changing a selection.
-- Use [Downgrade and Recovery](./downgrade-recovery) if a change does not behave as expected.
+## Analysis and performance
 
-[SCREENSHOT PLACEHOLDER — candidate first-party plugin selection or list; capture manually from an available candidate build.]
+| Plugin | What it does |
+| --- | --- |
+| Clip Mask Viewer | Read-only clip-mask duplicate checker and visualizer with a graph/table inspector and editor selection highlight. |
+| Texture Atlas Statistics | Shows total and current-texture model-image counts in the native texture-atlas editor window. |
+| Performance Statistics | Real-time CPU, FPS, and JVM memory charts as an embedded panel and a standalone window. |
+
+## Appearance
+
+| Plugin | What it does |
+| --- | --- |
+| UI Theme | Legacy-compatible theme packages, built-in themes, a theme manager workflow, and exact-version Cubism appearance application. |
+| Palette Label Style | Label text and background colors for Deformer, Part, and Parameter palette entries. |
+| Scene Palette Enhancer | Sorts and manually reorders items in the Cubism Scene palette. |
+
+## Integration and system
+
+| Plugin | What it does |
+| --- | --- |
+| Turboism MCP Server | Loopback Model Context Protocol server exposing typed Cubism inspection, editing, history, and Editor-command workflows. Requires bearer authentication; see [MCP](../build-a-plugin/mcp). |
+| Turboism Core | Built-in, non-removable Turboism menu, toolbar, settings, tab, and plugin manager. Cannot be disabled or uninstalled. |
+
+## How to manage them
+
+- Deselect individual plugins while running the installer in Full or Thin mode.
+- Enable or disable an installed plugin from plugin management; the change applies after Cubism restarts.
+- [Plugin Management](./plugin-management) covers install, replacement, enable/disable, uninstall, and the data each plugin keeps.
+- [Update Policy](./update-policy) covers how a newer bundle reaches an existing installation.

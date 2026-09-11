@@ -1,9 +1,9 @@
 ---
 title: GraalJS Scripts
-description: Candidate instructions for explicitly invoked, limited GraalJS scripts.
+description: Package and run explicitly invoked, limited GraalJS scripts.
 ---
 
-This page is candidate documentation for publication pending. GraalJS scripts are not Java plugins and do not establish a released scripting surface.
+GraalJS scripts are not Java plugins. They run only when a Java plugin explicitly invokes them, and they receive a limited bridge rather than the Java SDK.
 
 ## Package a script
 
@@ -12,12 +12,17 @@ A script package uses a `script.json` descriptor with schema version `2` and `la
 ```json
 {
   "schemaVersion": 2,
+  "id": "dev.example.script.hello",
+  "name": "Hello Script",
+  "version": "0.1.0",
   "language": "js",
   "entry": "main.js",
   "sourceSha256": "<SHA-256 of the source>",
   "permissions": []
 }
 ```
+
+Only `schemaVersion` 2 is accepted, and `js` is currently the only supported script language.
 
 This is a field-level outline, not a complete permission catalogue. Use only permissions supported by the build you are targeting; availability and exact semantics remain capability-sensitive.
 
@@ -33,6 +38,4 @@ Use the Java path for a process-resident plugin with SDK lifecycle and services.
 
 ## Current status
 
-Script availability, exposed bridge operations, execution limits, and publication details remain pending and may differ by Preview build.
-
-[SCREENSHOT PLACEHOLDER — explicit script invocation; capture manually from an available candidate build.]
+Script execution is capability-sensitive: exposed bridge operations, resource limits, and the exact permission set can differ by build. Design scripts to handle an unavailable operation or a failed run without assuming ambient host access.

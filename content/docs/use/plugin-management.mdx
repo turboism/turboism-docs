@@ -3,7 +3,7 @@ title: Plugin Management
 description: Install, replace, enable, disable, and uninstall local Turboism plugin JARs safely.
 ---
 
-Turboism provides two ways to install a local plugin JAR: managed installation (recommended) and manual installation (advanced/fallback). It is not a system-level Turboism installer, and the signed Official Directory is not production-enabled yet.
+Turboism provides two ways to install a local plugin JAR: managed installation (recommended) and manual installation (advanced/fallback). It is not a system-level Turboism installer. A Full installation already ships the reviewed [first-party plugin bundle](./first-party-plugins), and third-party plugins can be added with the same managed flow.
 
 All plugin-management changes are staged and applied after Cubism restarts. They do not hot-swap the currently loaded plugin instance.
 
@@ -19,7 +19,7 @@ All plugin-management changes are staged and applied after Cubism restarts. They
 8. Start Cubism again through the same Turboism home.
 9. Check the plugin list and Runtime logs for the effective state.
 
-Before staging, Runtime treats the selected JAR as untrusted local input. It opens a regular non-symlink JAR capped at 16 MiB, inspects exactly one descriptor and the plugin content, then snapshots the payload into pending state.
+Before staging, Runtime treats the selected JAR as untrusted local input. It opens a regular non-symlink JAR under bounded archive limits (raw size, per-entry size, total expansion, entry count, and compression ratio), inspects exactly one descriptor and the plugin content, then snapshots the payload into pending state.
 
 The staging journal persists the raw JAR SHA-256 and size, the descriptor hash, the plugin ID, and the version. On the next startup, Runtime revalidates the staged JAR against that identity before applying it.
 
@@ -103,7 +103,7 @@ The `plugins/` location depends on the launcher and installation mode:
 Managed installation additionally provides:
 
 - UI confirmation and pending-operation tracking;
-- source-path and strict archive preflight, including the 16 MiB cap;
+- source-path and strict archive preflight under the bounded archive limits;
 - private snapshot, pending journal, and staged apply;
 - managed backup/restore if the staged apply fails.
 
@@ -114,7 +114,7 @@ Manual installation bypasses all of the above, but the copied JAR still goes thr
 A managed JAR can be rejected for reasons including:
 
 - a symbolic link or non-regular source path;
-- size over the 16 MiB cap;
+- a size, entry, expansion, or compression-ratio limit violation;
 - malformed or ambiguous ZIP paths;
 - duplicate entries or special files;
 - more or fewer than one `META-INF/turboism/plugin.json`;
@@ -130,7 +130,7 @@ Rebuild the JAR from the current plugin source. Do not edit the archive manually
 
 Plugin management does not currently provide:
 
-- production-enabled online discovery or downloads;
+- third-party plugin discovery or downloads;
 - publisher signing or revocation;
 - a live marketplace;
 - retained historical versions;

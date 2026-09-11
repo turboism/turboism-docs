@@ -1,24 +1,37 @@
 ---
 title: Installer Modes
-description: Candidate Managed Runtime mode semantics for a future public installation flow.
+description: Compare the Full, Thin, and Lite installation selections and the optional managed GraalVM component.
 ---
 
-This page is candidate documentation for publication pending. These mode names describe a candidate Managed Runtime; they do not establish that an installer, a plugin directory, or any mode has been publicly released.
+Turboism installers and portable archives ship the same runtime with different plugin selections. A mode selects files; it never changes your Cubism installation.
 
-## Candidate modes
+## Modes
 
-- **Full** — the agent plus the complete candidate first-party plugin set. On supported Linux and macOS Java Full installations, it also includes the corresponding managed fx component.
-- **Thin** — the agent plus the same candidate first-party plugin set, but no managed fx component. On supported systems, the managed fx component can be explicitly **Install**ed or **Repair**ed when that action is offered.
-- **Lite** — the agent and common files only: no optional plugin JARs and no managed fx component.
+- **Full** — the agent plus the reviewed first-party plugin bundle. The installer preselects every approved release plugin and lets you deselect individual plugins.
+- **Thin** — the same approved plugin roster without the additional managed native runtime payload. Available in the Java installer, which also accepts an explicit custom executable path.
+- **Lite** — the agent and common files only. No first-party plugin JAR is copied.
 
-## Platform conditions
+The Windows `.exe` installer offers **Full** and **Lite**. The cross-platform `.jar` installer offers **Full**, **Thin**, and **Lite**. The portable archives ship as `full` and `lite` variants of the same payload.
 
-Windows Java Full is not offered. Windows Java Thin can install the candidate plugin set, but using the related capability requires you to provide a trusted fx executable yourself. A mode label alone does not guarantee host support, a particular plugin, or a managed component.
+## Optional managed GraalVM
 
-Exact availability, contents, selection UI, and compatibility remain pending and may differ by Preview build. Do not infer public publication or deployment availability from these labels.
+The installers offer an optional managed GraalVM component:
+
+- it downloads the pinned archive from the GraalVM official GitHub release and verifies it before use;
+- leaving it unchecked keeps the installation valid and complete for the plugin bundle;
+- you can install it later from Turboism settings.
+
+The development-only `Turboism with fx` plugin and its managed runtime bytes are not part of any release package.
+
+## What a mode does not change
+
+- The runtime home, configuration, logs, and plugin data are the same in every mode.
+- Rerunning the installer applies a different selection to the same home and changes only the managed plugin state.
+- Unknown files and third-party plugin JARs are never deleted by a mode change.
+- A mode label does not guarantee that a plugin feature is available on your Cubism version. Availability remains capability- and version-specific.
 
 ## Before choosing
 
-When a candidate installer is supplied with your Preview build, read its accompanying guidance, preserve important configuration and data, and review [Update Policy](./update-policy) and [Downgrade and Recovery](./downgrade-recovery) before changing modes.
-
-[SCREENSHOT PLACEHOLDER — installer mode selection; capture manually from an available candidate installer.]
+1. Back up `config.json` and any plugin `config/` or `data/` content that matters.
+2. Review [Update Policy](./update-policy) for how installer reruns and release channels work.
+3. Use [Downgrade and Recovery](./downgrade-recovery) if a change does not behave as expected.

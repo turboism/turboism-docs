@@ -1,20 +1,25 @@
 ---
 title: Reference
-description: Guided and generated references for the current Turboism Preview SDK.
+description: Guided and generated references for the public Turboism SDK.
 ---
 
-The Reference section documents the current plugin-facing SDK boundary.
+The Reference section documents the plugin-facing SDK boundary.
 
 ## Start here
 
 - [SDK API Guide](./sdk-api) — lifecycle, `PluginContext`, object APIs, hooks, configuration, storage, tasks, UI, permissions, and readiness constraints.
-- [Generated API Reference](./generated-api) — source-generated JDK 17 Javadoc for `dev.turboism.sdk.*`.
+- [Generated API Reference](./generated-api) — source-generated JDK 17 Javadoc for the public SDK packages, plus its publication status.
 - [Open the HTML type index](https://turboism.dev/sdk/index.html) — browse packages, classes, records, interfaces, and methods directly.
 
 ## Contract status
 
-The current reference is generated from development source and describes Preview APIs unless an API is explicitly documented as Stable.
+Turboism publishes one public SDK tier. The reviewed binary API baseline in the Turboism source repository (`sdk/api-contracts/baselines/`) is the compatibility gate: the current baseline is the live exact gate and earlier baselines remain historical audits.
 
-The source repository's reviewed binary API baseline remains the compatibility gate. Generated Javadoc is generated documentation, not an independent stability promise.
+Availability still depends on separate facts, and passing one does not establish another:
+
+1. the API exists in the SDK;
+2. the plugin declares the required permission;
+3. Runtime has a matching capability Provider;
+4. the active Cubism Editor version and object generation are supported.
 
 Internal Runtime, Bootstrap, test-framework, mapping, Provider, and first-party plugin implementation packages are intentionally excluded from the public reference.

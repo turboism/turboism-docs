@@ -1,50 +1,73 @@
 ---
 title: Update Policy
-description: Replace plugins and update the framework by rerunning an installer, and understand which automatic update capabilities do not exist yet.
+description: Update Turboism by rerunning an installer, and choose between the stable, beta, and nightly release channels.
 ---
 
-Turboism currently has local JAR replacement and manual installer reruns, not a production automatic update system.
+Turboism publishes product releases in three channels and mirrors every package behind a machine-readable release feed. Installing an update is still an explicit, manual step: the current stable release has no automatic installer update.
 
-## Plugin replacement today
+## Release channels
 
-Installing a newer plugin JAR with the same plugin ID stages a replacement intent. It applies after Cubism restarts.
+| Channel | Version shape | Purpose |
+| --- | --- | --- |
+| `stable` | `X.Y.Z` | Everyday use. Reviewed release notes and translations. |
+| `beta` | `X.Y.Z-beta.N`, `X.Y.Z-rc.N`, or `X.Y.Z-alpha.N` | Try upcoming changes before they are stable. |
+| `nightly` | `X.Y.Z-0.nightly.BUILD` | Daily development builds, produced only when the source changed. |
 
-1. Back up the current plugin JAR.
-2. Back up persistent `config/<pluginId>/` and `data/<pluginId>/` content when it matters.
-3. Install the newer JAR through plugin management.
-4. Restart Cubism.
-5. Verify version, lifecycle state, configuration migration, and logs.
+- A channel can legitimately report `status: not_published`; that is an empty channel, not an error.
+- Nightly builds are development builds: back up projects before use.
+- Every channel produces the same four package formats and the same per-package SHA-256 sidecars.
+
+## Machine-readable feeds
+
+Each channel publishes a JSON document:
+
+```text
+https://api.turboism.dev/v1/releases/stable.json
+https://api.turboism.dev/v1/releases/beta.json
+https://api.turboism.dev/v1/releases/nightly.json
+```
+
+A document carries the channel, the selected release (`version`, `tag`, `buildNumber`, `sourceRevision`, `publishedAt`), localized release notes, and one row per asset with its name, size, SHA-256, checksum file, and available sources (`official` mirror and `github`). Conditional requests are supported. A service error, an empty response, or a failed request must not be treated as “up to date”.
+
+The product website uses the same data for [turboism.dev/download](https://turboism.dev/download).
+
+## Update the framework
+
+1. Back up `config.json` and any persistent plugin `config/` and `data/` content that matters.
+2. Download the newer package for your platform and channel, and verify its SHA-256 checksum.
+3. Run the newer installer and target the same Turboism home directory, or replace the files of a portable archive you extracted.
+4. Rerun the plugin selection (Full, Thin, or Lite) as part of the update.
+5. Verify startup, plugin discovery, host capability status, and logs after the update.
+
+Rerunning the installer updates the same home and selection without blindly overwriting unrelated configuration. Do not overwrite or rewrite Cubism installation files as an update mechanism.
+
+## Replace or update a plugin
+
+Installing a newer plugin JAR with the same plugin ID stages a replacement intent that applies after Cubism restarts.
+
+1. Back up the current plugin JAR and the plugin's persistent `config/<pluginId>/` and `data/<pluginId>/` content when it matters.
+2. Install the newer JAR through plugin management.
+3. Restart Cubism.
+4. Verify the displayed version, lifecycle state, configuration migration, and logs.
 
 A failed apply restores the previous plugin files from a private backup. This workflow does not retain historical generations and does not provide a complete user-facing repair, rollback, or purge UI.
 
-## Framework installer updates
-
-A newer framework version is installed by rerunning an installer package:
-
-1. Obtain the newer `TurboismInstaller-<version>.exe` (Windows) or `TurboismInstaller-<version>.jar` (Windows/macOS) from the release or preview channel that provided your build.
-2. Back up `config.json` and any persistent plugin `config/` and `data/` content that matters.
-3. Run the newer installer and target the same Turboism home directory.
-4. Rerun the plugin selection (Lite/Full) as part of the update.
-5. Verify startup, plugin discovery, host capability status, and logs after the update.
-
-Rerunning the installer updates the same home and selection without blindly overwriting unrelated configuration. There is no automatic online updater and no signed public download channel yet; installer updates are manual reruns. Do not overwrite or rewrite Cubism installation files as an update mechanism.
-
 ## Compatibility expectations
 
-- New SDK APIs are Preview by default.
+- Turboism publishes one public SDK tier. The reviewed binary API baseline in the source repository is the compatibility gate.
 - API presence does not guarantee every Cubism version has a Provider.
 - Host-sensitive operations can remain unavailable on unsupported or unverified versions.
 - Plugin authors should use the declared Turboism API range and test unavailable behavior.
-- The generated API reference tracks current development source, not a final Stable release line.
+- Supported Cubism Editor versions are 5.2.03, 5.3.02, and 5.3.03, with Windows x64 as the supported host platform.
 
 ## Not currently available
 
-- production online update discovery and downloads;
-- marketplace channels;
+- automatic download and installation of framework updates;
+- plugin auto-updates;
+- a production-enabled marketplace;
 - publisher signatures and revocation;
 - retained immutable JAR generations;
 - a complete user-facing repair, rollback, or recovery UI;
-- automatic system-level installer updates;
-- a published Stable compatibility matrix.
+- global modification of Cubism launchers.
 
-The built-in Official Directory client and UI exist, but production activation is not ready: the signed endpoint and key readiness are incomplete.
+The built-in Official Directory client and UI exist, but production activation is not ready: the production key list is empty and live signed catalog readiness is not established.

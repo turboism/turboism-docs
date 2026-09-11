@@ -1,17 +1,26 @@
 ---
 title: Downgrade and Recovery
-description: Candidate recovery guidance that does not assume older-version downgrade support.
+description: Recover from a failed update, plugin replacement, or configuration change.
 ---
 
-This is candidate guidance for publication pending. Turboism does not currently document support for downgrading to an older version. Do not treat a retained installer or plugin JAR as proof that an older version can be restored safely.
+Turboism does not document a supported downgrade path to an older version. A retained installer or plugin JAR is not proof that an older version can be restored safely, because the framework, plugin state, and configuration schema move forward together.
 
 ## Recover from a failed change
 
 1. Stop and assess the failed update, replacement, or configuration change.
 2. Preserve the configuration, data, and plugin JARs that matter before making further changes.
-3. Use the recovery information supplied with the same Preview build, if any.
-4. Reapply a known-good configuration or plugin selection only when the supplied guidance supports it.
+3. Keep the installer package and logs from the build that failed; they carry the diagnostics needed to identify the cause.
+4. Reapply a known-good configuration or plugin selection only when you can verify it.
 5. If the issue persists, use [Troubleshooting](../troubleshooting) and record the visible behavior without exposing private material.
+
+## Recover a failed framework update
+
+1. Close Cubism and Turboism completely.
+2. Rerun the installer package of the version you were running before the update, targeting the same Turboism home.
+3. Verify startup and plugin discovery, and confirm that `config.json` still contains your settings.
+4. If the earlier package is no longer available, report the failure with the version, channel, and logs before trying unverified workarounds.
+
+Do not edit installed JARs, patch `config.json` by hand, or restore files into a running installation.
 
 ## Plugin replacements
 
@@ -19,4 +28,8 @@ A failed staged plugin replacement may restore the immediately previous plugin f
 
 ## Plan before updating
 
-Read [Update Policy](./update-policy) before changing a build, and see [Installer Modes](./installer-modes) for the candidate Managed Runtime choices. Public release, deployment, automatic recovery, and a complete rollback interface remain pending.
+- Read [Update Policy](./update-policy) before changing a build or channel.
+- See [Installer Modes](./installer-modes) for the Full, Thin, and Lite selections.
+- Keep an independent backup of projects and of `config.json` plus plugin `config/` and `data/` content.
+
+Automatic recovery and a complete rollback interface remain unavailable.

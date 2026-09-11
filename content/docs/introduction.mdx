@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: What Turboism is, how its plugin boundary works, and how to read the Preview documentation.
+description: What Turboism is, how its plugin boundary works, and how to read this documentation.
 ---
 
 Turboism is a runtime enhancement tool and plugin framework for Live2D Cubism Editor.
@@ -16,13 +16,20 @@ Plugins depend on the Turboism SDK only. Runtime owns host access, lifecycle, sa
 - use Turboism-owned Java types instead of `com.live2d.*` classes;
 - use `PluginContext` for configuration, storage, user files, tasks, UI, events, and Cubism access;
 - register closeable resources in `DisposableScope`;
-- declare permissions in manifest v2;
+- declare a supported plugin metadata schema version and the exact permissions the plugin uses;
 - handle Provider or host-version unavailability explicitly;
 - never bypass Runtime with reflection, raw host widgets, native handles, or bytecode transformers.
 
-## Preview documentation
+## Documentation scope
 
-The current SDK and plugin loader are implemented, and generated API pages are hosted on this site. However, Preview API presence is not the same as Stable compatibility or real-host readiness on every Cubism version.
+Turboism publishes one public SDK tier. The reviewed binary API baseline in the source repository is the compatibility gate, and the [SDK API Guide](./reference/sdk-api) describes the current surface.
+
+Two limits apply throughout this documentation:
+
+- an API that exists in the SDK does not mean every supported Cubism Editor version can execute it;
+- a supported Editor version does not mean every plugin feature is available on it.
+
+Windows x64 is the supported host platform, with Cubism Editor 5.2.03, 5.3.02, and 5.3.03 admitted as exact versions. Unsupported combinations fail closed rather than falling back to an unverified path.
 
 Continue with:
 

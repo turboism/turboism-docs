@@ -15,7 +15,7 @@ When asking an LLM to help with Turboism development, the developer remains resp
 
 ### Complete real-environment testing
 
-- Test the code you write or accept in a real environment. Changes involving plugins, the runtime, or host integration must be verified in an authorized environment that matches the target version; simulation, successful compilation, or an LLM's assessment alone is not enough.
+- Test the code you write or accept in a real environment. Changes involving plugins, the runtime, or host integration must be verified in an authorized environment that matches the target version (Cubism Editor 5.2.03, 5.3.02, or 5.3.03 on Windows x64); simulation, successful compilation, or an LLM's assessment alone is not enough.
 - Use dedicated test data and verify loading, primary behavior, failure handling, and cleanup. Do not test with user data without authorization.
 - Record the test environment, relevant versions, steps, and observed results. If real-environment testing is incomplete, state that clearly and do not claim the change is ready to use.
 
@@ -34,7 +34,7 @@ Turboism has three distinct extension paths:
 
 1. **Java plugins** are in-process plugins with the Java SDK lifecycle, manifest, permissions, and services.
 2. **GraalJS scripts** are restricted scripts that a Java plugin discovers through `PluginContext.scripts()` and explicitly runs with `ScriptService.run`; discovery alone does not execute a script.
-3. **MCP** is a first-party Preview plugin that provides authenticated loopback Streamable HTTP to trusted local external clients.
+3. **MCP** is a bundled first-party plugin that provides authenticated loopback Streamable HTTP to trusted local external clients.
 
 ACP is internal and used only with fx; it is not a fourth extension path. The codebase targets Java 17. Preserve these Java, GraalJS, MCP, and ACP boundaries. Do not substitute one path for another just because a nearby capability appears useful.
 
@@ -74,7 +74,7 @@ These standards apply to content designed or submitted for this project and its 
 
 - Do not duplicate content.
 - Do not design or submit political propaganda, pornographic content, or sensitive content unsuitable for the project community, including hateful, harassing, unlawful, or privacy-invading material.
-- Keep English, Chinese, and Japanese documentation semantically aligned. Do not claim release status, downloads, compatibility, installation steps, API signatures, or availability without verification.
+- Keep the English, Chinese, Japanese, and Korean documentation semantically aligned. Do not claim release status, downloads, compatibility, installation steps, API signatures, or availability without verification.
 
 ## Working instruction
 

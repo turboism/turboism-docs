@@ -1,6 +1,6 @@
 import { defineI18n } from "fumadocs-core/i18n";
 
-export const languages = ["en", "zh", "ja"] as const;
+export const languages = ["en", "zh", "ja", "ko"] as const;
 export type Language = (typeof languages)[number];
 
 export const LANGUAGE_COOKIE = "turboism-language";

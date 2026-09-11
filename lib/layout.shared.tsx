@@ -29,6 +29,17 @@ export const translations = i18n
       "Choose a language(language switcher)": "言語を選択",
       "Choose a language(language switcher)(aria-label)": "言語を選択",
     },
+    ko: {
+      displayName: "한국어",
+      "Search(search trigger)": "문서 검색",
+      "Search(search dialog)": "검색",
+      "No results found(search dialog)": "결과 없음",
+      "On this page(table of contents)": "이 페이지",
+      "Previous Page(pagination)": "이전 페이지",
+      "Next Page(pagination)": "다음 페이지",
+      "Choose a language(language switcher)": "언어 선택",
+      "Choose a language(language switcher)(aria-label)": "언어 선택",
+    },
   });
 
 export function providerOptions(language: Language) {

@@ -8,7 +8,7 @@ test('approved palette, shared fonts, and identical site navigation', () => {
  assert.doesNotMatch(css,/--color-(red|amber|green)-\d+\s*:/);
  assert.ok(css.includes('prefers-reduced-motion'));
  assert.deepEqual(nav.links.map(([key])=>key),['home','docs','sdk','plugins','learn','sponsor','thanks','download']);
- for(const locale of ['en','zh','ja'])for(const [key] of nav.links)assert.ok(nav.labels[locale][key]);
+ for(const locale of ['en','zh','ja','ko'])for(const [key] of nav.links)assert.ok(nav.labels[locale][key]);
  for(const family of ['Geist','Tinos','Noto_Serif_SC','Noto_Serif_JP'])assert.ok(fonts.includes(family));
  assert.match(shell,/data-turboism-brand/);assert.match(shell,/<details/);assert.match(shell,/aria-current/);
  assert.doesNotMatch(shell,/tb-tools|非 Live2D 官方出品|给想法一点活动空间|首页设计预览|为创作者而做/);

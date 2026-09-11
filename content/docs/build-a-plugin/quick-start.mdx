@@ -1,9 +1,9 @@
 ---
 title: Developer Quick Start
-description: Build a minimal Java 17 Turboism plugin against the current Preview SDK.
+description: Build a minimal Java 17 Turboism plugin against the public SDK.
 ---
 
-The current source-backed development path is to add a plugin module to the Turboism repository. A standalone starter template and stable Maven coordinates are not published yet.
+The current source-backed development path is to add a plugin module to the Turboism repository. A standalone starter template and published Maven coordinates are not available yet.
 
 ## 1. Create the module
 
@@ -75,18 +75,20 @@ public final class HelloPlugin implements TurboismPlugin {
 
 The class must be public, implement `TurboismPlugin` or a subinterface, and expose a public no-argument constructor.
 
-## 4. Add manifest v2
+## 4. Add the plugin descriptor
 
 Create `src/main/resources/META-INF/turboism/plugin.json`:
 
 ```json
 {
   "format": "turboism.plugin.meta",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "dev.example.plugin.hello",
   "name": "Hello Plugin",
   "version": "0.1.0",
   "description": "Minimal Turboism plugin lifecycle example.",
+  "category": "workflow",
+  "tags": ["example"],
   "entrypoints": [
     "dev.example.plugin.HelloPlugin"
   ],
@@ -111,7 +113,7 @@ Create `src/main/resources/META-INF/turboism/plugin.json`:
 }
 ```
 
-Read [Plugin Manifest and Packaging](./manifest) before adding permissions, resources, localization, dependencies, or multiple entrypoints.
+Schema 3 adds the required `category` field. Read [Plugin Manifest and Packaging](./manifest) before adding permissions, resources, localization, dependencies, multiple entrypoints, or schema 4 cross-plugin event contracts.
 
 ## 5. Build and validate
 

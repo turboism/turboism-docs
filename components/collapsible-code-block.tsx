@@ -156,6 +156,24 @@ export function CollapsibleCodeBlock({
         yaml: "YAML 設定",
       },
     },
+    ko: {
+      code: "코드",
+      lines: "줄",
+      line: "줄",
+      descriptions: {
+        bash: "셸 명령",
+        java: "Java 예제",
+        javascript: "JavaScript 예제",
+        json: "JSON 구성",
+        kotlin: "Kotlin 구성",
+        markdown: "Markdown 컨텍스트",
+        plaintext: "텍스트 예제",
+        text: "텍스트 예제",
+        typescript: "TypeScript 예제",
+        xml: "XML 구성",
+        yaml: "YAML 구성",
+      },
+    },
   }[pageLanguage];
   const summary = useMemo(
     () => describeCode(title, language, code, labels.descriptions, labels.code),

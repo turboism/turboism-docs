@@ -1,10 +1,36 @@
 ---
 title: Automation
-description: A preview concept for repeatable editor workflows.
+description: The extension paths Turboism supports, and the safety boundary they share.
 ---
 
-Turboism may explore automation and replay for editor workflows. Any such capability
-can affect project state and requires clear safety boundaries.
+Turboism supports three extension paths, plus the automation that first-party plugins build on top of them.
 
-Automation is an experimental concept, not an available feature. Do not rely on this
-page for API shape, availability, or operational behavior.
+## 1. Java plugins
+
+In-process Java 17 JARs with the SDK lifecycle, a plugin descriptor, declared permissions, and the `PluginContext` services. This is the full extension path and the one to use for anything that participates in the editor's own state.
+
+## 2. GraalJS scripts
+
+Restricted JavaScript that a Java plugin discovers through `PluginContext.scripts()` and explicitly runs with `ScriptService.run`. Discovery never executes a script, and scripts receive a limited bridge rather than the complete Java SDK. See [GraalJS Scripts](../build-a-plugin/graaljs-scripts).
+
+## 3. MCP
+
+The bundled Turboism MCP Server plugin exposes an authenticated loopback Streamable HTTP endpoint for trusted local external clients. It is an integration path for tools you run yourself, not an in-process API. See [MCP](../build-a-plugin/mcp).
+
+ACP is internal to Turboism with fx and is not a fourth extension path.
+
+## Automation built on these paths
+
+First-party plugins already automate several workflows, for example uploading Cubism auto-backup artifacts to a WebDAV endpoint, importing ordered PSD clipping relationships as ArtMesh clip masks, and exposing typed Cubism inspection, editing, and history operations through MCP.
+
+## The safety boundary
+
+Automation can change project content, so it shares one boundary regardless of the path:
+
+- an action or an explicit user permission must start the work;
+- operations that write files, create backups, or connect to a network service stay visible and permission-controlled;
+- Write operations go through Editor-owned transactions with Undo and dirty-state handling where the operation claims them;
+- plugins cannot register bytecode transformers, and scripts cannot reach beyond the bridge their caller supplies;
+- unsupported or unverified capabilities fail closed.
+
+Keep an independent backup of important projects before enabling content-changing automation. See [Safety and Rights](../safety-and-rights) and [Development Status](../development-status).

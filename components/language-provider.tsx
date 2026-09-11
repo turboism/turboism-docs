@@ -72,6 +72,20 @@ const copy: Record<Language, Copy> = {
       learnMore: "詳しく見る",
     },
   },
+  ko: {
+    language: "한국어",
+    nav: { home: "홈", docs: "문서", download: "다운로드", plugins: "플러그인", learn: "학습", chat: "채팅", github: "GitHub", contact: "문의" },
+    home: {
+      eyebrow: "Turboism / 문서",
+      title: "더 명확한 경계 위에서 구축합니다.",
+      description: "Turboism의 기본 사용과 개발 문서입니다.",
+      useTurboismTitle: "기본",
+      useTurboismDescription: "Turboism 설치와 사용, 플러그인 관리, 업데이트, 복구, 삭제를 확인합니다.",
+      buildPluginTitle: "개발",
+      buildPluginDescription: "Turboism 개발에 참여하거나 Java 플러그인, GraalJS, MCP로 개발합니다.",
+      learnMore: "자세히 보기",
+    },
+  },
 };
 
 const LanguageContext = createContext<{ language: Language; copy: Copy }>({

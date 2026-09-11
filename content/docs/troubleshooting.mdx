@@ -1,13 +1,21 @@
 ---
 title: Troubleshooting and Feedback
-description: Diagnose Preview startup, plugin JAR, lifecycle, permission, and Provider failures.
+description: Diagnose startup, installer, plugin JAR, lifecycle, permission, and Provider failures.
 ---
+
+## An installer does not start or fails verification
+
+- Confirm the package matches your platform and that you downloaded it from the published release or the official mirror.
+- Verify the SHA-256 checksum with the matching `.sha256` file. A mismatch means the download is incomplete or altered; download it again.
+- The `.jar` installer needs Java 17 or newer.
+- The installer requires all four acknowledgements and the full runtime declaration to be accepted before it changes any files.
+- Installers are unsigned, so Windows or macOS may show an unknown-publisher prompt. Do not disable operating-system protections; confirm the checksum instead.
 
 ## Turboism does not start
 
-- Confirm you are using the intended Preview directory and Turboism home.
-- Check the Java Agent and Runtime logs in Preview-owned or home-owned log directories.
-- Verify that the active Cubism installation matches the supported Preview envelope.
+- Confirm you are using the intended Turboism home and the managed launcher for the correct Cubism installation.
+- Check the runtime logs in the Turboism home's `logs/` directory, including `logs/installer/` output from the configurator.
+- Verify that the active Cubism installation matches the supported envelope (Editor 5.2.03, 5.3.02, or 5.3.03 on Windows x64).
 - Do not replace Cubism JARs, DLLs, BAT files, or licensing components to bypass an identity failure.
 
 ## A plugin does not appear
@@ -17,8 +25,8 @@ Check that:
 - the managed JAR installation completed after restart, or the manual JAR is directly in the root of `<turboism.home>/plugins/` (not in a subdirectory);
 - the same Turboism home is used on both launches;
 - no older JAR with the same plugin ID remains (a duplicate ID fails with `DUPLICATE_PLUGIN_ID`);
-- the JAR has exactly one `META-INF/turboism/plugin.json`;
-- the manifest uses schema version 2;
+- the JAR contains exactly one `META-INF/turboism/plugin.json`;
+- the manifest declares a supported `schemaVersion` (2, 3, or 4) and is valid for that version;
 - the entrypoint class exists, is public, implements `TurboismPlugin`, and has a public no-argument constructor;
 - the Turboism API range and required dependencies resolve;
 - the plugin ID is not disabled or duplicated;
@@ -26,11 +34,11 @@ Check that:
 
 ## A JAR is rejected
 
-A managed JAR can be rejected for a symbolic link or non-regular source, size over the 16 MiB cap, malformed paths, duplicate entries, special files, or a missing or duplicate `META-INF/turboism/plugin.json`.
+A managed JAR can be rejected for a symbolic link or non-regular source, an archive size, entry, expansion, or compression-ratio limit violation, malformed paths, duplicate entries, special files, or a missing or duplicate `META-INF/turboism/plugin.json`.
 
-Descriptor ID/version/API inconsistencies, copied SDK/Runtime/Live2D classes, native or installer payloads, nested JARs, missing entrypoints, and undeclared resources are also rejected.
+Descriptor ID/version/API-range inconsistencies, copied SDK/Runtime/Live2D classes, native or installer payloads, nested JARs, missing entrypoints, undeclared resources, and undeclared i18n catalogs are also rejected.
 
-Rebuild the JAR from the current plugin source. Do not edit the archive manually or disable inspection. The reasons above describe managed preflight; manual copying skips it, and only violations enforced by startup validation appear in Runtime startup diagnostics.
+Rebuild the JAR from the current plugin source. Do not edit the archive manually or disable inspection. The reasons above describe managed preflight; manual copying skips it, and only violations enforced by startup validation appear in runtime startup diagnostics.
 
 ## An operation remains pending
 
@@ -38,7 +46,7 @@ Plugin install, replacement, enable, disable, and uninstall operations apply aft
 
 - Confirm Cubism exited fully and was restarted.
 - Confirm the same `turboism.home` is used on both launches.
-- Inspect Runtime state and logs.
+- Inspect runtime state and logs.
 - Do not edit plugin, config, and pending-state files while Turboism is running.
 
 ## A host capability is unavailable
@@ -47,6 +55,16 @@ This is often a deliberate fail-closed result caused by host version, Cubism fil
 
 Record the exact Cubism version, Cubism file identity, operation, and diagnostic code. Do not bypass the failure with reflection or direct host access.
 
+## The interface language is not what you expect
+
+- The installer language only affects the installer.
+- The runtime language comes from the runtime `locale` setting; an explicit `-Dturboism.locale` or `config.json` locale outranks the host.
+- Plugin interface language otherwise follows Cubism Editor's **File → Environment Settings → General → Language**.
+
+## Warnings from Cubism launcher integration
+
+If managed launcher integration reports a conflict, the official BAT file or its backup was edited after installation. Cleanup restores only hash-matching managed files and preserves state for retry. Do not resolve the conflict by overwriting a file you did not back up.
+
 ## Feedback
 
-Use [Feedback and Requests](./report-a-bug) to report bugs or request framework and plugin features through Discord, GitHub, or email.
+Use [Feedback and Requests](./report-a-bug) to report bugs or request framework and plugin features through Discord, QQ, GitHub, or email.

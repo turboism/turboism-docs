@@ -3,7 +3,7 @@ title: SDK API Guide
 description: The current Turboism plugin SDK entrypoints, services, object model, lifecycle, and capability boundaries.
 ---
 
-The Turboism SDK is the only public dependency for plugins. New APIs are Preview by default. Availability depends on four separate facts:
+The Turboism SDK is the only public dependency for plugins. Turboism publishes one public SDK tier, and the reviewed binary API baseline in the source repository is the compatibility gate. Availability depends on four separate facts:
 
 1. the API exists in the SDK;
 2. the plugin declares the required permission;
@@ -252,10 +252,16 @@ Each UI family has independent capability and Provider evidence. One available f
 
 A permission does not bypass operation validation and does not create a missing Provider.
 
+## Cross-plugin event contracts
+
+Plugin descriptors using schema 4 can declare the public event types they export and import, each bound to a contract version and an ABI digest of the event type. Runtime resolves those contracts without ClassLoader delegation, rejects duplicate exports, and refuses imports whose provider contract is not admitted. Declaring an event contract grants no host write authority; it only makes a plugin-owned event type consumable by another plugin. See [Plugin Manifest and Packaging](../build-a-plugin/manifest).
+
 ## Version and readiness notes
 
 - Parameter authoring writes have a verified Cubism 5.3.02 path, but callers must still handle unavailability and stale targets.
 - Part display-name writes have real-host evidence on 5.2.03 and 5.3.02.
 - Part opacity authoring writes must not be claimed on 5.2.03.
+- Cubism 5.3.03 is an admitted exact version with its own texture-atlas authoring provider, selector contract, and layout provider, plus exact-version profiles for physics, performance metrics, project lifecycle, model statistics, and startup suppression. Admission is per capability, not a blanket guarantee for every operation family.
+- History DTOs (`HistoryEntry`, `HistoryChange`, `HistoryEditContext`, `HistoryGroup`, `HistoryOrigin`, `HistoryTarget`) are bounded immutable semantic projections. They never grant host write authority.
 - Fake and static tests prove their named layer only.
 - Snapshot/query/transaction compatibility surfaces currently coexist with the unified object graph.

@@ -92,9 +92,10 @@ Host-version claims require the project's higher-risk validation workflow; fake 
 
 - [ ] The plugin has one clear purpose.
 - [ ] Production code depends only on the SDK.
-- [ ] Manifest v2 declares exact entrypoints, resources, dependencies, and minimum permissions.
+- [ ] The plugin descriptor declares a supported schema version, exact entrypoints, resources, dependencies, and minimum permissions.
 - [ ] Registrations and handles are closeable and scoped.
 - [ ] Unavailable Providers fail closed with useful diagnostics.
+- [ ] Localized catalogs exist for every locale the plugin claims.
 - [ ] Configuration, storage, and user files use the correct service.
 - [ ] No unmanaged thread, executor, timer, host object, or reflection bridge exists.
 - [ ] Writes preserve Editor ownership and Undo semantics.

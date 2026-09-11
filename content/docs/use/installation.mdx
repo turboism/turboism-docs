@@ -1,78 +1,128 @@
 ---
 title: Installation
-description: Install Turboism with the Windows .exe installer or the cross-platform .jar installer without modifying a Cubism installation.
+description: Install Turboism from a published release package without modifying a Cubism installation.
 ---
 
-Turboism is installed with an installer package. Two installers exist: the Windows-native `TurboismInstaller-<version>.exe` and the cross-platform `TurboismInstaller-<version>.jar`, which installs on Windows and macOS with a Java 17+ runtime. Ordinary users install with one of these installer packages; building from source is developer and maintainer work.
+Turboism is distributed through [GitHub Releases](https://github.com/turboism/Turboism/releases) and the official download mirror at [turboism.dev/download](https://turboism.dev/download). Every package ships with a matching `.sha256` checksum file. Building Turboism from source is developer and maintainer work and is not required for ordinary use.
 
-Neither installer modifies Cubism JARs, DLLs, official launcher files, licensing state, or existing projects.
+No package modifies Cubism JARs, DLLs, official launcher files, licensing state, or existing projects.
 
-## Choose an installer
+Installers are currently unsigned. Verify the downloaded file against its checksum before running it.
 
-- On Windows, use the `.exe` installer. It is the native path: per-user, no administrator rights, with the Windows configurator and Start Menu integration.
-- On Windows or macOS, use the `.jar` installer when you prefer one installer file across platforms. It requires Java 17+ and runs with `java -jar TurboismInstaller-<version>.jar`.
-- Installer files must come from the release or preview channel that provided your build. Turboism does not currently publish public download assets for these installers.
-- The installer JAR is separate from plugin JARs. Plugins are managed through [Plugin Management](./plugin-management), not through this installer.
+## Choose a package
+
+| Package | Platform | Purpose |
+| --- | --- | --- |
+| `TurboismInstaller-<version>.exe` | Windows | Guided NSIS installer. Recommended on Windows. |
+| `TurboismInstaller-<version>.jar` | Windows, macOS, Linux | Guided IzPack installer. Requires Java 17 or newer. |
+| `turboism-<version>-full.zip` | Manual setup | Runtime plus the reviewed first-party plugin bundle. |
+| `turboism-<version>-lite.zip` | Manual setup | Runtime only; add your own plugin JARs. |
+
+All four formats carry the same release version. Use the channel that provided your build: see [Release Channels](./update-policy) and the three JSON feeds under `api.turboism.dev`.
+
+## Supported environments
+
+- **Windows x64** is the supported Cubism host platform.
+- Supported Cubism Editor versions are **5.2.03**, **5.3.02**, and **5.3.03**, each with exact-version adapters. Unlisted Editor versions are not claimed compatible, and unavailable adapters or features fail closed.
+- A supported Editor version does not mean every plugin feature is available on that version.
+- macOS packaging is preview-only: the installer can install and uninstall, but macOS Cubism host support is not verified and no macOS launcher is installed.
+- Linux coverage is limited to installer and payload behavior; Linux is not a supported Cubism host.
+
+## Installer languages
+
+Every Turboism installer ships in **English, Simplified Chinese, Japanese, and Korean**.
+
+- The EXE wizard shows a language selection step before the welcome page and keeps every language listed regardless of the host language.
+- The JAR wizard starts with a language-selection dialog; pass `-language eng|chn|jpn|kor` to preselect one and skip that dialog.
+- The installer language is installer-scoped and is never written to `config.json`. The language Turboism uses at runtime comes from the runtime `locale` setting, and plugin interface language follows Cubism Editor's **File → Environment Settings → General → Language**.
+
+## Installation modes
+
+The installers offer three plugin selections. The ZIP packages ship as the portable `full` and `lite` variants of the same payload:
+
+- **Full** — the agent plus the reviewed first-party plugin bundle. Individual plugins can be deselected in the installer.
+- **Thin** — the same plugin roster without an additional managed native runtime payload. Thin also accepts an explicit custom executable path.
+- **Lite** — the agent and common files only, with no first-party plugin JARs.
+
+The development-only Turboism with fx plugin and managed fx runtime bytes are not part of any release package. See [Installer Modes](./installer-modes) for the details.
+
+## Required acknowledgements
+
+Both installers gate the installation behind four explicit acknowledgements and a full localized runtime declaration. The acknowledgements cover Turboism's independent third-party identity, lawful Cubism authorization, independent backups before authorized content-changing automation, and open-source as-is operation without compatibility or recovery guarantees. The gate behaves the same in graphical, console, and automated modes.
 
 ## Windows `.exe` installer
 
-`TurboismInstaller-<version>.exe` is the Windows-native NSIS installer.
+`TurboismInstaller-<version>.exe` is the Windows-native NSIS installer, and the recommended path on Windows.
 
 - Runs per-user and requests no administrator elevation.
 - Installs to `%LOCALAPPDATA%\Turboism` by default; you can choose another directory.
-- Offers Lite and Full modes. Full installs the first-party plugins; Lite installs only the agent and common files.
-- Full mode lets you deselect individual plugins before installing.
 - Adds per-user Start Menu entries and registers uninstall in the current user's Programs and Features.
 - Opens `configure_turboism.ps1` after installation so you can configure Cubism roots and managed launch entries.
 - Writes `uninstall.exe` for later removal.
 - Does not modify Cubism installation files.
 
-## Cross-platform `.jar` installer (Windows/macOS)
+## Cross-platform `.jar` installer
 
-`TurboismInstaller-<version>.jar` is the IzPack-based installer for Windows and macOS.
-
-- Requires Java 17 or newer.
-- Run it with:
+`TurboismInstaller-<version>.jar` is the IzPack-based installer. It requires Java 17 or newer:
 
 ```bash
 java -jar TurboismInstaller-<version>.jar
 ```
 
-- Default install location: `%LOCALAPPDATA%\Turboism` on Windows; `~/Library/Application Support/Turboism` on macOS. You can choose another directory.
-- Offers the same Lite/Full modes as the `.exe` installer: Full installs the first-party plugins, Lite installs only the agent and common files, and Full lets you deselect individual plugins.
-- Rerunning the installer updates the same Turboism home and plugin selection without blindly overwriting unrelated configuration.
-- Uninstalls on both platforms through the generated uninstaller.
+- Default install location: `%LOCALAPPDATA%\Turboism` on Windows, `~/Library/Application Support/Turboism` on macOS, `${XDG_DATA_HOME:-~/.local/share}/Turboism` on Linux; you can choose another directory.
+- Rerunning the installer updates the same Turboism home and plugin selection without overwriting unrelated configuration.
+- Generates `Uninstaller/uninstaller.jar` under the Turboism home for removal.
 
-macOS packaging and uninstall are in Preview: they are verified on Apple Silicon and Intel packaging lanes, but macOS Cubism host launch and readiness are not verified and no macOS Cubism launcher is installed. On macOS, this installer can install and uninstall Turboism, but it does not yet provide a verified way to launch Turboism inside Cubism.
+Installing files on macOS or Linux does not imply Cubism host compatibility there.
+
+## ZIP packages
+
+1. Extract the whole archive into a separate Turboism folder, never into the Cubism installation directory.
+2. From the extracted folder, run the configurator:
+
+   ```powershell
+   powershell -NoProfile -ExecutionPolicy Bypass -File ".\configure_turboism.ps1"
+   ```
+
+   The execution-policy option applies only to that PowerShell process.
+3. Select the Cubism installations and plugins you want, then save.
+4. Start Cubism through the generated Turboism shortcut or `launch-cubism-turboism.bat` in that folder.
+
+## Verify the download
+
+Each package has a `.sha256` sidecar with the same filename plus `.sha256`. For example, in PowerShell:
+
+```powershell
+Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
+```
+
+Compare the result with the published value. A SHA-256 checksum proves file integrity; it is not a code-signing certificate.
 
 ## After installation
 
-1. On Windows, run `configure_turboism.ps1` in the Turboism home. It discovers supported Cubism 5.2/5.3 roots and creates one managed launch entry per selected root. Canceling the configurator leaves a valid framework-only install.
-2. Start Turboism through the managed launcher for your Cubism root (`launch-cubism-turboism.bat` on Windows).
-3. Confirm that Turboism starts and writes diagnostics in the Turboism home.
-4. Install plugins through [Plugin Management](./plugin-management), which stages JARs and applies them after Cubism restarts.
+1. On Windows, run `configure_turboism.ps1` in the Turboism home. It lists only exact supported Cubism Editor 5.2.03, 5.3.02, and 5.3.03 installations and creates one managed launch entry per selected root. Canceling the configurator leaves a valid framework-only install.
+2. Optionally enable integration with the official Cubism startup BAT for selected installations. It records a hash-guarded backup and is never applied implicitly; later user edits to those files become conflicts and preserve state for retry.
+3. Start Turboism through the managed launcher for your Cubism root (`launch-cubism-turboism.bat` on Windows).
+4. Confirm that Turboism starts and writes diagnostics in the Turboism home.
+5. Install additional plugins through [Plugin Management](./plugin-management), which stages JARs and applies them after Cubism restarts.
 
 ## Uninstall
 
 - Windows installation created by the `.exe` installer: run `uninstall.exe` in the Turboism home directory. The confirmation asks whether to keep `config.json`.
 - Windows installation created by the `.jar` installer: run
 
-```text
-java -jar <home>\Uninstaller\uninstaller.jar
-```
+  ```text
+  java -jar <home>\Uninstaller\uninstaller.jar
+  ```
 
 - macOS installation created by the `.jar` installer: double-click `uninstall.command` in the home directory, or run it in a terminal.
 
-The uninstaller removes installer-owned files and the runtime `logs`, `state`, and `cache` data. Unknown files and third-party plugin JARs are preserved; `config.json` is removed only when you choose to delete it.
-
-## Developers and maintainers
-
-Building Turboism from source and building installer packages is developer and maintainer work. Source, framework, and installer builds belong to developer or maintainer workflows and are intentionally excluded from this user guide.
+The uninstaller removes installer-owned files and the runtime `logs`, `state`, and `cache` data. The Java uninstaller defaults to keeping `config.json`, matching the NSIS uninstaller. Unknown files and third-party plugin JARs are preserved.
 
 ## Current limitations
 
-- macOS Cubism host launch is not verified, and no macOS Cubism launcher is installed.
-- Installer packages are not yet signed or notarized, and there is no public download channel.
-- There is no automatic online updater: updating means rerunning a newer installer.
+- Installer packages are not signed or notarized.
+- macOS Cubism host support is not verified, and no macOS launcher is installed.
+- There is no automatic online updater: updating means rerunning a newer installer, and update checks are not part of the current stable release.
 - Failed plugin replacements are protected by internal backup/restore, but a complete user-facing repair or history UI does not exist yet.
 - Feature readiness remains capability- and version-specific.

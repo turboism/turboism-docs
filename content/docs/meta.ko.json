@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "index",
+    "use",
+    "build-a-plugin",
+    "concepts",
+    "reference",
+    "safety-and-rights",
+    "report-a-bug",
+    "support-us",
+    "troubleshooting",
+    "development-status"
+  ]
+}

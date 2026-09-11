@@ -1,20 +1,33 @@
 ---
 title: Architecture
-description: A conceptual map of Turboism’s role between plugins and Cubism.
+description: How Turboism sits between plugins and Live2D Cubism Editor.
 ---
 
-Turboism is conceived as an adaptation layer between Live2D Cubism Editor internals
-and extension code.
+Turboism is an adaptation layer between Live2D Cubism Editor internals and extension code. It gives plugin authors a stable integration surface without requiring direct dependence on host implementation details.
 
-Its purpose is to give plugin authors a higher-level integration surface without
-requiring direct dependence on host implementation details.
+## Dependency direction
 
-## Conceptual layers
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
 
-1. Live2D Cubism Editor as the host application.
-2. Adaptation work for host-specific symbols and version differences.
-3. Turboism framework services and extension boundaries.
-4. Official and third-party plugins built on those boundaries.
+- **Plugins** describe user workflows and depend only on the SDK.
+- **SDK** exposes Turboism-owned types, services, and lifecycle contracts.
+- **Runtime** owns host access, lifecycle, permissions, threading, transactions, diagnostics, compatibility, and version routing.
+- **Adapter/Provider** layers isolate host-specific symbols per exact Cubism Editor version.
+- **Cubism/Editor** remains the host application, installed and licensed separately.
 
-Layer names describe the intended architecture, not a promise that named classes,
-services, or features are available in a released SDK.
+## Design rules that follow from this
+
+- One public SDK tier. Plugins never see `com.live2d.*` types, host widgets, native handles, host ClassLoaders, or runtime implementation types.
+- Runtime owns execution. Plugins do not create unmanaged threads, executors, or timers, and do not register bytecode transformers.
+- Writes are Editor-owned operations with validation, Undo, dirty-state handling, and stale-reference rejection.
+- Capabilities fail closed. An unavailable Provider, an unverified host version, or a stale object reference produces a typed failure instead of a fallback path.
+- Verification is layered by cost and risk, from focused tests to packaged integration, release gates, and explicit exact-version host validation.
+
+## Where to go next
+
+- [Mapping Layer](./mapping-layer) — how host-specific knowledge stays isolated.
+- [Automation](./automation) — the extension and automation paths.
+- [Development Status](../development-status) — what is implemented today.
+- [SDK API Guide](../reference/sdk-api) — the current plugin-facing surface.

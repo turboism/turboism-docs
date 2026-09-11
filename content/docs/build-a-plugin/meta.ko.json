@@ -1,0 +1,14 @@
+{
+  "title": "개발",
+  "pagesIndex": "overview",
+  "pages": [
+    "contributing",
+    "quick-start",
+    "plugin-interfaces",
+    "manifest",
+    "designing-plugins",
+    "graaljs-scripts",
+    "mcp",
+    "[LLM으로 개발하기](llm-coding-context)"
+  ]
+}

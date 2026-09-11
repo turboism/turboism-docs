@@ -12,7 +12,7 @@ try{
  for(const width of [1440,375]){
   const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'});
   await page.goto(origin+route,{waitUntil:'domcontentloaded'});
-  for(const locale of ['en','zh','ja']){
+  for(const locale of ['en','zh','ja','ko']){
    const header=page.locator('header.tb-header');assert.equal(await header.count(),1);
    assert.equal(await header.getAttribute('data-turboism-brand'),navigation.version);
    if(width<1200)await header.locator('summary').click();
