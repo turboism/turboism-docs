@@ -1,24 +1,37 @@
 ---
 title: インストーラーモード
-description: 将来の公開インストールフロー向けの候補 Managed Runtime モードの意味。
+description: Full、Thin、Lite のインストール選択肢と、オプションのマネージド GraalVM コンポーネントを比較する。
 ---
 
-このページは公開待ちの候補ドキュメントです。これらのモード名は候補 Managed Runtime を説明するものであり、インストーラー、plugin directory、またはいずれかのモードが公開済みであることを示しません。
+Turboism のインストーラーとポータブルアーカイブは、同じランタイムを異なるプラグイン選択とともに配布します。モードが選択するのはファイルであり、Cubism のインストールを変更することはありません。
 
-## 候補モード
+## モード
 
-- **Full** — agent と完全な候補 first-party plugin set です。サポート対象の Linux および macOS Java Full インストールでは、対応する managed fx component も含まれます。
-- **Thin** — agent と同じ候補 first-party plugin set を含みますが、managed fx component は含みません。サポート対象の system では、その操作が提供される場合に managed fx component を明示的に**Install**または**Repair**できます。
-- **Lite** — agent と common file のみです。optional plugin JAR も managed fx component も含みません。
+- **Full** — agent と、レビュー済みのファーストパーティプラグインバンドル。インストーラーは承認済みのリリースプラグインをすべて事前選択し、個々のプラグインを選択解除できます。
+- **Thin** — 同じ承認済みプラグイン構成から、追加のマネージドネイティブランタイムペイロードを除いたもの。Java インストーラーで利用でき、明示的なカスタム実行ファイルパスも受け付けます。
+- **Lite** — agent と common file のみ。ファーストパーティの plugin JAR はコピーされません。
 
-## プラットフォームの条件
+Windows の `.exe` インストーラーは **Full** と **Lite** を提供します。クロスプラットフォームの `.jar` インストーラーは **Full**、**Thin**、**Lite** を提供します。ポータブルアーカイブは同じ payload の `full` と `lite` バリアントとして配布されます。
 
-Windows Java Full は提供されません。Windows Java Thin では候補 plugin set をインストールできますが、関連 capability を使うには、信頼できる fx executable をユーザー自身で用意する必要があります。モード名だけで host support、特定の plugin、または managed component が保証されるわけではありません。
+## オプションのマネージド GraalVM
 
-正確な availability、内容、選択 UI、compatibility は保留中であり、Preview build ごとに異なる場合があります。これらのラベルから公開済みまたは deployment が可能であると推測しないでください。
+インストーラーは、オプションのマネージド GraalVM コンポーネントを提供します。
+
+- GraalVM 公式 GitHub リリースから固定されたアーカイブをダウンロードし、使用前に検証します。
+- 選択しないままでも、プラグインバンドルにとってインストールは有効かつ完全なままです。
+- 後から Turboism の設定でインストールできます。
+
+開発専用の `Turboism with fx` plugin とそのマネージドランタイムバイトは、どのリリースパッケージにも含まれません。
+
+## モードが変更しないもの
+
+- ランタイム home、設定、ログ、プラグインデータはどのモードでも同じです。
+- インストーラーを再実行すると、同じ home に異なる選択が適用され、管理対象のプラグイン状態だけが変わります。
+- 不明なファイルとサードパーティの plugin JAR は、モード変更によって削除されることはありません。
+- モード名は、使用中の Cubism バージョンでプラグイン機能が利用できることを保証しません。利用可否は capability とバージョンに依存します。
 
 ## 選択前に
 
-候補インストーラーが Preview build とともに提供された場合は、付属の案内を読み、重要な configuration と data を保持し、モードを変更する前に[更新ポリシー](./update-policy)と[ダウングレードと復旧](./downgrade-recovery)を確認してください。
-
-[SCREENSHOT PLACEHOLDER — インストーラーモードの選択。利用可能な候補インストーラーから手動で撮影します。]
+1. `config.json` と、重要な plugin の `config/`・`data/` の内容を backup します。
+2. インストーラーの再実行とリリースチャンネルの仕組みは[更新ポリシー](./update-policy)を確認してください。
+3. 変更が想定どおりに動作しない場合は[ダウングレードと復旧](./downgrade-recovery)を使用してください。

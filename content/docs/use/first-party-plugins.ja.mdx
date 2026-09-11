@@ -1,30 +1,57 @@
 ---
 title: ファーストパーティプラグイン
-description: 独立した分類であるファーストパーティ plugin set の候補 capability family。
+description: Full インストールに含まれるレビュー済みプラグインバンドル。
 ---
 
-このページは公開待ちの候補概要です。ファーストパーティ plugin は独立した分類であり、bundle、deployment、公開 plugin directory、または詳細 tutorial page が公開済みであるという主張ではありません。
+Full インストールには、レビュー済みのファーストパーティプラグインのバンドルが含まれます。これらはサードパーティプラグインと同じ public SDK 境界を使用し、それぞれが独立した JAR で、インストール時に選択を解除できます。
 
-## 候補 capability family
+個々の機能の利用可否は、Cubism Editor のバージョンと、そのバージョンが公開する capability Provider に依存します。バンドルされたプラグインであることは、対応するすべてのバージョンですべての機能が動作する保証ではありません。
 
-候補ファーストパーティ plugin set には、次の plugin family が含まれる場合があります。
+## モデリング
 
-- parameter の一括操作。
-- mesh mirroring。
-- clipping mask。
-- palette、scene、texture atlas。
-- physics。
-- backup。
-- performance。
-- theme。
+| プラグイン | 機能 |
+| --- | --- |
+| MaxRects-BSSF Layout Algorithm | 並列探索を行う MaxRects-BSSF texture-atlas パッキングアルゴリズムを登録します。 |
+| Mesh Edit Mirror Axis Enhance | mesh 編集に mirror 軸の回転と、実ホストの mirror ツールとの正確な同等性を追加します。 |
+| Parameter Batch Transfer | 1 つの ArtMesh または Deformer の parameter binding を、任意の反転付きで他の parameter へ一括転送します。 |
+| Physics Editor | Physics Settings グループの全選択と、再度開いたときの状態保持を追加します。 |
 
-これらは capability family であり、リリースの約束ではありません。正確な set、availability、behavior、compatibility は保留中で、Preview build ごとに異なる場合があります。詳細な tutorial page は別途後から提供されます。plugin directory にこれらの plugin がすでに存在すると推測しないでください。
+## ワークフロー
 
-## この概要の使い方
+| プラグイン | 機能 |
+| --- | --- |
+| Cubism Tab Filter | Parameter、Deformer、Scene、Log のパレットタブにキーワードフィルターボックスを追加します。 |
+| PSD Clip Mask Import | 順序付けされた PSD のクリッピング関係を、明示的な上書きポリシー付きで ArtMesh のクリップマスク割り当てに取り込みます。 |
+| History Panel | アクティブなドキュメントのネイティブ Undo 履歴を、スナップショットに紐付いた Undo/Redo ナビゲーションを備えた Photoshop 風ペインに投影します。 |
+| Recent Preview | Recent Files のホバーポップアップに、最近のプロジェクトファイルの範囲が限定されたプレビューサムネイルを表示します。 |
+| WebDAV Auto-Backup Sync | JDK HTTP client を使用して、Cubism の自動バックアップ生成物を WebDAV エンドポイントへアップロードします。 |
 
-- 候補の選択意味は[インストーラーモード](./installer-modes)で確認します。
-- 手元の build で利用できるローカル plugin のライフサイクルには[プラグイン管理](./plugin-management)を使用します。
-- 選択を変更する前に[更新ポリシー](./update-policy)を読みます。
-- 変更が期待どおりに動作しない場合は[ダウングレードと復旧](./downgrade-recovery)を使用します。
+## 分析とパフォーマンス
 
-[SCREENSHOT PLACEHOLDER — 候補ファーストパーティ plugin の選択または一覧。利用可能な候補 build から手動で撮影します。]
+| プラグイン | 機能 |
+| --- | --- |
+| Clip Mask Viewer | 読み取り専用のクリップマスク重複チェッカー兼ビジュアライザーで、グラフ/表インスペクターとエディターの選択ハイライトを備えます。 |
+| Texture Atlas Statistics | ネイティブの texture-atlas エディターウィンドウに、モデル画像の合計数と現在の texture の数を表示します。 |
+| Performance Statistics | CPU、FPS、JVM メモリのリアルタイムチャートを、埋め込みパネルと独立ウィンドウで表示します。 |
+
+## 外観
+
+| プラグイン | 機能 |
+| --- | --- |
+| UI Theme | 旧バージョン互換のテーマパッケージ、組み込みテーマ、テーママネージャーのワークフロー、および正確なバージョンに対応した Cubism 外観の適用。 |
+| Palette Label Style | Deformer、Part、Parameter のパレット項目のラベル文字色と背景色。 |
+| Scene Palette Enhancer | Cubism の Scene パレットの項目を並べ替え、手動で順序を変更できるようにします。 |
+
+## 連携とシステム
+
+| プラグイン | 機能 |
+| --- | --- |
+| Turboism MCP Server | 型付きの Cubism 検査、編集、履歴、Editor コマンドのワークフローを公開する loopback Model Context Protocol サーバー。bearer 認証が必要です。[MCP](../build-a-plugin/mcp)を参照してください。 |
+| Turboism Core | 組み込みで削除できない Turboism のメニュー、ツールバー、設定、タブ、プラグインマネージャー。無効化もアンインストールもできません。 |
+
+## 管理方法
+
+- Full または Thin モードでインストーラーを実行する際に、個々のプラグインの選択を解除します。
+- インストール済みのプラグインはプラグイン管理で有効化または無効化します。変更は Cubism の再起動後に適用されます。
+- [プラグイン管理](./plugin-management)は、インストール、置換、有効化/無効化、アンインストール、および各プラグインが保持するデータを扱います。
+- [更新ポリシー](./update-policy)は、新しいバンドルが既存のインストールに届く方法を扱います。

@@ -3,7 +3,7 @@ title: SDK API ガイド
 description: 現在の Turboism プラグイン SDK のエントリーポイント、サービス、オブジェクトモデル、ライフサイクル、機能境界。
 ---
 
-Turboism SDK は plugin にとって唯一の public dependency です。新しい API はデフォルトで Preview です。利用可能性は、次の 4 つの事実に分かれます。
+Turboism SDK は plugin にとって唯一の public dependency です。Turboism は単一の public SDK 階層を公開し、source repository のレビュー済みバイナリ API ベースラインが compatibility gate です。利用可能性は、次の 4 つの事実に分かれます。
 
 1. SDK に API が存在する。
 2. plugin が必要な permission を宣言している。
@@ -252,10 +252,16 @@ UI API は Swing/AWT や host widget ではなく SDK DTO を使います。現�
 
 permission は operation validation を迂回せず、欠けている Provider を作りません。
 
+## クロスプラグインイベント契約
+
+schema 4 を使用する plugin descriptor は、自身が export および import する public event type を宣言できます。それぞれは contract version と event type の ABI digest に結び付きます。Runtime はそれらの contract を ClassLoader delegation なしで解決し、duplicate export を拒否し、provider contract が認定されていない import を拒否します。event contract を宣言しても host への write 権限は付与されず、plugin が所有する event type を他の plugin から利用できるようになるだけです。詳細は[プラグインマニフェストとパッケージング](../build-a-plugin/manifest)を参照してください。
+
 ## バージョンと準備状況に関する注意
 
 - Parameter authoring write には検証済みの Cubism 5.3.02 path がありますが、caller は引き続き unavailable と stale target を処理しなければなりません。
 - Part display-name write には 5.2.03 と 5.3.02 で実ホストの証拠があります。
 - Part opacity authoring write は 5.2.03 で主張してはいけません。
+- Cubism 5.3.03 は認定された正確なバージョンであり、独自の texture-atlas authoring provider、selector contract、layout provider に加え、physics、performance metrics、project lifecycle、model statistics、startup suppression 用の exact-version profile を持ちます。認定は capability 単位であり、すべての operation family に対する包括的な保証ではありません。
+- History DTO（`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`）は、範囲が限定された immutable な semantic projection です。host への write 権限を与えることはありません。
 - Fake と static test が証明するのは、それぞれが名指しした layer だけです。
 - Snapshot/query/transaction compatibility surface は現在、unified object graph と併存しています。

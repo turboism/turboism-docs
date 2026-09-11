@@ -1,9 +1,9 @@
 ---
 title: GraalJS スクリプト
-description: 明示的に呼び出す制限付き GraalJS script の候補説明。
+description: 明示的に呼び出す制限付き GraalJS script をパッケージ化して実行する。
 ---
 
-このページは公開待ちの候補ドキュメントです。GraalJS script は Java plugin ではなく、公開済みの scripting surface を確立するものでもありません。
+GraalJS script は Java plugin ではありません。Java plugin が明示的に呼び出した場合にのみ実行され、Java SDK ではなく制限付きの bridge を受け取ります。
 
 ## script をパッケージ化する
 
@@ -12,12 +12,17 @@ script package は、schema version `2` の `script.json` descriptor を使用�
 ```json
 {
   "schemaVersion": 2,
+  "id": "dev.example.script.hello",
+  "name": "Hello Script",
+  "version": "0.1.0",
   "language": "js",
   "entry": "main.js",
-  "sourceSha256": "<source の SHA-256>",
+  "sourceSha256": "<SHA-256 of the source>",
   "permissions": []
 }
 ```
+
+受け入れられる `schemaVersion` は 2 のみで、script 言語として現在サポートされるのは `js` だけです。
 
 これは field-level の概要であり、完全な permission catalog ではありません。対象 build がサポートする permission だけを使用してください。availability と正確な意味は引き続き capability-sensitive です。
 
@@ -33,6 +38,4 @@ SDK lifecycle と service を持つプロセス常駐 plugin には Java のパ�
 
 ## 現在の状態
 
-script の availability、公開される bridge operation、execution limit、公開の詳細は保留中で、Preview build ごとに異なる場合があります。
-
-[SCREENSHOT PLACEHOLDER — 明示的な script invocation。利用可能な候補 build から手動で撮影します。]
+script の実行は capability-sensitive です。公開される bridge operation、resource limit、正確な permission set は build ごとに異なる場合があります。ambient な host access を仮定せず、利用できない operation や失敗した実行を処理できるように script を設計してください。

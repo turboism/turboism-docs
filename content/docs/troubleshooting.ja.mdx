@@ -1,13 +1,21 @@
 ---
 title: トラブルシューティングとフィードバック
-description: Preview の起動、プラグイン JAR、ライフサイクル、権限、Provider の失敗を診断する。
+description: 起動、インストーラー、プラグイン JAR、ライフサイクル、権限、Provider の失敗を診断する。
 ---
+
+## インストーラーが起動しない、または検証に失敗する
+
+- パッケージが自分のプラットフォーム向けであり、公開リリースまたは公式ミラーからダウンロードしたものであることを確認します。
+- 対応する `.sha256` ファイルで SHA-256 チェックサムを検証します。一致しない場合、ダウンロードが不完全か改変されているため、もう一度ダウンロードしてください。
+- `.jar` インストーラーには Java 17 以降が必要です。
+- インストーラーは、ファイルを変更する前に、4 つの確認事項と完全なランタイム宣言のすべてが承諾されることを要求します。
+- インストーラーは署名されていないため、Windows や macOS で不明な発行元の警告が表示されることがあります。オペレーティングシステムの保護を無効にせず、代わりにチェックサムで確認してください。
 
 ## Turboism が起動しない
 
-- 意図した Preview directory と Turboism home を使用していることを確認します。
-- Preview が所有する、または home が所有する log directory にある Java Agent と Runtime のログを確認します。
-- 使用中の Cubism インストールがサポート対象の Preview envelope と一致することを確認します。
+- 意図した Turboism home と、正しい Cubism インストールに対応するマネージドランチャーを使用していることを確認します。
+- Turboism home の `logs/` ディレクトリにあるランタイムログを確認します。コンフィギュレーターが出力する `logs/installer/` の内容も含みます。
+- 使用中の Cubism インストールがサポート対象の範囲（Windows x64 上の Editor 5.2.03、5.3.02、5.3.03）と一致することを確認します。
 - identity failure を回避するために Cubism JAR、DLL、BAT ファイル、ライセンスコンポーネントを置き換えないでください。
 
 ## プラグインが表示されない
@@ -17,8 +25,8 @@ description: Preview の起動、プラグイン JAR、ライフサイクル、�
 - マネージド JAR のインストールが再起動後に完了している、または手動の JAR が `<turboism.home>/plugins/` のルート直下にある（サブディレクトリにない）。
 - 両方の起動で同じ Turboism home が使われている。
 - 同じ plugin ID の古い JAR が残っていない（重複 ID は `DUPLICATE_PLUGIN_ID` で失敗する）。
-- JAR に `META-INF/turboism/plugin.json` が正確に 1 つある。
-- マニフェストが schema version 2 を使用している。
+- JAR に `META-INF/turboism/plugin.json` が正確に 1 つ含まれている。
+- マニフェストが対応する `schemaVersion`（2、3、または 4）を宣言し、そのバージョンとして妥当である。
 - entrypoint class が存在し、public で、`TurboismPlugin` を実装し、public no-argument constructor を持つ。
 - Turboism API range と required dependencies が解決される。
 - plugin ID が disabled または重複していない。
@@ -26,11 +34,11 @@ description: Preview の起動、プラグイン JAR、ライフサイクル、�
 
 ## JAR が拒否される
 
-マネージド JAR は、シンボリックリンクまたは通常ファイルでない source、16 MiB 上限を超える size、壊れた path、duplicate entry、special file、`META-INF/turboism/plugin.json` の欠落または重複などを理由に拒否されることがあります。
+マネージド JAR は、シンボリックリンクまたは通常ファイルでない source、アーカイブの size・entry・展開量・圧縮率の上限違反、壊れた path、duplicate entry、special file、`META-INF/turboism/plugin.json` の欠落または重複などを理由に拒否されることがあります。
 
-descriptor の ID/version/API 不一致、コピーされた SDK/Runtime/Live2D class、native または installer payload、nested JAR、missing entrypoint、undeclared resource も拒否されます。
+descriptor の ID/version/API range の不一致、コピーされた SDK/Runtime/Live2D class、native または installer payload、nested JAR、missing entrypoint、undeclared resource、undeclared i18n catalog も拒否されます。
 
-現在の plugin source から JAR を再ビルドしてください。アーカイブを手動で編集したり、inspection を無効にしたりしないでください。上記の理由はマネージド preflight の説明です。手動コピーはこれをスキップし、startup validation で強制される違反のみが Runtime の startup diagnostics に現れます。
+現在の plugin source から JAR を再ビルドしてください。アーカイブを手動で編集したり、inspection を無効にしたりしないでください。上記の理由はマネージド preflight の説明です。手動コピーはこれをスキップし、startup validation で強制される違反のみがランタイムの startup diagnostics に現れます。
 
 ## 操作が pending のままになる
 
@@ -38,7 +46,7 @@ descriptor の ID/version/API 不一致、コピーされた SDK/Runtime/Live2D 
 
 - Cubism が完全に終了し、再起動されたことを確認します。
 - 両方の起動で同じ `turboism.home` が使われていることを確認します。
-- Runtime state とログを確認します。
+- ランタイムの state とログを確認します。
 - Turboism の実行中に plugin、config、pending-state ファイルを編集しないでください。
 
 ## ホスト capability が利用できない
@@ -47,6 +55,16 @@ descriptor の ID/version/API 不一致、コピーされた SDK/Runtime/Live2D 
 
 正確な Cubism version、Cubism ファイルの識別情報、operation、diagnostic code を記録してください。リフレクションやホストへの直接アクセスで失敗を迂回しないでください。
 
+## インターフェース言語が想定と異なる
+
+- インストーラーの言語はインストーラーにのみ影響します。
+- ランタイムの言語はランタイムの `locale` 設定から決まります。明示的な `-Dturboism.locale` または `config.json` の locale はホストより優先されます。
+- それ以外の場合、プラグインのインターフェース言語は Cubism Editor の **ファイル → 環境設定 → 一般 → 言語**（File → Environment Settings → General → Language）に従います。
+
+## Cubism ランチャー連携の警告
+
+マネージドランチャー連携が競合を報告する場合、公式 BAT ファイルまたはそのバックアップがインストール後に編集されています。クリーンアップはハッシュが一致する管理対象ファイルのみを復元し、再試行のために state を保持します。バックアップしていないファイルを上書きして競合を解消しないでください。
+
 ## フィードバック
 
-[フィードバックと機能要望](./report-a-bug)から、Discord、GitHub、メールでバグを報告したり、フレームワークやプラグインの機能を提案したりできます。
+[フィードバックと機能要望](./report-a-bug)から、Discord、QQ、GitHub、メールでバグを報告したり、フレームワークやプラグインの機能を提案したりできます。

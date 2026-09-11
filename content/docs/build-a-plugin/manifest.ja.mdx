@@ -1,6 +1,6 @@
 ---
 title: プラグインマニフェストとパッケージング
-description: Manifest v2 の plugin JAR を定義し、リリース用ファイルとして配布する。
+description: schema version 2、3、4 の plugin descriptor を定義し、ビルドした JAR を配布する。
 ---
 
 すべての Turboism plugin JAR には、次の場所に descriptor が正確に 1 つあります。
@@ -9,18 +9,28 @@ description: Manifest v2 の plugin JAR を定義し、リリース用ファイ�
 META-INF/turboism/plugin.json
 ```
 
-Runtime が受け入れるのは schema version 2 だけです。Version 1 はロードも自動 upgrade もされません。
+descriptor は `"format": "turboism.plugin.meta"` と `schemaVersion` を宣言します。Runtime が受け入れる schema version は **2**、**3**、**4** で、対応する contract に対して厳格に検証し、descriptor を自動で upgrade することはありません。
 
-## 最小 manifest
+| バージョン | 契約 |
+| --- | --- |
+| 2 | 基本的な lifecycle、entrypoint、API range、dependency、permission、resource、localization。 |
+| 3 | 必須の `category` フィールドと任意の `tags` を追加します（first-party plugin が使用しているのは v3 です）。 |
+| 4 | 宣言された cross-plugin event contract（`eventExports` と `eventImports`）を追加します。 |
+
+schema version 1 はロードされません。未知のフィールドは無視されず、拒否されます。
+
+## Manifest の例
 
 ```json
 {
   "format": "turboism.plugin.meta",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "dev.example.plugin.hello",
   "name": "Hello Plugin",
   "version": "0.1.0",
   "description": "Minimal Turboism plugin lifecycle example.",
+  "category": "workflow",
+  "tags": ["example", "lifecycle"],
   "entrypoints": [
     "dev.example.plugin.HelloPlugin"
   ],
@@ -45,6 +55,8 @@ Runtime が受け入れるのは schema version 2 だけです。Version 1 は�
 }
 ```
 
+必須フィールドは `id`、`name`、`version`、`entrypoints`、`turboismApi`、`authors`、`website`、`resources`、`i18n` です。schema 3 ではさらに `category` が必須です。
+
 ## Entrypoint のルール
 
 各 entrypoint は次を満たさなければなりません。
@@ -63,6 +75,12 @@ disable/shutdown:       reverse manifest order
 
 construct、initialization、enablement の途中で failure が発生すると、JAR 全体が rollback されます。
 
+## Category と tags
+
+`category` は 2〜32 文字の小文字 kebab-case token でなければなりません。レビュー済みの first-party category は `modeling`、`workflow`、`appearance`、`analysis`、`performance`、`integration`、`system`、`development` です。形式が正しいものの登録されていない category もロードされ、`other` として提示され、構造化された `PLUGIN_CATEGORY_UNKNOWN` diagnostic を出力します。
+
+`tags` は任意で、2〜32 文字の小文字 kebab-case token を最大 12 個保持し、permission や capability を持ちません。
+
 ## Dependency
 
 ```json
@@ -78,7 +96,7 @@ construct、initialization、enablement の途中で failure が発生すると�
 - `type` は `required` または `optional` です。
 - `ordering` は `none`、`before`、または `after` です。
 - dependency ID は reverse-domain syntax を使います。
-- version range は現在の Turboism version-range grammar を使います。
+- version range は Turboism version-range grammar を使います。
 
 dependency record は resolution と ordering を制御します。別 plugin の private implementation package を public Java dependency にするものではありません。
 
@@ -104,7 +122,7 @@ Resource root は `/` で終わる正規化済みの相対 prefix です。
 "resources": ["icons/"],
 "i18n": {
   "baseName": "META-INF/turboism/i18n/messages",
-  "locales": ["base", "en", "zh_Hans"]
+  "locales": ["base", "en", "zh-Hans"]
 }
 ```
 
@@ -118,6 +136,36 @@ META-INF/turboism/i18n/messages_zh_Hans.properties
 ```
 
 宣言した root と catalog は存在しなければなりません。通常の class 以外の resource は、宣言された root に属していなければなりません。path traversal、absolute path、backslash、空の segment、undeclared resource は拒否されます。
+
+サポートされる runtime locale は `en`、`ja`、`ko`、`zh-Hans`、`zh-Hant` と、`base` bundle です。manifest の locale ID は scripted form（`zh-Hans`）を使用し、resource bundle のファイル名は Java の underscore form（`messages_zh_Hans.properties`）を使用します。
+
+## Cross-plugin event contract（schema 4）
+
+schema 4 では、plugin が所有および消費する public event type を宣言できるため、Runtime は ClassLoader delegation なしでそれらを解決できます。
+
+```json
+"eventExports": [
+  {
+    "id": "dev.example.event.hello",
+    "contractVersion": "1.0.0",
+    "eventType": "dev.example.api.HelloEvent",
+    "abiSha256": "<sha256 of the event type bytes>"
+  }
+],
+"eventImports": [
+  {
+    "provider": "dev.example.plugin.base",
+    "eventId": "dev.example.event.base-status",
+    "contractVersion": "1.0.0",
+    "eventType": "dev.example.api.BaseStatusEvent",
+    "abiSha256": "<sha256 of the event type bytes>"
+  }
+]
+```
+
+import は `"required": true` を持つこともでき、その provider contract が認定されることを要求します。Runtime はすべての entry について宣言された ABI digest を検証し、plugin 内で重複する export ID や event type を拒否し、認定された provider contract に解決しない import を拒否します。
+
+Plugin ID は、少なくとも 1 つのドットを含む reverse-domain syntax を使用します（`dev.example.plugin.hello`）。event ID は小文字の dot/dash token 形式を使用します。
 
 ## build と検証
 
@@ -134,11 +182,13 @@ repository は Java 17 を使用し、module のビルド結果を次の下に�
 build/worktree/<worktreeId>/<module>/libs/
 ```
 
+`libs/` にある JAR がリリース用ファイルです。wrapper archive も別個の packaging step もありません。
+
 ## 厳格な JAR 検証
 
 JAR 自体がインストール成果物です。Runtime は選択された JAR を信頼できないローカル入力として扱い、次を検証します。
 
-- 通常ファイルで、source chain にシンボリックリンクがなく、16 MiB 上限。
+- 通常ファイルで、source chain にシンボリックリンクがなく、raw size、entry ごとの size、総展開量、entry 数、圧縮率の上限の範囲内である。
 - `META-INF/turboism/plugin.json` が正確に 1 つ。
 - descriptor の ID、version、API range の整合性。
 - コピーされた SDK、Runtime、test、test-framework、Live2D class がない。

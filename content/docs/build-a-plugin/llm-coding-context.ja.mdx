@@ -15,11 +15,11 @@ Turboism の開発を LLM に依頼する場合も、コードの品質、検証
 
 ### 実環境でテストする
 
-- 自分で作成または採用したコードを実環境でテストしてください。プラグイン、ランタイム、ホスト連携に関わる変更は、使用許可があり、対象バージョンと一致する実際の環境で検証する必要があります。シミュレーション、コンパイル成功、LLM の判断だけでは不十分です。
+- 自分で作成または採用したコードを実環境でテストしてください。プラグイン、ランタイム、ホスト連携に関わる変更は、使用許可があり、対象バージョン（Windows x64 上の Cubism Editor 5.2.03、5.3.02、または 5.3.03）と一致する実際の環境で検証する必要があります。シミュレーション、コンパイル成功、LLM の判断だけでは不十分です。
 - 専用のテストデータを使用し、読み込み、主要な動作、失敗時の処理、クリーンアップの結果を確認してください。許可なくユーザーデータをテストに使用してはいけません。
 - テスト環境、関連バージョン、手順、実際の結果を記録してください。実環境でのテストが完了していない場合は、その事実を明記し、利用可能であると主張してはいけません。
 
-````markdown title="完全な LLM 開発コンテキスト"
+````markdown title="完全な LLM 開発コンテキスト" lines="59"
 # Turboism 開発コンテキスト
 
 ## 役割と範囲
@@ -34,7 +34,7 @@ Turboism には異なる 3 つの extension path があります。
 
 1. **Java plugin** は、Java SDK lifecycle、manifest、permission、service を持つプロセス内 plugin です。
 2. **GraalJS script** は制限付き script です。Java plugin が `PluginContext.scripts()` で検出し、`ScriptService.run` で明示的に実行します。検出だけで script が実行されることはありません。
-3. **MCP** は first-party Preview plugin であり、信頼できる local external client に認証済み loopback Streamable HTTP を提供します。
+3. **MCP** はバンドルされた first-party plugin であり、信頼できる local external client に認証済み loopback Streamable HTTP を提供します。
 
 ACP は fx とともに内部でのみ使用され、第 4 の extension path ではありません。codebase は Java 17 を対象にしています。Java、GraalJS、MCP、ACP の境界を維持してください。近くにある capability が便利に見えるという理由だけで、ある path を別の path の代わりに使わないでください。
 
@@ -74,7 +74,7 @@ command、task、module、または contract が存在しない場合は、代�
 
 - content を重複させないでください。
 - political propaganda、pornographic content、または hate、harassment、unlawful、privacy-invading な material を含む、project community に適さない sensitive content を設計または提出しないでください。
-- English、中国語、日本語の documentation の意味を一致させてください。検証なしに release status、download、compatibility、installation step、API signature、availability を主張しないでください。
+- English、中国語、日本語、韓国語の documentation の意味を一致させてください。検証なしに release status、download、compatibility、installation step、API signature、availability を主張しないでください。
 
 ## 作業指示
 

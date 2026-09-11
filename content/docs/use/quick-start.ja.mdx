@@ -1,53 +1,76 @@
 ---
 title: クイックスタート
-description: インストーラーパッケージから Turboism をインストールし、設定して、初回起動を確認する。
+description: 公開された Turboism パッケージをインストールし、設定して、初回起動を確認する。
 ---
 
-このクイックスタートは、[インストール](./installation) で説明しているインストーラーパッケージから始めます。必要なのは、インストーラーパッケージとインストール済みの Cubism だけです。
+このクイックスタートは、[インストール](./installation) で説明している公開リリースパッケージから始めます。必要なのは、パッケージと、適法にライセンスされた Cubism Editor がインストールされていることです。
 
 ## 1. 安全に準備する
 
-- Windows は、現在検証済みの Cubism ホスト起動経路です。
-- インストーラー JAR 自体は Windows と macOS で動作し、Java 17+ ランタイムが必要です。
+- Windows x64 が対応する Cubism ホストプラットフォームです。対応する Editor バージョンは 5.2.03、5.3.02、5.3.03 です。
+- `.jar` インストーラーには Java 17+ ランタイムが必要です。
 - 開く project を backup するか、使い捨ての copy を使用します。
 - Turboism home を Cubism installation から分離しておきます。
 - Cubism JAR、DLL、BAT file、licensing state を編集しないでください。
 
-## 2. Windows `.exe` インストーラーでインストールして起動する
+## 2. ダウンロードと検証
+
+1. [turboism.dev/download](https://turboism.dev/download) を開き、**Stable**、**Beta**、**Nightly** のいずれかのチャンネルを選びます。
+2. パッケージを 1 つと、対応する `.sha256` ファイルをダウンロードします。
+3. ファイルのハッシュを検証します。たとえば PowerShell では:
+
+   ```powershell
+   Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
+   ```
+
+インストーラーは署名されていないため、チェックサムが自分で実行できる完全性の確認手段です。
+
+## 3. インストール
+
+### Windows `.exe` インストーラー
 
 1. `TurboismInstaller-<version>.exe` を実行します。
-2. インストールディレクトリ（既定では `%LOCALAPPDATA%\Turboism`）と Lite または Full モードを選択します。Full モードでは個々のプラグインの選択を解除できます。
-3. インストーラーが `configure_turboism.ps1` を開いたら、使用する Cubism ルートを選択して保存します。Turboism はそれらを `config.json` とは別に記録し、選択した各ルートに管理起動エントリを 1 つ作成します。設定をキャンセルしても安全で、フレームワークのみの有効なインストールが残ります。
-4. 選択した Cubism ルートの管理ランチャーで Turboism を起動します（`launch-cubism-turboism.bat`）。
-5. Cubism と Turboism の診断情報が初期化されるまで待ちます。
+2. インストーラーの言語（英語、簡体字中国語、日本語、韓国語）を選択します。
+3. ライセンスを読み、4 つの必須の確認事項すべてを承諾します。
+4. **Full** または **Lite** を選択し、インストールディレクトリ（既定では `%LOCALAPPDATA%\Turboism`）を選びます。Full モードでは個々のプラグインの選択を解除できます。
+5. オプションのマネージド GraalVM コンポーネントをダウンロードするかどうかを決めます。
+6. インストーラーが `configure_turboism.ps1` を開いたら、使用する Cubism インストールを選択して保存します。設定をキャンセルしても、フレームワークのみの有効なインストールが残ります。
+7. Cubism ルートの管理ランチャー（`launch-cubism-turboism.bat`）で Cubism を起動します。
 
-## 3. クロスプラットフォーム `.jar` インストーラーでインストールする（Windows/macOS）
+### クロスプラットフォーム `.jar` インストーラー
 
-1. `TurboismInstaller-<version>.jar` を実行します：
+1. インストーラーを実行します:
 
-```bash
-java -jar TurboismInstaller-<version>.jar
-```
+   ```bash
+   java -jar TurboismInstaller-<version>.jar
+   ```
 
-2. Lite または Full モードと対象ディレクトリを選択します。Full モードは first-party plugin をインストールし、個々のプラグインの選択を解除できます。
-3. Windows では、インストーラーが完了したら `configure_turboism.ps1` を実行し、使用する Cubism ルートを選択して保存します。Turboism はそれらを `config.json` とは別に記録し、選択した各ルートに管理起動エントリを 1 つ作成します。その後、選択したルートの管理ランチャーで起動します。macOS では、このインストーラーはインストールとアンインストールのみを対象とします。macOS Cubism ホストの起動は未検証で、macOS Cubism ランチャーもインストールされないため、macOS で Cubism 内から Turboism を起動する検証済みの方法はまだありません。
+   `-language eng|chn|jpn|kor` を渡すと、インストーラーの言語を事前選択できます。
+2. 宣言を完了し、**Full**、**Thin**、**Lite** のいずれかと対象ディレクトリを選択します。
+3. Windows では、インストール済みの `configure_turboism.ps1` を実行し、Cubism インストールを選択して、管理ランチャーで起動します。macOS では、このインストーラーはインストールとアンインストールのみを対象とします。macOS の Cubism ホスト対応は未検証で、macOS ランチャーもインストールされません。
+
+### ポータブル ZIP
+
+1. アーカイブ全体を専用のフォルダに展開します。
+2. そのフォルダで `configure_turboism.ps1` を実行し、Cubism インストールを選択します。
+3. 生成されたショートカット、または `launch-cubism-turboism.bat` から Cubism を起動します。
+
+インストーラーの言語はインストーラーにのみ影響します。Turboism が実行時に使用する言語はランタイムの `locale` 設定から決まり、プラグインのインターフェース言語は Cubism Editor の **ファイル → 環境設定 → 一般 → 言語**（File → Environment Settings → General → Language）に従います。
 
 ## 4. 初回起動を確認する
-
-以下のチェックリストは、検証済みの Cubism ホスト起動経路である Windows を対象としています。
 
 次を確認してください。
 
 - Cubism が通常どおり起動する。
 - Turboism ランタイムが起動を報告する。
-- Runtime が意図した Turboism home を使用する。
-- インストール済みの plugin が plugin/runtime diagnostics に表示される。
+- ランタイムが意図した Turboism home を使用する。
+- インストール済みの plugin がプラグインマネージャーと runtime diagnostics に表示される。
 - 利用できない host capability が Cubism をクラッシュさせず fail closed する。
 - Cubism を閉じると plugin scope と framework 所有の executor が解放される。
 
 ## 5. プラグインを追加する
 
-[プラグイン管理](./plugin-management) を使ってローカルプラグイン JAR をインストールします。
+Full の選択では、レビュー済みのファーストパーティプラグインバンドルが既にインストールされています。ローカルプラグイン JAR を追加するには:
 
 1. Turboism を開き、**プラグイン管理**（Plugin Management）を選択します。
 2. **JAR からインストール…**（Install from JAR…）を選択します。
@@ -59,15 +82,15 @@ java -jar TurboismInstaller-<version>.jar
 
 ### 手動インストール（代替）
 
-上級/フォールバック経路として、プラグイン JAR を手動でインストールすることもできます（例：ローカルで build した JAR のテスト）。plugin JAR は plugin source から build した JAR であり、Turboism installer JAR（`TurboismInstaller-<version>.jar`）とは別物です。
+上級のフォールバック経路として（例：ローカルで build した JAR のテスト）、プラグイン JAR を直接配置できます:
 
 1. Cubism と Turboism を完全に閉じます。
 2. 信頼できる plugin JAR を `<turboism.home>/plugins/` の直下に直接コピーします。
-3. plugin ID ごとに JAR を最大 1 つにします——同じ ID の古い JAR が残っていないことを確認します。
+3. plugin ID ごとに JAR を最大 1 つにします。
 4. 同じ Turboism home で再起動します。
-5. plugin state と Runtime logs を確認します。
+5. plugin state と runtime logs を確認します。
 
-手動インストールはマネージドの保護を迂回します。保護の詳細と更新/アンインストールの詳細については [プラグイン管理](./plugin-management) を参照してください。
+手動インストールはマネージドの保護を迂回します。手順の全体は [プラグイン管理](./plugin-management) を参照してください。
 
 ## 6. ログを見つける
 
@@ -76,6 +99,7 @@ java -jar TurboismInstaller-<version>.jar
 ## 次のステップ
 
 - [プラグイン管理](./plugin-management)
+- [ファーストパーティプラグイン](./first-party-plugins)
 - [トラブルシューティング](../troubleshooting)
 - [開発状況](../development-status)
 - [プラグインを作る](../build-a-plugin/quick-start)
