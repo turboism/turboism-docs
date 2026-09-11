@@ -163,7 +163,7 @@ schema 4 では、plugin が所有および消費する public event type を宣
 ]
 ```
 
-import は `"required": true` を持つこともでき、その provider contract が認定されることを要求します。Runtime はすべての entry について宣言された ABI digest を検証し、plugin 内で重複する export ID や event type を拒否し、認定された provider contract に解決しない import を拒否します。
+`eventImports` の entry は `"required": true` を持つこともでき、その provider contract が認定されることを要求します。Runtime はすべての entry について宣言された ABI digest を検証し、plugin 内で重複する export ID や event type を拒否し、認定された provider contract に解決しない import を拒否します。
 
 Plugin ID は、少なくとも 1 つのドットを含む reverse-domain syntax を使用します（`dev.example.plugin.hello`）。event ID は小文字の dot/dash token 形式を使用します。
 

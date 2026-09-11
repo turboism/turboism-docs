@@ -163,7 +163,7 @@ Schema 4 lets a plugin declare the public event types it owns and consumes, so R
 ]
 ```
 
-An import may also carry `"required": true` to demand that its provider contract be admitted. Runtime validates the declared ABI digest for every entry, rejects duplicate export IDs or event types within a plugin, and refuses imports that do not resolve to an admitted provider contract.
+An `eventImports` entry may also carry `"required": true` to demand that its provider contract be admitted. Runtime validates the declared ABI digest for every entry, rejects duplicate export IDs or event types within a plugin, and refuses imports that do not resolve to an admitted provider contract.
 
 Plugin IDs use reverse-domain syntax with at least one dot (`dev.example.plugin.hello`); event IDs use a lowercase dot/dash token form.
 

@@ -256,6 +256,12 @@ permission は operation validation を迂回せず、欠けている Provider �
 
 schema 4 を使用する plugin descriptor は、自身が export および import する public event type を宣言できます。それぞれは contract version と event type の ABI digest に結び付きます。Runtime はそれらの contract を ClassLoader delegation なしで解決し、duplicate export を拒否し、provider contract が認定されていない import を拒否します。event contract を宣言しても host への write 権限は付与されず、plugin が所有する event type を他の plugin から利用できるようになるだけです。詳細は[プラグインマニフェストとパッケージング](../build-a-plugin/manifest)を参照してください。
 
+## 非契約の公開型
+
+いくつかのクラスは、共有された内部ヘルパーが必要とするために public な SDK クラスとしてコンパイルされていますが、そのクラス自身のドキュメントは、安定プラグイン API 面に属さないと明記しています。現在の例は `dev.turboism.sdk.cubism.ActiveReadProjections` です。
+
+これらの型を呼び出さず、そのシグネチャを互換性の約束として扱わないでください。生成されたリファレンスに掲載されているのは、それらがリリース済みバイトコードに存在するためであり、理由は [生成された API リファレンス](./generated-api) に記載しています。
+
 ## バージョンと準備状況に関する注意
 
 - Parameter authoring write には検証済みの Cubism 5.3.02 path がありますが、caller は引き続き unavailable と stale target を処理しなければなりません。
