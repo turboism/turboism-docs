@@ -13,3 +13,8 @@ next-env.d.ts
 # tooling artifacts
 /.omo
 /.research-artifacts
+
+# generated SDK reference styling
+public/api/sdk/turboism-brand.css
+public/api/sdk/turboism-fonts.css
+public/api/sdk/turboism-nav.js
