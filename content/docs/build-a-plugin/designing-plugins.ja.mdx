@@ -92,9 +92,10 @@ host-version に関する主張には、プロジェクトのより高リスク�
 
 - [ ] plugin に明確な目的が 1 つある。
 - [ ] production code が SDK のみに依存している。
-- [ ] Manifest v2 が正確な entrypoint、resource、dependency、minimum permission を宣言している。
+- [ ] plugin descriptor が対応する schema version、正確な entrypoint、resource、dependency、minimum permission を宣言している。
 - [ ] registration と handle が closeable で scope 管理されている。
 - [ ] 利用できない Provider が有用な診断情報とともに fail closed する。
+- [ ] plugin が宣言するすべての locale に対応するローカライズ済み catalog が存在する。
 - [ ] configuration、storage、user file が正しい service を使っている。
 - [ ] 管理されていない thread、executor、timer、host object、reflection bridge が存在しない。
 - [ ] write が Editor の所有権と Undo semantics を維持している。

@@ -1,17 +1,33 @@
 ---
 title: アーキテクチャ
-description: Plugin と Cubism の間で Turboism が担う役割の概念マップ。
+description: Plugin と Live2D Cubism Editor の間で Turboism が担う役割。
 ---
 
-Turboism は、Live2D Cubism Editor の内部実装と extension code の間にある adaptation layer として構想されています。
+Turboism は、Live2D Cubism Editor の内部実装と extension code の間にある adaptation layer です。host implementation detail に直接依存することなく、plugin author に安定した integration surface を提供します。
 
-その目的は、host implementation detail に直接依存せずに、plugin author に高レベルな integration surface を提供することです。
+## 依存の方向
 
-## 概念上のレイヤー
+```text
+Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
+```
 
-1. Host application としての Live2D Cubism Editor。
-2. Host 固有の symbol と version 差分への adaptation work。
-3. Turboism framework service と extension boundary。
-4. それらの boundary 上に構築される official および third-party plugin。
+- **Plugins** はユーザーのワークフローを記述し、SDK にのみ依存します。
+- **SDK** は Turboism が所有する型、service、lifecycle contract を公開します。
+- **Runtime** は host へのアクセス、lifecycle、permission、thread、transaction、diagnostic、compatibility、version routing を担います。
+- **Adapter/Provider** 層は、host 固有の symbol を Cubism Editor の正確なバージョンごとに分離します。
+- **Cubism/Editor** は host application であり、別途インストールしてライセンスされます。
 
-Layer 名は意図された architecture を説明するものであり、名前が挙げられた class、service、feature が released SDK で利用できることを約束するものではありません。
+## ここから導かれる設計ルール
+
+- public SDK の階層は 1 つです。plugin が `com.live2d.*` の型、host widget、native handle、host ClassLoader、runtime implementation type を目にすることはありません。
+- 実行を所有するのは Runtime です。plugin は管理されていない thread、executor、timer を作成せず、bytecode transformer も登録しません。
+- 書き込みは Editor が所有する operation であり、validation、Undo、dirty-state の処理、stale reference の拒否を伴います。
+- capability は fail closed で失敗します。利用できない Provider、検証されていない host version、stale な object reference は、フォールバック経路ではなく型付きの失敗を返します。
+- 検証はコストとリスクに応じて階層化されます。focused test から、パッケージ化された integration、リリースゲート、明示的な正確バージョンの host validation まで段階があります。
+
+## 次に読むもの
+
+- [マッピング層](./mapping-layer) — host 固有の知識をどのように分離するか。
+- [自動化](./automation) — extension と automation の経路。
+- [開発状況](../development-status) — 現在実装されている内容。
+- [SDK API ガイド](../reference/sdk-api) — 現在の plugin 向けサーフェス。

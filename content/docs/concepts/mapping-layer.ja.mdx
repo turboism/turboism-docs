@@ -1,8 +1,27 @@
 ---
 title: マッピング層
-description: ホスト連携に明示的な境界が必要な理由。
+description: ホスト連携に明示的な境界が必要な理由と、Turboism がそれを分離する方法。
 ---
 
-Host application は、version の違いによって symbol と implementation detail が変わることがあります。Mapping layer は、host 固有の知識を extension experience から分離できる概念上の boundary です。
+Host application は、version の違いによって symbol と implementation detail が変わります。Mapping layer は、host 固有の知識を plugin experience から分離しておくための boundary です。
 
-Plugin developer は、Cubism internals に対する独自の reflection を実装するのではなく、公開された extension point を対象にできるべきです。
+## なぜ存在するのか
+
+Cubism Editor の internals は public API ではありません。class 名、method signature、field のレイアウト、評価の挙動はバージョン間で異なり、あるビルドに存在する symbol が、別のビルドでは存在しない、名前が変わっている、あるいは異なる動作をすることがあります。
+
+明示的な boundary がなければ、すべての plugin が reflection、version チェック、host object の仮定によってこの問題を自ら解決しなければなりません。plugin のコードは host とまったく同じように壊れやすくなり、Turboism は未サポートの組み合わせで fail closed できなくなります。
+
+## Turboism が分離する方法
+
+- plugin は公開された SDK の型を対象とし、`com.live2d.*` クラスを読み込みません。
+- Runtime は、検出した host build に対して正確なバージョンの adapter と Provider を選択します。
+- Cubism Editor 5.2.03、5.3.02、5.3.03 が認定された正確なバージョンです。一覧にないバージョンが黙って互換として扱われることはありません。
+- host member の選択は記録され、レビュー済みの evidence として固定されます。固定された identity と一致しない build は、推測せずに失敗します。
+- 公開された Cubism の値は、plugin code に届く前に、Turboism が所有する immutable な型へコピーされます。
+- model object と reference は generation に紐付き、project の close、document の切り替え、model の reload、object の削除、plugin の無効化、Provider の置換、未サポートの version 遷移の後に無効になります。
+
+## plugin author にとっての意味
+
+利用できない状態に対処する必要があることに変わりはありませんが、対処する場所は 1 つの予測可能な場所、つまり型付きの「unsupported」または「unavailable」の結果です。独自の reflection layer は必要なく、書くべきでもありません。host に直接到達する plugin は、mapping、permission model、および失敗を理解可能にする diagnostic を迂回してしまいます。
+
+object API と capability model については [SDK API ガイド](../reference/sdk-api)を、現在認定されているバージョンについては[開発状況](../development-status)を参照してください。

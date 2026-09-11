@@ -1,17 +1,26 @@
 ---
 title: ダウングレードと復旧
-description: 以前の version への downgrade を仮定しない候補復旧ガイド。
+description: 更新、プラグインの置換、設定変更に失敗した場合に復旧する。
 ---
 
-これは公開待ちの候補ガイドです。Turboism は現在、以前の version への downgrade をサポートしているとは記載していません。保持しているインストーラーや plugin JAR があっても、以前の version を安全に復元できる証拠として扱わないでください。
+Turboism は、以前の version へのサポートされた downgrade 経路を記載していません。保持しているインストーラーや plugin JAR は、以前の version を安全に復元できる証拠にはなりません。framework、plugin state、configuration schema は一緒に前へ進むためです。
 
 ## 失敗した変更から復旧する
 
 1. 失敗した更新、置換、または設定変更を止めて評価します。
 2. 追加の変更を行う前に、重要な設定、データ、plugin JAR を保存します。
-3. 同じ Preview build とともに提供された復旧情報があれば使用します。
-4. 付属の案内が許可する場合にのみ、既知の正常な設定または plugin 選択を再適用します。
+3. 失敗した build のインストーラーパッケージとログを保持します。原因を特定するために必要な診断情報が含まれています。
+4. 検証できる場合にのみ、既知の正常な設定または plugin 選択を再適用します。
 5. 問題が続く場合は[トラブルシューティング](../troubleshooting)を使用し、private material を公開せずに目に見える動作を記録します。
+
+## 失敗した framework 更新の復旧
+
+1. Cubism と Turboism を完全に終了します。
+2. 更新前に使用していた version のインストーラーパッケージを、同じ Turboism home を対象に再実行します。
+3. 起動と plugin の検出を確認し、`config.json` に設定が残っていることを確認します。
+4. 以前のパッケージが入手できない場合は、検証されていない回避策を試す前に、version、channel、ログを添えて失敗を報告してください。
+
+インストール済みの JAR を編集したり、`config.json` を手作業で修正したり、実行中のインストールにファイルを復元したりしないでください。
 
 ## Plugin の置換
 
@@ -19,4 +28,8 @@ staged plugin replacement が失敗すると、直前の plugin file が内部�
 
 ## 更新前に計画する
 
-build を変更する前に[更新ポリシー](./update-policy)を読み、候補 Managed Runtime の選択肢は[インストーラーモード](./installer-modes)で確認してください。公開リリース、deployment、自動復旧、完全な rollback interface は保留中です。
+- build または channel を変更する前に[更新ポリシー](./update-policy)を読んでください。
+- Full、Thin、Lite の選択肢は[インストーラーモード](./installer-modes)で確認してください。
+- プロジェクトのほか、`config.json` と plugin の `config/` および `data/` の内容を、独立したバックアップとして保持してください。
+
+自動復旧と完全な rollback interface は利用できません。

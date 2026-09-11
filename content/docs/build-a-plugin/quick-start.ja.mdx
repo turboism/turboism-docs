@@ -1,9 +1,9 @@
 ---
 title: 開発者向けクイックスタート
-description: 現在の Preview SDK に対して、最小の Java 17 Turboism plugin を build する。
+description: public SDK に対して最小の Java 17 Turboism plugin を build する。
 ---
 
-現在の source-backed development path は、Turboism repository に plugin module を追加することです。standalone starter template と Stable Maven coordinates はまだ公開されていません。
+現在の source-backed development path は、Turboism repository に plugin module を追加することです。standalone starter template と公開された Maven coordinates はまだ利用できません。
 
 ## 1. module を作成する
 
@@ -75,18 +75,20 @@ public final class HelloPlugin implements TurboismPlugin {
 
 class は public で、`TurboismPlugin` または subinterface を実装し、public no-argument constructor を公開しなければなりません。
 
-## 4. manifest v2 を追加する
+## 4. plugin descriptor を追加する
 
 `src/main/resources/META-INF/turboism/plugin.json` を作成します。
 
 ```json
 {
   "format": "turboism.plugin.meta",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "dev.example.plugin.hello",
   "name": "Hello Plugin",
   "version": "0.1.0",
   "description": "Minimal Turboism plugin lifecycle example.",
+  "category": "workflow",
+  "tags": ["example"],
   "entrypoints": [
     "dev.example.plugin.HelloPlugin"
   ],
@@ -111,7 +113,7 @@ class は public で、`TurboismPlugin` または subinterface を実装し、pu
 }
 ```
 
-permission、resource、localization、dependency、複数の entrypoint を追加する前に、[プラグインマニフェストとパッケージング](./manifest) を読んでください。
+Schema 3 では必須の `category` フィールドが追加されます。permission、resource、localization、dependency、複数の entrypoint、または schema 4 の cross-plugin event contract を追加する前に、[プラグインマニフェストとパッケージング](./manifest) を読んでください。
 
 ## 5. build と検証を行う
 
@@ -128,7 +130,9 @@ build/worktree/<worktreeId>/hello/libs/
 
 `libs/` の JAR がプラグインのリリース成果物です。配布時は変更しないでください。
 
-この lifecycle-only example には constructor-only test で十分です。plugin が action、UI、event、configuration、task を登録するようになったら、recording/fake `PluginContext` を使って registration、failure handling、disable/shutdown behavior、scope cleanup を検証してください。
+この lifecycle-only example には constructor-only test で十分です。
+
+plugin が action、UI、event、configuration、task を登録するようになったら、recording/fake `PluginContext` を使って registration、failure handling、disable/shutdown behavior、scope cleanup を検証してください。
 
 ## 6. JAR を配布する
 

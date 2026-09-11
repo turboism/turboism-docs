@@ -1,11 +1,11 @@
 ---
 title: 開発状況
-description: 現在の Turboism コードベースが実装しているもの、Preview として残っているもの、まだ製品上の約束ではないもの。
+description: 現在の Turboism コードベースが実装しているもの、バージョン制限付きで残っているもの、まだ製品上の約束ではないもの。
 ---
 
 Turboism は、Live2D Cubism Editor 向けの Java 17 ランタイム拡張ツールおよびプラグインフレームワークです。開発は、廃止された M1–M16 移行シーケンスではなく、利用可能なフレームワークと製品機能を中心に進められています。
 
-このページは現在の開発ブランチをソースに基づいて切り取ったスナップショットです。リリース告知ではありません。
+このページは現在の開発ブランチをソースに基づいて切り取ったスナップショットです。リリース告知ではありません。公開されているバージョンは[リリースフィード](./update-policy)を参照してください。
 
 ## 現在のアーキテクチャ
 
@@ -15,33 +15,57 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 
 プラグインが依存するのは Turboism SDK だけです。ホストへのアクセス、ライフサイクル、安全性、スレッド、トランザクション、診断、互換性、バージョンルーティングは Runtime が担います。
 
-## 実装済みのフレームワーク基盤
+## 対応するホストバージョン
+
+- Windows x64 が対応する Cubism ホストプラットフォームです。
+- Cubism Editor **5.2.03**、**5.3.02**、**5.3.03** は、バージョンごとにルーティングされる adapter と Provider を備えた、認定済みの正確なバージョンです。
+- 一覧にない Editor バージョンは互換性があるとは主張されず、未サポートまたは未検証の capability は fail closed で失敗します。
+- macOS のパッケージングはプレビューのみで検証済みのホスト対応はありません。Linux はインストーラーと payload の挙動に限られます。
+
+## リリースと配布
+
+- 1 つの製品アイデンティティに 3 つのチャンネル（`stable`、`beta`、`nightly`）があります。各チャンネルは同じ 4 つのパッケージ形式を生成します。
+- 製品リリースは、読み取り専用の candidate build と、明示的に保護された GitHub の promotion ステップに分かれます。失敗した candidate は意図した version を再利用し、promotion だけが annotated tag を作成し、再ビルドせずに検証済みのバイトを公開します。
+- すべての build は、version、channel、build number、source revision、dirty flag というグローバルな build identity を埋め込みます（`FrameworkBuildInfo`）。
+- `api.turboism.dev` の release API は、asset ごとの SHA-256 と checksum file を伴ってすべての channel をミラーし、公式ミラーと GitHub の source を解決し、release ごとの download request を報告します。
+- レビュー済みの release notes は、英語をフォールバックとして簡体字中国語と日本語の翻訳を伴います。digest が正確な英語セクションと一致しなくなった翻訳は、再利用せずに拒否されます。
+- インストーラーは英語、簡体字中国語、日本語、韓国語で提供されます。インストーラーの言語はインストーラーに限定され、ランタイムの言語はランタイムの `locale` 設定から決まり、プラグインのインターフェース言語は Cubism の Environment Settings の言語に従います。
+
+## フレームワーク基盤
 
 - Java Agent bootstrap、Runtime、SDK、first-party plugin、test-framework、integration-test モジュール。
+- plugin メタデータスキーマバージョン **2**、**3**（必須の `category` と上限付きの `tags` を追加）、**4**（宣言された event import と export を追加）。バージョンごとに厳格に検証されます。
 - ローカルプラグイン JAR の検出、マニフェストと API 範囲の検証、依存関係の解決、プラグインごとの ClassLoader、ライフサイクル実行、逆順シャットダウン、scope/ClassLoader のクリーンアップ。
-- 順序付き複数エントリポイントと JAR 全体の起動ロールバックを備えたプラグインマニフェスト v2。
+- JAR ごとの順序付き複数エントリポイントと、JAR 全体の起動ロールバック。
 - ロギング、パス、ローカライズ、タスク、設定、ストレージ、ユーザーファイル、イベント、アクション、UI 貢献、Cubism アクセス、診断のための `PluginContext` サービス。
-- ローカル JAR の install、replacement、enable、disable、uninstall を行う Preview マネージド管理。変更は journal にステージングされ、Cubism の再起動後に適用されます。core plugin は保護されます。
+- ローカル JAR の install、replacement、enable、disable、uninstall のマネージド管理。変更は journal にステージングされ、Cubism の再起動後に適用されます。core plugin は無効化もアンインストールもできません。
 - startup preflight は適用前にステージング済み payload の identity（SHA-256、size、descriptor hash）を再検証し、private backup/restore が失敗した置換適用を保護します。
+- フレームワークのメッセージカタログは、first-party plugin と同じ locale matrix に従います。カタログが欠けている場合は、黙って英語に縮退するのではなく build gate で失敗します。
 
 ## インストーラーと配布
 
-実装済みのインストーラーは 2 つあり、同じステージング済み payload と Lite/Full モデルを共有しています。
+3 つのパッケージング経路が、1 つのステージング済み payload と Full/Thin/Lite プラグインモデルを共有しています。
 
-- Windows ネイティブの NSIS インストーラー（`TurboismInstaller-<version>.exe`）。Windows ではこちらを優先します。
-- Java 17 の IzPack インストーラー（`TurboismInstaller-<version>.jar`）。Windows/macOS のインストールセマンティクス向けに実装されています。
+- Windows ネイティブの NSIS インストーラー（`TurboismInstaller-<version>.exe`）。Full と Lite、およびオプションのマネージド GraalVM コンポーネントを提供します。
+- Java 17 の IzPack インストーラー（`TurboismInstaller-<version>.jar`）。Full、Thin、Lite を提供し、Windows、macOS、Linux にインストールできます。
+- ポータブルな `turboism-<version>-full.zip` と `turboism-<version>-lite.zip` アーカイブ。
 
-Windows EXE は、ユーザー単位のインストール、Lite/Full と first-party plugin の選択、スタートメニュー項目、アンインストールをカバーします。インストーラー JAR は Windows と macOS で同じ Lite/Full 選択を提供し、プラットフォームのアンインストールサポートを生成します。どちらも Cubism のインストールファイルを変更しません。これらの実装は、release または preview チャネル向けにインストーラーパッケージを生成しますが、署名・ノータリゼーション済みの公開チャネルはまだ存在しません。
+どちらのインストーラーも、4 つの必須の確認事項と、完全なローカライズ済みランタイム宣言をインストールの前提条件とします。どちらも Cubism のインストールファイルを変更しません。`config.json` は更新の所有権を明示しています。既存の有効なドキュメントでは、インストーラーは管理対象のプラグイン選択だけを変更し、認識された legacy schema は payload を変更する前に移行して検証されます。Windows の設定ツールは、正確にサポート対象の Cubism インストールのみを一覧に表示し、Turboism が所有するショートカットを、オプションでハッシュで保護された公式 BAT 連携とは分離して保ちます。
 
 ## Cubism と Editor API の進捗
 
-- 統合された Preview オブジェクトグラフが Canvas、Parameters、Parameter Groups、Parts、Drawables、Deformers、Glue、パラメータバインディングをカバーします。
-- Cubism 5.2 と 5.3.02 の Core-backed read は、不変のコピー済みデータ、バージョン正規化、generation に束縛された stale-reference 拒否、digest-pinned resolver evidence を使用します。
-- Cubism 5.3.02 のパラメータ編集経路は、`Parameter.setValue` を Editor 操作、権限チェック、Undo、dirty-state 処理、refresh、stale-target 拒否に接続します。
-- Part display-name の書き込みには 5.2.03 と 5.3.02 で実ホストの証拠があります。
-- Part opacity の編集書き込みには 5.3.02 で証拠があります。観測された evaluation setter がネイティブ Part Undo に参加しなかったため、5.2.03 では意図的に利用できません。
+- 統合されたオブジェクトグラフが Canvas、Parameters、Parameter Groups、Parts、Drawables、Deformers、Warp および Rotation Deformers、Glue、パラメータバインディング、texture atlas をカバーします。
+- Core-backed read は、不変のコピー済みデータ、バージョン正規化、generation に束縛された stale-reference 拒否、digest-pinned resolver evidence を使用します。
+- パラメータ編集経路は、`Parameter.setValue` を Editor 操作、権限チェック、Undo、dirty-state 処理、refresh、stale-target 拒否に接続します。
+- Part display-name の書き込みには 5.2.03 と 5.3.02 で実ホストの証拠があります。Part opacity の編集書き込みには 5.3.02 で証拠があり、観測された evaluation setter がネイティブ Part Undo に参加しなかったため、5.2.03 では意図的に利用できません。
+- Cubism 5.3.03 は、独自の認定済み texture-atlas authoring provider、selector contract、layout provider に加え、physics、performance metrics、project lifecycle、model statistics、startup suppression 用の exact-version profile を持ちます。
 - Parameter lifecycle hook は、順序付き同期 `before` 書き換え、変更時のみの `on`、正常完了時の `after`、再帰拒否、上限付き観測処理、アンロード時のクリーンアップをサポートします。
-- first-party Parameter CSV workflow は現在、統合された `CubismModel` と `Parameter` API を使用します。
+- 履歴は不変の意味的詳細を投影するようになりました。`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`、および target、coordinate、grouping の上限付き検証です。これらの値はホストへの書き込み権限を与えません。
+- 現在のページの texture-atlas layout contract は、レビュー済みの SDK compatibility baseline（v8）として固定され、保持された constructor の linkage gate を持ちます。
+
+## ファーストパーティプラグイン
+
+レビュー済みバンドルには 17 個のプラグインが含まれます。texture-atlas パッキング、mesh の mirror 軸編集、parameter 一括転送、physics 編集、パレットタブフィルター、PSD クリップマスク取り込み、履歴パネル、最近のプレビューサムネイル、WebDAV 自動バックアップ同期、クリップマスクビューアー、texture-atlas 統計、パフォーマンス統計、UI テーマ、パレットラベルのスタイル、Scene パレット拡張、loopback MCP サーバー、そして組み込みの core plugin です。[ファーストパーティプラグイン](./use/first-party-plugins)を参照してください。
 
 ## 共有プラグインサービスと UI
 
@@ -61,6 +85,21 @@ SDK には次の契約が含まれます。
 
 対応する Provider または検証済みホスト capability が利用できない場合、ホストと UI の各 family は fail closed します。Fake または static test だけでは、実ホスト対応の準備が自動的に確立されることはありません。
 
+## 検証モデル
+
+検証は、1 つの未分化なゲートとしてではなく、コストとリスクに応じて階層化されます。
+
+```text
+focused verification      smallest affected compile or test selection
+devCheck                  production compilation plus structural boundaries
+checkIntegration          packaged runtime, plugin, bundle, and cross-module behavior
+checkCompletedCommit      full automated repository gate for a coherent change
+checkRelease              completed-commit plus supply-chain, historical, and installer-artifact checks
+host validation           explicit exact-version Cubism execution for the affected feature
+```
+
+Host validation は監督されたローカルキューを通じて実行されます。build と prepare の作業は並行して実行できますが、単一の host-admission lock が実際の Cubism セッションを直列化し、完了には一致する構造化された lifecycle と cleanup の evidence が必要で、所有権が不明な場合は無関係なセッションを終了させるのではなく、検査のためにホストを隔離します。
+
 ## Official Directory の状況
 
 組み込みの署名済み Official Directory client と UI は実装されていますが、本番アクティベーションは未準備です。本番 key list は空で、ライブ署名済み catalog の準備は確立されていません。ライブマーケットプレイスではありません。
@@ -68,24 +107,24 @@ SDK には次の契約が含まれます。
 ## 進行中またはバージョン制限付き
 
 - 多くの unified-object write method は、特定のバージョン Provider に依存しています。インターフェースにメソッドがあることは、サポート対象のすべての Cubism バージョンで実行できることを意味しません。
-- Cubism 5.2 Editor-authoring の完全な matrix は、いくつかの operation family でまだ不完全です。
-- Project、selection、model-tree、その他の semantic Editor API は引き続き進化しています。
-- Drawable、Deformer、Glue、mesh、PSD、texture-atlas の write と workflow には、利用者主導の実装と正確な検証が必要です。
+- 完全な Editor-authoring matrix は、いくつかの operation family でまだ不完全であり、family ごとの準備状況は [SDK API ガイド](./reference/sdk-api)に記録されています。
+- Drawable、Deformer、Glue、mesh、PSD、および追加の texture-atlas workflow には、利用者主導の実装と正確な検証が必要です。
 - Host UI attachment、高頻度 hook、実ホスト対応は、正確なバージョンゲートを伴う高リスク境界として残っています。
+- 更新チェックは現在の stable リリースには含まれません。更新はインストーラーの手動再実行です。
 - SDK HTML Javadoc は生成でき、このサイトで公開されていますが、多くの public declaration にはより詳しい説明コメントがまだ必要です。
 
 ## 現在約束されていないもの
 
 Turboism は現在、次のものを約束していません。
 
-- 署名・ノータリゼーション済みのインストーラーパッケージの公開リリースチャネル。
-- 検証済みの macOS Cubism ホスト起動。
-- 自動オンライン更新または本番利用可能なマーケットプレイス。
-- publisher signing または revocation。
-- 完全なユーザー向け immutable-generation install、repair、rollback、recovery、purge UI。
+- インストーラーパッケージの署名またはノータリゼーション済みの公開リリースチャネル。
+- 検証済みの macOS Cubism ホスト対応。
+- フレームワークまたはプラグイン更新の自動ダウンロードとインストール。
+- 本番有効化されたマーケットプレイス、publisher signing、または revocation。
+- 完全なユーザー向けの install、repair、rollback、recovery、purge UI。
 - Cubism launcher のグローバルな変更。
-- すべての Cubism バージョンに対する一様な対応準備。
-- Preview、fake、static、または単一バージョンの証拠だけに基づく本番対応。
+- すべての Cubism バージョンに対する一様な機能準備。
+- fake、static、または単一バージョンの証拠だけに基づく本番対応。
 
 ## 近い将来の順序
 
@@ -94,7 +133,7 @@ Turboism は現在、次のものを約束していません。
 3. 検証済み consumer から Undo を伴う Editor-owned writes を拡張する。
 4. operation lifecycle semantics を標準化する。
 5. project、selection、model-tree API を完成させる。
-6. SDK-only plugin によって first-party workflow を復元する。
+6. 残りの first-party workflow を SDK-only plugin によって復元する。
 7. 明示的 API、refresh、polling、callback で不十分な場合に限り hook を追加する。
 8. third-party SDK、packaging、release evidence を強化する。
 

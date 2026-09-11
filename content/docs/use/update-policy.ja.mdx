@@ -1,50 +1,73 @@
 ---
 title: 更新ポリシー
-description: プラグインを置換し、インストーラーの再実行でフレームワークを更新する方法と、まだ存在しない自動更新機能について理解する。
+description: インストーラーの再実行で Turboism を更新し、stable、beta、nightly のリリースチャンネルを選択する。
 ---
 
-Turboism に現在あるのは、ローカル JAR replacement と手動によるインストーラーの再実行であり、本番用の automatic update system ではありません。
+Turboism は 3 つのチャンネルで製品リリースを公開し、すべてのパッケージを機械可読なリリースフィードの背後でミラーしています。更新のインストールは引き続き明示的な手動操作です。現在の stable リリースにインストーラーの自動更新はありません。
 
-## 現在のプラグイン置換
+## リリースチャンネル
 
-同じ plugin ID を持つ新しいプラグイン JAR をインストールすると、replacement intent がステージングされます。Cubism の再起動後に適用されます。
+| チャンネル | バージョンの形式 | 目的 |
+| --- | --- | --- |
+| `stable` | `X.Y.Z` | 日常的な利用。レビュー済みのリリースノートと翻訳。 |
+| `beta` | `X.Y.Z-beta.N`、`X.Y.Z-rc.N`、または `X.Y.Z-alpha.N` | stable になる前の変更を試す。 |
+| `nightly` | `X.Y.Z-0.nightly.BUILD` | 日次の開発ビルド。ソースが変更されたときだけ生成されます。 |
 
-1. 現在の plugin JAR を backup します。
-2. 重要な場合は、persistent `config/<pluginId>/` と `data/<pluginId>/` の内容を backup します。
-3. plugin management を通じて新しい JAR をインストールします。
-4. Cubism を再起動します。
-5. version、lifecycle state、configuration migration、logs を確認します。
+- チャンネルが `status: not_published` を返すことは正常で、エラーではなく空のチャンネルです。
+- nightly ビルドは開発ビルドです。使用前にプロジェクトをバックアップしてください。
+- すべてのチャンネルが同じ 4 つのパッケージ形式と、同じパッケージ単位の SHA-256 サイドカーを生成します。
+
+## 機械可読フィード
+
+各チャンネルは JSON ドキュメントを公開します。
+
+```text
+https://api.turboism.dev/v1/releases/stable.json
+https://api.turboism.dev/v1/releases/beta.json
+https://api.turboism.dev/v1/releases/nightly.json
+```
+
+ドキュメントには、channel、選択された release（`version`、`tag`、`buildNumber`、`sourceRevision`、`publishedAt`）、ローカライズされた release notes、および asset ごとの name、size、SHA-256、checksum file、利用可能な source（`official` ミラーと `github`）の行が含まれます。条件付きリクエストに対応しています。サービスのエラー、空のレスポンス、失敗したリクエストを「最新である」と解釈してはいけません。
+
+製品サイトも同じデータを [turboism.dev/download](https://turboism.dev/download) に使用しています。
+
+## フレームワークを更新する
+
+1. `config.json` と、重要な persistent プラグインの `config/`・`data/` の内容を backup します。
+2. プラットフォームとチャンネルに合った新しいパッケージをダウンロードし、その SHA-256 チェックサムを検証します。
+3. 新しいインストーラーを実行し、同じ Turboism home ディレクトリを対象にします。または、展開済みのポータブルアーカイブのファイルを置き換えます。
+4. 更新の一部としてプラグイン選択（Full、Thin、Lite）を再実行します。
+5. 更新後に startup、plugin discovery、host capability status、logs を確認します。
+
+インストーラーを再実行すると、同じ home と選択が更新され、無関係な設定を盲目的に上書きすることはありません。更新の手段として Cubism installation file を上書きまたは書き換えないでください。
+
+## プラグインを置換または更新する
+
+同じ plugin ID を持つ新しいプラグイン JAR をインストールすると、Cubism の再起動後に適用される replacement intent がステージングされます。
+
+1. 現在の plugin JAR と、重要な場合は plugin の persistent `config/<pluginId>/`・`data/<pluginId>/` の内容を backup します。
+2. plugin management を通じて新しい JAR をインストールします。
+3. Cubism を再起動します。
+4. version、lifecycle state、configuration migration、logs を確認します。
 
 適用に失敗した場合、private backup から以前の plugin file が復元されます。この workflow は historical generation を保持せず、完全なユーザー向け修復・ロールバック・purge UI も提供しません。
 
-## フレームワークのインストーラー更新
-
-新しいフレームワークバージョンは、インストーラーパッケージを再実行してインストールします。
-
-1. そのビルドを提供した release または preview チャネルから、新しい `TurboismInstaller-<version>.exe`（Windows）または `TurboismInstaller-<version>.jar`（Windows/macOS）を入手します。
-2. `config.json` と、重要な persistent プラグインの `config/`・`data/` の内容を backup します。
-3. 新しいインストーラーを実行し、同じ Turboism home ディレクトリを対象にします。
-4. 更新の一部としてプラグイン選択（Lite/Full）を再実行します。
-5. 更新後に startup、plugin discovery、host capability status、logs を確認します。
-
-インストーラーを再実行すると、同じ home と選択が更新され、無関係な設定を盲目的に上書きすることはありません。自動オンラインアップデーターも署名済みの公開ダウンロードチャネルもまだないため、インストーラーの更新は手動での再実行です。update の手段として Cubism installation file を上書きまたは書き換えないでください。
-
 ## 互換性に関する期待値
 
-- 新しい SDK API はデフォルトで Preview です。
+- Turboism は単一の public SDK 階層を公開します。source repository のレビュー済みバイナリ API ベースラインが compatibility gate です。
 - API が存在しても、すべての Cubism version に Provider があるとは限りません。
 - host-sensitive operation は、未サポートまたは未検証の version では利用できないままになることがあります。
 - plugin author は宣言された Turboism API range を使用し、unavailable behavior をテストすべきです。
-- generated API reference は現在の development source を追跡するもので、最終的な Stable release line ではありません。
+- 対応する Cubism Editor バージョンは 5.2.03、5.3.02、5.3.03 で、Windows x64 が対応するホストプラットフォームです。
 
 ## 現在利用できないもの
 
-- 本番向け online update discovery と download。
-- marketplace channel。
+- フレームワーク更新の自動ダウンロードとインストール。
+- plugin の自動更新。
+- 本番有効化されたマーケットプレイス。
 - publisher signature と revocation。
-- retained immutable JAR generation。
+- 保持される immutable な JAR generation。
 - 完全なユーザー向け修復・ロールバック・リカバリ UI。
-- 自動のシステムレベルインストーラー更新。
-- 公開された Stable compatibility matrix。
+- Cubism launcher のグローバルな変更。
 
-組み込みの Official Directory client と UI は存在しますが、本番アクティベーションは未準備です。署名済み endpoint と key の準備は不完全です。
+組み込みの Official Directory client と UI は存在しますが、本番アクティベーションは未準備です。本番 key list は空で、ライブ署名済み catalog の準備は確立されていません。

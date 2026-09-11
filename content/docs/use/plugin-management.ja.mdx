@@ -3,7 +3,7 @@ title: プラグイン管理
 description: ローカル Turboism プラグイン JAR を安全にインストール、置換、有効化、無効化、アンインストールする。
 ---
 
-Turboism は、ローカルプラグイン JAR のインストール方法として、管理インストール（推奨）と手動インストール（上級/フォールバック）の 2 つを提供しています。これは system-level Turboism installer ではなく、署名済み Official Directory もまだ本番利用できません。
+Turboism は、ローカルプラグイン JAR のインストール方法として、管理インストール（推奨）と手動インストール（上級/フォールバック）の 2 つを提供しています。これは system-level Turboism installer ではありません。Full インストールにはレビュー済みの[ファーストパーティプラグインバンドル](./first-party-plugins)が既に含まれており、サードパーティのプラグインは同じ管理フローで追加できます。
 
 すべての plugin-management 変更はステージングされ、Cubism の再起動後に適用されます。現在ロードされている plugin instance を hot-swap することはありません。
 
@@ -19,7 +19,7 @@ Turboism は、ローカルプラグイン JAR のインストール方法とし
 8. 同じ Turboism home を通じて Cubism を再起動します。
 9. plugin list と Runtime logs で有効な state を確認します。
 
-ステージング前に、Runtime は選択された JAR を信頼できないローカル入力として扱います。16 MiB 上限の通常の非シンボリックリンク JAR を開き、descriptor が正確に 1 つであることと plugin content を厳格に検査し、payload を pending state にスナップショットします。
+ステージング前に、Runtime は選択された JAR を信頼できないローカル入力として扱います。アーカイブの上限（raw size、entry ごとの size、総展開量、entry 数、圧縮率）の範囲内で通常の非シンボリックリンク JAR を開き、descriptor が正確に 1 つであることと plugin content を厳格に検査し、payload を pending state にスナップショットします。
 
 staging journal は、raw JAR の SHA-256 と size、descriptor hash、plugin ID、version を永続化します。次の起動時に Runtime は、適用前にステージング済み JAR をその identity と照合して再検証します。
 
@@ -103,7 +103,7 @@ plugin JAR は plugin source から build した JAR であり、Turboism イン
 管理インストールはさらに次を提供します。
 
 - UI 確認と pending operation の追跡。
-- source path と厳格な archive preflight（16 MiB 上限を含む）。
+- source path と、アーカイブ上限の範囲内での厳格な archive preflight。
 - private snapshot、pending journal、staged apply。
 - staged apply が失敗したときの managed backup/restore。
 
@@ -114,7 +114,7 @@ plugin JAR は plugin source から build した JAR であり、Turboism イン
 マネージド JAR は、次のような理由で拒否されることがあります。
 
 - シンボリックリンクまたは通常ファイルでない source path。
-- 16 MiB 上限を超える size。
+- size、entry、展開量、圧縮率の上限違反。
 - malformed または ambiguous ZIP path。
 - duplicate entry または special file。
 - `META-INF/turboism/plugin.json` が 1 つより多い、または少ない。
@@ -130,7 +130,7 @@ plugin JAR は plugin source から build した JAR であり、Turboism イン
 
 Plugin management は現在、次を提供していません。
 
-- 本番利用可能な online discovery または download。
+- サードパーティプラグインの discovery または download。
 - publisher signing または revocation。
 - ライブマーケットプレイス。
 - 保持される履歴バージョン。

@@ -1,8 +1,36 @@
 ---
 title: 自動化
-description: 繰り返し可能な Editor ワークフローに関する Preview 概念。
+description: Turboism がサポートする extension 経路と、それらが共有する安全境界。
 ---
 
-Turboism では、Editor workflow の automation と replay を検討する可能性があります。そのような capability は project state に影響し得るため、明確な安全境界が必要です。
+Turboism は 3 つの extension 経路と、ファーストパーティプラグインがその上に構築する automation をサポートします。
 
-Automation は experimental concept であり、利用できる feature ではありません。このページを API shape、availability、operational behavior の根拠にしないでください。
+## 1. Java plugin
+
+SDK lifecycle、plugin descriptor、宣言された permission、`PluginContext` service を備えたプロセス内の Java 17 JAR です。これは完全な extension 経路であり、editor 自身の state に関与するものにはこれを使用します。
+
+## 2. GraalJS script
+
+Java plugin が `PluginContext.scripts()` で検出し、`ScriptService.run` で明示的に実行する制限付き JavaScript です。検出だけで script が実行されることはなく、script は完全な Java SDK ではなく制限付きの bridge を受け取ります。[GraalJS スクリプト](../build-a-plugin/graaljs-scripts)を参照してください。
+
+## 3. MCP
+
+バンドルされた Turboism MCP Server plugin が、信頼できるローカルの外部クライアント向けに、認証済みの loopback Streamable HTTP endpoint を公開します。これは自分で実行するツールのための integration 経路であり、プロセス内 API ではありません。[MCP](../build-a-plugin/mcp)を参照してください。
+
+ACP は fx とともに Turboism 内部で使用されるものであり、4 つ目の extension 経路ではありません。
+
+## これらの経路の上に構築される automation
+
+ファーストパーティプラグインは既にいくつかのワークフローを自動化しています。たとえば、Cubism の自動バックアップ生成物を WebDAV endpoint へアップロードする、順序付けされた PSD のクリッピング関係を ArtMesh のクリップマスクとして取り込む、型付きの Cubism 検査・編集・履歴 operation を MCP 経由で公開する、といったものです。
+
+## 安全境界
+
+automation は project の内容を変更し得るため、経路にかかわらず 1 つの境界を共有します。
+
+- 操作またはユーザーの明示的な許可が作業を開始します。
+- ファイルの書き込み、バックアップの作成、ネットワークサービスへの接続を行う operation は、可視的で permission によって制御されたままになります。
+- 書き込み operation は、その operation が対象としている場合、Undo と dirty-state の処理を伴う Editor 所有の transaction を通ります。
+- plugin は bytecode transformer を登録できず、script は呼び出し元が提供する bridge を超えて到達できません。
+- 未サポートまたは未検証の capability は fail closed で失敗します。
+
+内容を変更する automation を有効にする前に、重要な project の独立したバックアップを取ってください。[安全性と権利](../safety-and-rights)と[開発状況](../development-status)を参照してください。
