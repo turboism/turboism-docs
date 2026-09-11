@@ -1,6 +1,6 @@
 ---
 title: 插件 Manifest 与打包
-description: 定义一个 manifest v2 插件 JAR，并将其作为发布产物分发。
+description: 为 schema 版本 2、3 和 4 定义插件描述符，并分发构建产物 JAR。
 ---
 
 每个 Turboism 插件 JAR 都恰好包含一个位于以下位置的描述符：
@@ -9,18 +9,28 @@ description: 定义一个 manifest v2 插件 JAR，并将其作为发布产物�
 META-INF/turboism/plugin.json
 ```
 
-Runtime 仅接受 schema version 2。不会加载或自动升级 version 1。
+描述符声明 `"format": "turboism.plugin.meta"` 和 `schemaVersion`。Runtime 接受 schema 版本 **2**、**3** 和 **4**，并严格按对应契约进行校验，不会自动升级描述符。
 
-## 最小 Manifest
+| 版本 | 契约 |
+| --- | --- |
+| 2 | 基础生命周期、入口点、API 范围、依赖、权限、资源和本地化。 |
+| 3 | 新增必需的 `category` 字段和可选的 `tags`（第一方插件使用 v3）。 |
+| 4 | 新增声明的跨插件事件契约：`eventExports` 和 `eventImports`。 |
+
+不会加载 schema 版本 1。未知字段会被拒绝，而不是被忽略。
+
+## Manifest 示例
 
 ```json
 {
   "format": "turboism.plugin.meta",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "dev.example.plugin.hello",
   "name": "Hello Plugin",
   "version": "0.1.0",
   "description": "Minimal Turboism plugin lifecycle example.",
+  "category": "workflow",
+  "tags": ["example", "lifecycle"],
   "entrypoints": [
     "dev.example.plugin.HelloPlugin"
   ],
@@ -45,6 +55,8 @@ Runtime 仅接受 schema version 2。不会加载或自动升级 version 1。
 }
 ```
 
+必需字段为 `id`、`name`、`version`、`entrypoints`、`turboismApi`、`authors`、`website`、`resources` 和 `i18n`；schema 3 还额外要求 `category`。
+
 ## 入口点规则
 
 每个入口点必须：
@@ -63,6 +75,12 @@ disable/shutdown:       reverse manifest order
 
 构造、初始化或启用期间发生的失败会回滚整个 JAR。
 
+## category 与 tags
+
+`category` 必须是小写的 kebab-case 标记，长度为 2–32 个字符。已审查的第一方 category 为 `modeling`、`workflow`、`appearance`、`analysis`、`performance`、`integration`、`system` 和 `development`。格式正确但未注册的 category 仍会加载，以 `other` 呈现，并产生结构化的 `PLUGIN_CATEGORY_UNKNOWN` 诊断。
+
+`tags` 是可选的，最多包含 12 个长度为 2–32 个字符的小写 kebab-case 标记，且不携带任何权限或能力。
+
 ## 依赖
 
 ```json
@@ -78,7 +96,7 @@ disable/shutdown:       reverse manifest order
 - `type` 为 `required` 或 `optional`。
 - `ordering` 为 `none`、`before` 或 `after`。
 - 依赖 ID 使用反向域名语法。
-- 版本范围使用当前 Turboism 版本范围语法。
+- 版本范围使用 Turboism 版本范围语法。
 
 依赖记录控制解析与排序。它不会将另一个插件的私有实现包变为公共 Java 依赖。
 
@@ -104,7 +122,7 @@ disable/shutdown:       reverse manifest order
 "resources": ["icons/"],
 "i18n": {
   "baseName": "META-INF/turboism/i18n/messages",
-  "locales": ["base", "en", "zh_Hans"]
+  "locales": ["base", "en", "zh-Hans"]
 }
 ```
 
@@ -118,6 +136,36 @@ META-INF/turboism/i18n/messages_zh_Hans.properties
 ```
 
 声明的根目录和目录必须存在。普通的非 class 资源必须属于已声明的根目录。路径遍历、绝对路径、反斜杠、空路径段和未声明资源都会被拒绝。
+
+支持的运行时 locale 为 `en`、`ja`、`ko`、`zh-Hans` 和 `zh-Hant`，外加 `base` 捆绑包。Manifest 中的 locale ID 使用带连字符的形式（`zh-Hans`）；资源包文件名使用 Java 下划线形式（`messages_zh_Hans.properties`）。
+
+## 跨插件事件契约（schema 4）
+
+Schema 4 允许插件声明其拥有和消费的公共事件类型，使 Runtime 无需 ClassLoader 委托即可解析这些契约：
+
+```json
+"eventExports": [
+  {
+    "id": "dev.example.event.hello",
+    "contractVersion": "1.0.0",
+    "eventType": "dev.example.api.HelloEvent",
+    "abiSha256": "<sha256 of the event type bytes>"
+  }
+],
+"eventImports": [
+  {
+    "provider": "dev.example.plugin.base",
+    "eventId": "dev.example.event.base-status",
+    "contractVersion": "1.0.0",
+    "eventType": "dev.example.api.BaseStatusEvent",
+    "abiSha256": "<sha256 of the event type bytes>"
+  }
+]
+```
+
+导入项还可以携带 `"required": true`，以要求其提供程序契约被接纳。Runtime 会校验每个条目声明的 ABI 摘要，拒绝同一插件内重复的导出 ID 或事件类型，并拒绝无法解析到已接纳提供程序契约的导入。
+
+插件 ID 使用至少包含一个点的反向域名语法（`dev.example.plugin.hello`）；事件 ID 使用小写的点/短横线标记形式。
 
 ## 构建与验证
 
@@ -134,11 +182,13 @@ META-INF/turboism/i18n/messages_zh_Hans.properties
 build/worktree/<worktreeId>/<module>/libs/
 ```
 
+`libs/` 中的 JAR 就是发布产物。不存在包装归档，也没有单独的打包步骤。
+
 ## 严格的 JAR 验证
 
 JAR 本身即是安装产物。Runtime 将所选 JAR 视为不受信任的本地输入，并验证：
 
-- 常规文件、源链中没有符号链接，上限 16 MiB；
+- 常规文件、源链中没有符号链接，并受原始大小、单条目大小、总展开量、条目数量和压缩比上限约束；
 - 恰好一个 `META-INF/turboism/plugin.json`；
 - 描述符 ID、版本和 API 范围一致；
 - 没有复制的 SDK、Runtime、test、test-framework 或 Live2D 类；

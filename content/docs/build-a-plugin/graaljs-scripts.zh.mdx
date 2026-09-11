@@ -1,9 +1,9 @@
 ---
 title: GraalJS 脚本
-description: 面向显式调用的受限 GraalJS 脚本的候选说明。
+description: 打包并运行显式调用的受限 GraalJS 脚本。
 ---
 
-本页是待发布的候选文档。GraalJS 脚本不是 Java 插件，也不会建立一个已发布的脚本编写接口。
+GraalJS 脚本不是 Java 插件。它们仅在 Java 插件显式调用时运行，并获得有限的 bridge，而不是 Java SDK。
 
 ## 打包脚本
 
@@ -12,12 +12,17 @@ description: 面向显式调用的受限 GraalJS 脚本的候选说明。
 ```json
 {
   "schemaVersion": 2,
+  "id": "dev.example.script.hello",
+  "name": "Hello Script",
+  "version": "0.1.0",
   "language": "js",
   "entry": "main.js",
-  "sourceSha256": "<源文件的 SHA-256>",
+  "sourceSha256": "<SHA-256 of the source>",
   "permissions": []
 }
 ```
+
+仅接受 `schemaVersion` 2，且 `js` 目前是唯一支持的脚本语言。
 
 这只是字段级概览，不是完整的权限清单。只使用目标构建支持的权限；可用性和准确语义仍与 capability 有关。
 
@@ -33,6 +38,4 @@ description: 面向显式调用的受限 GraalJS 脚本的候选说明。
 
 ## 当前状态
 
-脚本可用性、暴露的 bridge 操作、执行限制和发布细节仍待确定，并且可能因 Preview 构建而异。
-
-[SCREENSHOT PLACEHOLDER — 显式调用脚本；从可用的候选构建中手动截图。]
+脚本执行与 capability 相关：暴露的 bridge 操作、资源限制和确切的权限集合可能因构建而异。设计脚本时应能处理不可用的操作或失败的运行，而不要假定可以访问环境中的宿主资源。

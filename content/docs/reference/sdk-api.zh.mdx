@@ -3,7 +3,7 @@ title: SDK API 指南
 description: 当前 Turboism 插件 SDK 的入口点、服务、对象模型、生命周期与能力边界。
 ---
 
-Turboism SDK 是插件唯一的公开依赖项。新 API 默认处于 Preview 状态。其可用性取决于四项彼此独立的事实：
+Turboism SDK 是插件唯一的公开依赖项。Turboism 发布单一的公共 SDK 层级，源代码仓库中已审查的二进制 API 基线是兼容性门禁。其可用性取决于四项彼此独立的事实：
 
 1. API 存在于 SDK 中；
 2. 插件声明了所需权限；
@@ -252,10 +252,16 @@ UI API 使用 SDK DTO，而不是 Swing/AWT 或主机小部件。当前族包括
 
 权限不会绕过操作验证，也不会创建缺失的 Provider。
 
+## 跨插件事件契约
+
+使用 schema 4 的插件描述符可以声明其导出和导入的公共事件类型，每个类型都绑定一个契约版本和事件类型的 ABI 摘要。Runtime 无需 ClassLoader 委托即可解析这些契约，拒绝重复的导出，并拒绝提供程序契约未被接纳的导入。声明事件契约不授予任何主机写入权限；它只是让插件自有的事件类型可供其他插件使用。请参阅[插件 Manifest 与打包](../build-a-plugin/manifest)。
+
 ## 版本与就绪状态说明
 
 - 参数创作写入具有已验证的 Cubism 5.3.02 路径，但调用方仍必须处理不可用性和过时目标。
 - 部件显示名称写入在 5.2.03 和 5.3.02 上具有真实主机证据。
 - 不得声称部件不透明度创作写入支持 5.2.03。
+- Cubism 5.3.03 是已接纳的确切版本，拥有自己的 texture-atlas 创作 provider、selector 契约和 layout provider，以及针对 physics、performance metrics、project lifecycle、model statistics 和 startup suppression 的确切版本 profile。接纳是按能力进行的，并不是对每个操作系列的全面保证。
+- History DTO（`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`）是有界的不可变语义投影。它们绝不授予主机写入权限。
 - Fake 和静态测试仅证明其所命名的层。
 - 快照/查询/事务兼容接口当前与统一对象图并存。

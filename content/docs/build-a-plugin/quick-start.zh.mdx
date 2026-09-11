@@ -1,9 +1,9 @@
 ---
 title: 开发者快速入门
-description: 基于当前 Preview SDK 构建一个最小的 Java 17 Turboism 插件。
+description: 基于公共 SDK 构建一个最小的 Java 17 Turboism 插件。
 ---
 
-当前由源代码支持的开发路径是在 Turboism 仓库中添加插件模块。尚未发布独立入门模板和稳定 Maven 坐标。
+当前由源代码支持的开发路径是在 Turboism 仓库中添加插件模块。独立入门模板和已发布的 Maven 坐标尚不可用。
 
 ## 1. 创建模块
 
@@ -75,18 +75,20 @@ public final class HelloPlugin implements TurboismPlugin {
 
 该 class 必须为 public，实现 `TurboismPlugin` 或其子接口，并提供一个 public 无参数构造函数。
 
-## 4. 添加 manifest v2
+## 4. 添加插件描述符
 
 创建 `src/main/resources/META-INF/turboism/plugin.json`：
 
 ```json
 {
   "format": "turboism.plugin.meta",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "dev.example.plugin.hello",
   "name": "Hello Plugin",
   "version": "0.1.0",
   "description": "Minimal Turboism plugin lifecycle example.",
+  "category": "workflow",
+  "tags": ["example"],
   "entrypoints": [
     "dev.example.plugin.HelloPlugin"
   ],
@@ -111,7 +113,7 @@ public final class HelloPlugin implements TurboismPlugin {
 }
 ```
 
-在添加权限、资源、本地化、依赖或多个入口点之前，请阅读[插件 Manifest 与打包](./manifest)。
+Schema 3 新增必需的 `category` 字段。在添加权限、资源、本地化、依赖、多个入口点或 schema 4 跨插件事件契约之前，请阅读[插件 Manifest 与打包](./manifest)。
 
 ## 5. 构建与验证
 

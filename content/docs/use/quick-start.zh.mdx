@@ -1,53 +1,76 @@
 ---
 title: 快速开始
-description: 从安装包安装 Turboism，进行配置，并验证首次运行。
+description: 安装已发布的 Turboism 安装包，进行配置，并验证首次运行。
 ---
 
-本快速开始从[安装](./installation)中所述的安装包开始。你只需要安装包和已安装的 Cubism。
+本快速开始从[安装](./installation)中所述的已发布安装包开始。你需要该安装包，以及已安装且合法授权的 Cubism Editor。
 
 ## 1. 安全准备
 
-- Windows 是目前经过验证的 Cubism 宿主启动路径。
-- 安装器 JAR 本身可在 Windows 和 macOS 上运行，需要 Java 17+ 运行时。
+- Windows x64 是受支持的 Cubism 宿主平台。受支持的 Editor 版本为 5.2.03、5.3.02 和 5.3.03。
+- `.jar` 安装器需要 Java 17+ 运行时。
 - 备份要打开的项目，或使用一次性副本。
 - 将 Turboism home 与 Cubism 安装分开。
 - 不要编辑 Cubism JAR、DLL、BAT 文件或许可状态。
 
-## 2. 使用 Windows `.exe` 安装器安装并启动
+## 2. 下载与验证
+
+1. 打开 [turboism.dev/download](https://turboism.dev/download) 并选择渠道：**Stable**、**Beta** 或 **Nightly**。
+2. 下载一个安装包及其配对的 `.sha256` 文件。
+3. 验证文件哈希，例如在 PowerShell 中：
+
+   ```powershell
+   Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
+   ```
+
+安装器未签名，因此校验和是你可以自行完成的完整性检查。
+
+## 3. 安装
+
+### Windows `.exe` 安装器
 
 1. 运行 `TurboismInstaller-<version>.exe`。
-2. 选择安装目录（默认为 `%LOCALAPPDATA%\Turboism`）以及 Lite 或 Full 模式。在 Full 模式下可以取消勾选单个插件。
-3. 当安装器打开 `configure_turboism.ps1` 时，选择要使用的 Cubism 根目录并保存。Turboism 会将其单独记录在 `config.json` 之外，并为每个选中的根目录创建一个托管启动入口。取消配置器是安全的，会留下一个有效的仅框架安装。
-4. 通过所选 Cubism 根目录的托管 launcher 启动 Turboism（`launch-cubism-turboism.bat`）。
-5. 等待 Cubism 和 Turboism diagnostics 初始化。
+2. 选择安装器语言（英文、简体中文、日文或韩文）。
+3. 阅读许可协议，并确认全部四项必需确认。
+4. 选择 **Full** 或 **Lite**，然后选择安装目录（默认为 `%LOCALAPPDATA%\Turboism`）。在 Full 模式下可以取消勾选单个插件。
+5. 决定是否下载可选的托管 GraalVM 组件。
+6. 当安装器打开 `configure_turboism.ps1` 时，选择要使用的 Cubism 安装并保存。取消配置器会留下一个有效的仅框架安装。
+7. 通过所选 Cubism 根目录的托管 launcher 启动 Cubism（`launch-cubism-turboism.bat`）。
 
-## 3. 使用跨平台 `.jar` 安装器安装（Windows/macOS）
+### 跨平台 `.jar` 安装器
 
-1. 运行 `TurboismInstaller-<version>.jar`：
+1. 运行安装器：
 
-```bash
-java -jar TurboismInstaller-<version>.jar
-```
+   ```bash
+   java -jar TurboismInstaller-<version>.jar
+   ```
 
-2. 选择 Lite 或 Full 模式以及目标目录。Full 模式会安装第一方插件，并允许取消勾选单个插件。
-3. 在 Windows 上，安装完成后运行 `configure_turboism.ps1`，选择要使用的 Cubism 根目录并保存。Turboism 会将其单独记录在 `config.json` 之外，并为每个选中的根目录创建一个托管启动入口；然后通过所选根目录的托管 launcher 启动。在 macOS 上，此安装器仅覆盖安装和卸载：macOS Cubism 宿主启动尚未验证，且未安装 macOS Cubism launcher，因此 macOS 上尚没有经过验证的在 Cubism 内部启动 Turboism 的方式。
+   传入 `-language eng|chn|jpn|kor` 可预先选择安装器语言。
+2. 完成各项声明，并选择 **Full**、**Thin** 或 **Lite**，然后选择目标目录。
+3. 在 Windows 上，运行已安装的 `configure_turboism.ps1`，选择 Cubism 安装，并通过托管 launcher 启动。在 macOS 上，此安装器仅覆盖安装和卸载：macOS Cubism 宿主支持尚未验证，且未安装 macOS launcher。
+
+### 便携式 ZIP
+
+1. 将整个归档解压到独立文件夹中。
+2. 从该文件夹运行 `configure_turboism.ps1`，并选择 Cubism 安装。
+3. 通过生成的快捷方式或 `launch-cubism-turboism.bat` 启动 Cubism。
+
+安装器语言只影响安装器。Turboism 在运行时使用的语言来自运行时 `locale` 设置，插件界面语言跟随 Cubism Editor 的 **File → Environment Settings → General → Language**。
 
 ## 4. 验证首次运行
-
-下面的检查清单适用于 Windows，即经过验证的 Cubism 宿主启动路径。
 
 检查以下各项：
 
 - Cubism 正常启动；
 - Turboism runtime 报告启动成功；
-- Runtime 使用预期的 Turboism home；
-- 已安装的插件出现在 plugin/runtime diagnostics 中；
+- runtime 使用预期的 Turboism home；
+- 已安装的插件出现在插件管理器和 runtime diagnostics 中；
 - 不可用的宿主 capability 会 fail closed，而不是导致 Cubism 崩溃；
 - 关闭 Cubism 后，插件 scope 和框架所有的 executor 都会释放。
 
 ## 5. 添加插件
 
-使用[插件管理](./plugin-management)安装本地插件 JAR：
+Full 选项已安装已审查的第一方插件捆绑包。如需添加本地插件 JAR：
 
 1. 打开 Turboism，选择 **插件管理**（Plugin Management）。
 2. 选择 **从 JAR 安装…**（Install from JAR…）。
@@ -59,15 +82,15 @@ java -jar TurboismInstaller-<version>.jar
 
 ### 手动安装（备选）
 
-作为高级/备用路径，你也可以手动安装插件 JAR——例如在本地测试构建出的 JAR。插件 JAR 是从插件源码构建出的 JAR，不是 Turboism 安装器 JAR（`TurboismInstaller-<version>.jar`）。
+作为高级备用路径——例如在本地测试构建出的 JAR——你可以直接放置插件 JAR：
 
 1. 完全关闭 Cubism 和 Turboism。
 2. 将受信任的插件 JAR 直接复制到 `<turboism.home>/plugins/` 根下。
-3. 保持每个 plugin ID 最多一个 JAR——确保没有同 ID 的旧 JAR 残留。
+3. 保持每个 plugin ID 最多一个 JAR。
 4. 使用同一个 Turboism home 重启。
-5. 验证插件状态和 Runtime 日志。
+5. 验证插件状态和 runtime 日志。
 
-手动安装会绕过托管保护。完整的保护措施以及更新/卸载细节请参见[插件管理](./plugin-management)。
+手动安装会绕过托管保护。完整流程请参见[插件管理](./plugin-management)。
 
 ## 6. 查找日志
 
@@ -76,6 +99,7 @@ java -jar TurboismInstaller-<version>.jar
 ## 后续步骤
 
 - [插件管理](./plugin-management)
+- [第一方插件](./first-party-plugins)
 - [故障排查](../troubleshooting)
 - [开发状态](../development-status)
 - [构建插件](../build-a-plugin/quick-start)

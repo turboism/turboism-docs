@@ -1,50 +1,73 @@
 ---
 title: 更新策略
-description: 替换插件并通过重新运行安装器更新框架，同时了解目前尚不存在的自动更新能力。
+description: 通过重新运行安装器更新 Turboism，并在 stable、beta 和 nightly 发布渠道之间选择。
 ---
 
-Turboism 当前支持本地 JAR 替换和手动重新运行安装器，而不是生产级自动更新系统。
+Turboism 在三个渠道发布产品版本，并在机器可读的发布信息源后镜像每个安装包。安装更新仍是明确的手动步骤：当前稳定版本没有自动安装器更新。
 
-## 当前的插件替换
+## 发布渠道
+
+| 渠道 | 版本形态 | 用途 |
+| --- | --- | --- |
+| `stable` | `X.Y.Z` | 日常使用。已审查的发行说明和翻译。 |
+| `beta` | `X.Y.Z-beta.N`、`X.Y.Z-rc.N` 或 `X.Y.Z-alpha.N` | 在变更稳定之前提前试用。 |
+| `nightly` | `X.Y.Z-0.nightly.BUILD` | 每日开发构建，仅在源代码发生变化时产出。 |
+
+- 渠道可以合法地报告 `status: not_published`；这表示渠道为空，而不是错误。
+- nightly 构建是开发构建：使用前请备份项目。
+- 每个渠道都产出相同的四种安装包格式以及相同的每包 SHA-256 伴随文件。
+
+## 机器可读的信息源
+
+每个渠道发布一份 JSON 文档：
+
+```text
+https://api.turboism.dev/v1/releases/stable.json
+https://api.turboism.dev/v1/releases/beta.json
+https://api.turboism.dev/v1/releases/nightly.json
+```
+
+文档包含渠道、所选发行版（`version`、`tag`、`buildNumber`、`sourceRevision`、`publishedAt`）、本地化发行说明，以及每个资产的一行记录，含名称、大小、SHA-256、校验和文件和可用来源（`official` 镜像与 `github`）。支持条件请求。服务错误、空响应或请求失败都不得被视为“已是最新”。
+
+产品网站使用相同的数据支撑 [turboism.dev/download](https://turboism.dev/download)。
+
+## 更新框架
+
+1. 备份 `config.json` 以及任何重要的持久化插件 `config/` 和 `data/` 内容。
+2. 下载适用于你的平台和渠道的更新安装包，并验证其 SHA-256 校验和。
+3. 运行新版安装器并指向同一个 Turboism home 目录，或替换你解压出的便携归档中的文件。
+4. 在更新过程中重新运行插件选择（Full、Thin 或 Lite）。
+5. 更新后验证启动、插件发现、宿主 capability 状态和日志。
+
+重新运行安装器会更新同一个 home 和选择，不会盲目覆盖无关配置。不要把覆盖或重写 Cubism 安装文件作为更新机制。
+
+## 替换或更新插件
 
 安装具有相同 plugin ID 的新版插件 JAR 会分阶段提交替换意图，并在 Cubism 重启后生效。
 
-1. 备份当前插件 JAR。
-2. 在重要时备份持久化的 `config/<pluginId>/` 和 `data/<pluginId>/` 内容。
-3. 通过插件管理安装新版 JAR。
-4. 重启 Cubism。
-5. 验证版本、生命周期状态、配置迁移和日志。
+1. 在重要时备份当前插件 JAR 以及插件的持久化 `config/<pluginId>/` 和 `data/<pluginId>/` 内容。
+2. 通过插件管理安装新版 JAR。
+3. 重启 Cubism。
+4. 验证显示的版本、生命周期状态、配置迁移和日志。
 
 应用失败时，会从私有 backup 恢复之前的插件文件。此工作流不会保留历史 generation，也不提供完整的用户面向修复、回滚或清理 UI。
 
-## 框架安装器更新
-
-新版框架通过重新运行安装包安装：
-
-1. 从提供构建的 release 或 preview 渠道获取更新的 `TurboismInstaller-<version>.exe`（Windows）或 `TurboismInstaller-<version>.jar`（Windows/macOS）。
-2. 备份 `config.json` 以及任何重要的持久化插件 `config/` 和 `data/` 内容。
-3. 运行新版安装器，并指向同一个 Turboism home 目录。
-4. 在更新过程中重新运行插件选择（Lite/Full）。
-5. 更新后验证启动、插件发现、宿主 capability 状态和日志。
-
-重新运行安装器会更新同一个 home 和选择，不会盲目覆盖无关配置。目前还没有自动在线更新器，也没有签名的公开下载渠道；安装器更新是手动重新运行。不要把覆盖或重写 Cubism 安装文件作为更新机制。
-
 ## 兼容性预期
 
-- 新 SDK API 默认是 Preview。
+- Turboism 发布单一的公共 SDK 层级。源代码仓库中已审查的二进制 API 基线是兼容性门禁。
 - API 存在并不保证每个 Cubism 版本都有 Provider。
 - 不受支持或未经验证的版本上的宿主敏感操作可能仍然不可用。
 - 插件作者应使用已声明的 Turboism API 范围，并测试不可用行为。
-- 生成的 API 参考跟踪当前开发源代码，而不是最终 Stable 发布线。
+- 受支持的 Cubism Editor 版本为 5.2.03、5.3.02 和 5.3.03，Windows x64 是受支持的宿主平台。
 
 ## 当前不可用
 
-- 生产级在线更新发现和下载；
-- marketplace 渠道；
+- 框架更新的自动下载与安装；
+- 插件自动更新；
+- 生产可用的 marketplace；
 - 发布者签名和撤销；
 - 保留不可变的 JAR generation；
 - 完整的用户面向修复、回滚或恢复 UI；
-- 自动系统级安装器更新；
-- 已发布的 Stable 兼容性矩阵。
+- 对 Cubism launcher 的全局修改。
 
-内置的 Official Directory 客户端和 UI 已存在，但生产激活尚未就绪：签名端点和密钥就绪性尚不完整。
+内置的 Official Directory 客户端和 UI 已存在，但生产激活尚未就绪：生产密钥列表为空，实时签名 catalog 就绪性尚未建立。
