@@ -7,6 +7,7 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
@@ -19,6 +20,7 @@ let sync = false;
 let interactive = false;
 let approvedPublicSurface = false;
 let approvedPreviewSurface = false;
+let approvedKnownExceptions = false;
 let expectedVersion;
 
 for (const argument of args) {
@@ -31,6 +33,8 @@ for (const argument of args) {
     approvedPublicSurface = true;
   } else if (argument === "--approved-preview-surface") {
     approvedPreviewSurface = true;
+  } else if (argument === "--approved-known-exceptions") {
+    approvedKnownExceptions = true;
   } else if (argument.startsWith("--expected-version=")) {
     expectedVersion = argument.slice("--expected-version=".length).trim();
   } else if (argument.startsWith("--")) {
@@ -169,6 +173,78 @@ const blockedContent = [
     /\bNot part of the stable plugin API surface\b/i,
   ],
 ];
+
+/**
+ * Reviewed scope exceptions that may be published only with
+ * "--approved-known-exceptions". Each entry names one exact blocker for one exact
+ * file: a wider pattern would silently absorb future findings. Anything that does
+ * not match an entry here still fails the run.
+ */
+const knownExceptions = [
+  {
+    id: "active-read-projections-not-contractual",
+    label: "internal contract published as API",
+    file: /(?:^|\/)dev\/turboism\/sdk\/cubism\/ActiveReadProjections\.html$/,
+    reason:
+      "ActiveReadProjections is compiled as a public SDK class because CubismFacade "+
+      "and CubismReadCapabilityService default methods share its helpers. The class "+
+      "Javadoc marks it as not part of the stable plugin API surface, so publishing "+
+      "its page documents existing bytecode rather than adding a contract. The type "+
+      "must stay listed as non-contractual in reference/generated-api and in the "+
+      "SDK API guide for as long as it remains public.",
+  },
+  {
+    id: "active-read-projections-not-contractual",
+    label: "type excluded from the stable plugin API",
+    file: /(?:^|\/)dev\/turboism\/sdk\/cubism\/ActiveReadProjections\.html$/,
+    reason: "Same reviewed exception as the internal-contract blocker for this one file.",
+  },
+];
+
+/**
+ * Repairs the one known JDK Javadoc generator defect instead of publishing it.
+ * The constant-values contents list links to #dev.turboism while the section
+ * heading that owns that grouping carries only a title attribute, so the link
+ * has no target. Adding the missing id keeps the published page navigable and is
+ * reported on every run; any other broken link still fails.
+ */
+function repairGeneratedAnchors(directory) {
+  const repaired = [];
+  const visit = (current) => {
+    for (const name of readdirSync(current)) {
+      const file = join(current, name);
+      if (statSync(file).isDirectory()) {
+        visit(file);
+        continue;
+      }
+      if (extname(name) !== ".html") continue;
+      const content = readFileSync(file, "utf8");
+      const anchors = new Set(
+        Array.from(content.matchAll(/\b(?:id|name)="([^"]+)"/g), (match) => match[1]),
+      );
+      const missing = new Set();
+      for (const match of content.matchAll(/\bhref="#([^"]+)"/g)) {
+        const fragment = match[1];
+        if (!anchors.has(fragment) && !fragment.startsWith("!") && !fragment.startsWith("?")) {
+          missing.add(fragment);
+        }
+      }
+      let updated = content;
+      for (const fragment of missing) {
+        const escaped = fragment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const heading = new RegExp(
+          `(<h[1-6][^>]*\\btitle="${escaped}"[^>]*)(>)`,
+        );
+        if (!heading.test(updated)) continue;
+        updated = updated.replace(heading, `$1 id="${fragment}"$2`);
+        repaired.push(`${file.slice(directory.length + 1)} -> #${fragment}`);
+      }
+      if (updated !== content) writeFileSync(file, updated, "utf8");
+    }
+  };
+  visit(directory);
+  return repaired;
+}
 const blockedMatches = [];
 const previewFiles = new Set();
 const htmlFiles = [];
@@ -200,6 +276,14 @@ function scanDirectory(directory) {
 }
 
 scanDirectory(generated);
+
+// Repair the generated-anchor defect before the link check so a repaired anchor
+// is verified like any other, and report every repair on each run.
+const repairedAnchors = repairGeneratedAnchors(generated);
+if (repairedAnchors.length > 0) {
+  console.log(`Repaired generated anchors: ${repairedAnchors.length}`);
+  for (const anchor of repairedAnchors) console.log(`  - ${anchor}`);
+}
 
 function decodeHtmlAttribute(value) {
   return value
@@ -269,16 +353,50 @@ for (const htmlFile of htmlFiles) {
   }
 }
 
-const publicationBlockers = [
-  ...new Set(blockedMatches),
-  ...new Set(brokenLinks.map((link) => `broken local link: ${link}`)),
-];
-if (publicationBlockers.length > 0) {
+// Classify every blocker. A blocker whose exact file and exact label match a
+// reviewed entry is held back and must be approved explicitly; everything else
+// fails immediately, so the exception list cannot widen silently.
+const heldBackBlockers = [];
+const failingBlockers = [];
+for (const blocker of new Set([
+  ...blockedMatches,
+  ...brokenLinks.map((link) => `broken local link: ${link}`),
+])) {
+  const [label, ...rest] = blocker.split(": ");
+  const subject = rest.join(": ");
+  const exception = knownExceptions.find(
+    (candidate) => candidate.label === label && candidate.file.test(subject),
+  );
+  if (exception) heldBackBlockers.push({ blocker, exception });
+  else failingBlockers.push(blocker);
+}
+
+if (failingBlockers.length > 0) {
   throw new Error(
-    `Generated SDK Javadoc failed publication checks:\n${publicationBlockers
+    `Generated SDK Javadoc failed publication checks:\n${failingBlockers
       .map((match) => `- ${match}`)
       .join("\n")}`,
   );
+}
+if (heldBackBlockers.length > 0) {
+  if (!approvedKnownExceptions) {
+    throw new Error(
+      `Generated SDK Javadoc contains ${heldBackBlockers.length} reviewed publication exception(s). `+
+        "Review each one against the recorded reason and pass --approved-known-exceptions to sync:\n" +
+        heldBackBlockers
+          .map(
+            ({ blocker, exception }) =>
+              `- [${exception.id}] ${blocker}\n  reason: ${exception.reason}`,
+          )
+          .join("\n"),
+    );
+  }
+  console.log(
+    `Reviewed publication exceptions accepted: ${heldBackBlockers.length}`,
+  );
+  for (const { blocker, exception } of heldBackBlockers) {
+    console.log(`  - [${exception.id}] ${blocker}`);
+  }
 }
 
 const packages = readFileSync(join(generated, "element-list"), "utf8")

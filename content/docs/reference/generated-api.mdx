@@ -1,15 +1,25 @@
 ---
 title: Generated API Reference
-description: SDK Javadoc generation, review, and publication status.
+description: The hosted SDK Javadoc version, how it is generated, and which review exceptions apply.
 ---
 
 The SDK Javadoc is generated from the matching Turboism source tree and hosted under the SDK documentation site only after review.
+
+## Hosted version
+
+| Item | Value |
+| --- | --- |
+| Generated from | Turboism `v0.43.10` release source |
+| Identifies itself as | `sdk 0.43.10 API` |
+| Public packages | 59 |
+| Searchable public types | 691 |
+| Hosted at | [turboism.dev/sdk/index.html](https://turboism.dev/sdk/index.html) |
 
 ## Documentation update workflow
 
 When the public SDK, its documentation, or its version changes:
 
-1. generate Javadoc with the source repository's `:sdk:javadoc` Gradle task;
+1. generate Javadoc with the source repository's `:sdk:javadoc` task in release-version mode;
 2. verify the exact version and reject snapshot output;
 3. review every publicly searchable package and type;
 4. confirm that internal implementation types and unapproved Preview APIs are not presented as public contracts;
@@ -17,16 +27,30 @@ When the public SDK, its documentation, or its version changes:
 6. synchronize the reviewed output to the documentation site; and
 7. run the documentation lint, type check, and production build.
 
-Successful generation alone does not approve publication. If the generated public surface or version is not ready, keep the hosted Javadoc unchanged and record the blocker here.
+Successful generation alone does not approve publication.
 
-## Current status
+## Reviewed publication exceptions
 
-The `0.43.3` release-mode candidate has been generated and reviewed. Its version is correct and does not contain a snapshot marker, but it was not synchronized because:
+The published reference reproduces the compiled public surface of `v0.43.10`, so it documents two conditions that review classified as exceptions rather than as hidden problems. Both are re-checked on every synchronisation, and any blocker outside this list still fails the run.
 
-- `ActiveReadProjections` remains publicly searchable while its own documentation says that it is an internal helper outside the stable plugin API;
-- the generated constant-values page contains a broken local anchor; and
-- several public types still use Preview API language and need an approved public-reference policy.
+### `ActiveReadProjections` is public but not a contract
 
-The update script now detects the version automatically, scans generated output for blocked material and broken local links, requires explicit approval for Preview API language, and validates the documentation site after synchronization.
+`dev.turboism.sdk.cubism.ActiveReadProjections` is compiled as a public class because `CubismFacade` and `CubismReadCapabilityService` default methods share its helpers. The class Javadoc states that it is not part of the stable plugin API surface.
 
-Until those blockers are resolved, use the [SDK API Guide](./sdk-api) and the public SDK source declarations. Do not rely on the currently hosted HTML reference for release, deployment, or compatibility claims.
+- Its page is hosted because the type already exists in released bytecode.
+- It is **not** a supported extension point. Do not call it, and do not treat its signatures as a compatibility promise.
+- It must remain listed as non-contractual here and in the [SDK API Guide](./sdk-api) for as long as the type stays public.
+
+### Repaired constant-values anchor
+
+The JDK Javadoc generator writes a contents link to `#dev.turboism` in `constant-values.html` without emitting a matching target. The synchronisation script adds the missing anchor, reports the repair on every run, and still fails on any other broken link.
+
+## Preview API language
+
+Some public types still describe themselves as Preview contributions. That wording means the type is capability- and version-sensitive, not that it is part of a Stable line. Availability still depends on the permission, the capability Provider, and the exact Cubism Editor version, as described in [SDK API Guide](./sdk-api).
+
+## Using this reference
+
+- Treat generated Javadoc as documentation of the current source, not as an independent stability promise. The reviewed binary API baseline in the Turboism source repository remains the compatibility gate.
+- For guided behavior, version limits, and readiness boundaries, use the [SDK API Guide](./sdk-api) first.
+- Do not rely on the hosted HTML reference alone for release, deployment, or compatibility claims.

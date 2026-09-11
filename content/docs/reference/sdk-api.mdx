@@ -256,6 +256,18 @@ A permission does not bypass operation validation and does not create a missing 
 
 Plugin descriptors using schema 4 can declare the public event types they export and import, each bound to a contract version and an ABI digest of the event type. Runtime resolves those contracts without ClassLoader delegation, rejects duplicate exports, and refuses imports whose provider contract is not admitted. Declaring an event contract grants no host write authority; it only makes a plugin-owned event type consumable by another plugin. See [Plugin Manifest and Packaging](../build-a-plugin/manifest).
 
+## Non-contractual public types
+
+A few classes are compiled as public SDK classes because shared internal helpers
+need them, while their own documentation states that they are not part of the
+stable plugin API surface. `dev.turboism.sdk.cubism.ActiveReadProjections` is the
+current example.
+
+Do not call these types and do not treat their signatures as a compatibility
+promise. They appear in the generated reference because they exist in released
+bytecode, and they are listed with their reason on the
+[Generated API Reference](./generated-api).
+
 ## Version and readiness notes
 
 - Parameter authoring writes have a verified Cubism 5.3.02 path, but callers must still handle unavailability and stale targets.

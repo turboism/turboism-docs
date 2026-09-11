@@ -16,8 +16,12 @@ npm run release:check
 npm run build
 ```
 
-English is the authoritative source. Keep the Simplified Chinese and Japanese
-pages semantically aligned with every documentation change.
+English is the authoritative source. Keep the Simplified Chinese, Japanese, and
+Korean pages semantically aligned with every documentation change.
+
+Documentation pages are authored as `content/docs/<page>.mdx` (English),
+`<page>.zh.mdx`, `<page>.ja.mdx`, and `<page>.ko.mdx`. Navigation titles live in
+the matching `meta.json` / `meta.<lang>.json` files.
 
 ## Deployment
 
@@ -80,8 +84,8 @@ Before syncing, confirm that:
 - Preview APIs follow the approved public-reference policy;
 - generated descriptions do not expose local paths, private validation material,
   host logs, credentials, or implementation-only evidence; and
-- guided English, Simplified Chinese, and Japanese documentation matches the
-  generated public surface.
+- guided English, Simplified Chinese, Japanese, and Korean documentation matches
+  the generated public surface.
 
 If any check fails, leave `public/api/sdk/` unchanged and document the blocker on
 the generated API status page.
@@ -97,8 +101,35 @@ npm run sync:sdk-api -- ../turboism \
   --approved-public-surface
 ```
 
-The script refuses to sync snapshot output, output with the wrong version, or
-output without the explicit public-surface approval flag.
+Review the repaired-anchor and exception lines the script prints. The script
+refuses to sync snapshot output, output with the wrong version, or output without
+the explicit public-surface approval flag.
+
+### Publication exceptions
+
+The generated output reproduces the compiled public surface, so a release can
+contain a public type the SDK itself documents as non-contractual. Those are
+handled as reviewed exceptions rather than silent omissions:
+
+- each exception in `knownExceptions` names one exact blocker for one exact file,
+  with a written reason; any other blocker still fails the run; and
+- every held-back exception must be published on
+  `content/docs/reference/generated-api.<lang>.mdx` with its reason and the
+  condition for removing it.
+
+Release a known exception only with an explicit flag:
+
+```bash
+npm run sync:sdk-api -- ../turboism \
+  --expected-version=<version> \
+  --approved-public-surface \
+  --approved-preview-surface \
+  --approved-known-exceptions
+```
+
+Generation defects in the Javadoc output are repaired rather than published: the
+script adds a missing generated anchor, reports every repair on each run, and
+still fails on any other broken link.
 
 ### 4. Validate the documentation site
 

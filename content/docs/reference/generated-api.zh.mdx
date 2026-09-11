@@ -1,15 +1,25 @@
 ---
 title: 生成的 API 参考
-description: SDK Javadoc 的生成、审查与发布状态。
+description: 当前托管的 SDK Javadoc 版本、生成方式，以及适用的审查例外。
 ---
 
-SDK Javadoc 必须从对应的 Turboism 源码生成，并在完成审查后才能同步到 SDK 文档站点。
+SDK Javadoc 必须从对应的 Turboism 源码生成，并在完成审查后才托管到 SDK 文档站点。
+
+## 当前托管版本
+
+| 项目 | 值 |
+| --- | --- |
+| 生成来源 | Turboism `v0.43.10` 发行版源码 |
+| 自述版本 | `sdk 0.43.10 API` |
+| 公共包数量 | 59 |
+| 可搜索的公共类型数量 | 691 |
+| 托管地址 | [turboism.dev/sdk/index.html](https://turboism.dev/sdk/index.html) |
 
 ## 文档更新流程
 
 当公共 SDK、SDK 说明或版本发生变化时：
 
-1. 使用源码仓库的 `:sdk:javadoc` Gradle 任务生成 Javadoc；
+1. 在 release 版本模式下使用源码仓库的 `:sdk:javadoc` 任务生成 Javadoc；
 2. 核对精确版本，并拒绝带有 snapshot 标识的输出；
 3. 审查每个可公开搜索的包和类型；
 4. 确认内部实现类型和未经批准的 Preview API 没有被当作公共契约；
@@ -17,16 +27,30 @@ SDK Javadoc 必须从对应的 Turboism 源码生成，并在完成审查后才�
 6. 将通过审查的结果同步到文档站点；
 7. 运行文档 lint、类型检查和生产构建。
 
-生成成功不代表可以发布。如果生成的公共面或版本尚未准备好，应保持现有托管 Javadoc 不变，并在本页记录阻塞原因。
+生成成功不代表可以发布。
 
-## 当前状态
+## 已审查的发布例外
 
-已经生成并审查 `0.43.3` 的 release 模式候选结果。版本标识正确，也不包含 snapshot 标识，但尚未同步，原因包括：
+当前托管内容反映 `v0.43.10` 已编译的公共面，因此其中包含两项被审查认定为例外、而非隐藏问题的内容。每次同步都会重新检查这两项；不在此列表中的任何阻塞项仍会导致同步失败。
 
-- `ActiveReadProjections` 仍可公开搜索，而它自己的说明将其定义为不属于稳定插件 API 的内部辅助类型；
-- 生成的常量值页面包含一个无效的本地锚点；
-- 多个公共类型仍使用 Preview API 表述，需要先批准公共参考策略。
+### `ActiveReadProjections` 是 public，但不是契约
 
-SDK 更新脚本现在会自动读取版本、扫描生成结果中的受限内容和无效本地链接、对 Preview API 表述要求明确批准，并在同步后验证文档站点。
+`dev.turboism.sdk.cubism.ActiveReadProjections` 会编译为 public 类，因为 `CubismFacade` 与 `CubismReadCapabilityService` 的默认方法共用它的辅助方法。该类的 Javadoc 明确说明它不属于稳定插件 API 面。
 
-在这些问题解决前，请使用 [SDK API 指南](./sdk-api)和公共 SDK 源码声明。不要依赖当前托管的 HTML 参考作出发布、部署或兼容性声明。
+- 之所以托管它的页面，是因为该类型已存在于已发行的字节码中。
+- 它**不是**受支持的扩展点。请不要调用它，也不要把它当作兼容性承诺。
+- 只要该类型仍为 public，就必须在本页和 [SDK API 指南](./sdk-api) 中继续标注它为非契约类型。
+
+### 已修复的常量值锚点
+
+JDK 的 Javadoc 生成器会在 `constant-values.html` 中写入指向 `#dev.turboism` 的目录链接，却不输出对应的目标。同步脚本会补上缺失的锚点，并在每次运行时报告该修复；其他任何失效链接仍会导致失败。
+
+## Preview API 表述
+
+部分公共类型仍以 Preview 贡献的形式描述自己。这类表述说明该类型受能力和版本约束，并不意味着它属于 Stable 产品线。可用性仍取决于权限、能力 Provider，以及精确的 Cubism Editor 版本，详见 [SDK API 指南](./sdk-api)。
+
+## 如何使用本参考
+
+- 请把生成的 Javadoc 视为当前源码的说明，而不是独立的稳定性承诺。Turboism 源码仓库中已审查的二进制 API 基线才是兼容性判据。
+- 关于行为指导、版本限制和就绪边界，请先阅读 [SDK API 指南](./sdk-api)。
+- 不要仅凭托管的 HTML 参考作出发布、部署或兼容性声明。
