@@ -1,0 +1,24 @@
+---
+title: 개발
+description: Turboism에 기여하거나 Java, GraalJS 및 MCP로 개발합니다.
+---
+
+## Turboism에 기여
+
+Turboism 자체에 기여하려면 [기여](./contributing)를 읽어 주세요.
+
+## Java 플러그인
+
+[빠른 시작](./quick-start), [플러그인 인터페이스](./plugin-interfaces), [플러그인 매니페스트 및 패키징](./manifest) 및 [플러그인 설계](./designing-plugins)를 사용하세요. Java 플러그인은 프로세스 내에 로드되는 Java 17 JAR이며 공개 SDK 수명 주기와 서비스를 사용합니다.
+
+## GraalJS 스크립트
+
+제한된 스크립팅은 [GraalJS 스크립트](./graaljs-scripts)를 읽어 주세요. Java 호출자가 `ScriptService`를 통해 스크립트를 명시적으로 실행해야 하며, 검색만으로 자동 실행되지 않고 스크립트는 완전한 Java SDK를 받지 않습니다.
+
+## MCP
+
+신뢰하는 외부 클라이언트가 인증된 루프백 Streamable HTTP 자동화를 필요로 할 때 [MCP](./mcp)를 읽어 주세요. MCP는 프로세스 내 플러그인 API가 아닙니다.
+
+## 코딩 에이전트 컨텍스트
+
+[LLM으로 개발하기](./llm-coding-context)는 코딩 에이전트를 위한 벤더 중립적인 프로젝트 브리프입니다. 또 다른 개발 방식이 아닙니다. ACP는 Turboism with fx 내부용이며 네 번째 인터페이스가 아닙니다.

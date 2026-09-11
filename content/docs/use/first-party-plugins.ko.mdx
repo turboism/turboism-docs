@@ -1,0 +1,57 @@
+---
+title: 기본 제공 플러그인
+description: Full 설치에 포함된 검토된 플러그인 번들입니다.
+---
+
+Full 설치에는 검토된 기본 제공 플러그인 번들이 포함됩니다. 이들은 서드파티 플러그인과 동일한 공개 SDK 경계를 사용하며, 각각 설치 시 선택 해제할 수 있는 독립적인 JAR입니다.
+
+개별 기능의 가용성은 여전히 Cubism Editor 버전과 그 버전이 제공하는 기능 프로바이더에 따라 다릅니다. 플러그인이 번들에 포함된다고 해서 모든 지원 버전에서 모든 기능이 동작한다는 약속은 아닙니다.
+
+## 모델링
+
+| 플러그인 | 기능 |
+| --- | --- |
+| MaxRects-BSSF Layout Algorithm | 병렬 검색을 지원하는 MaxRects-BSSF 텍스처 아틀라스 패킹 알고리즘을 등록합니다. |
+| Mesh Edit Mirror Axis Enhance | 메시 편집에 미러 축 회전과 실제 호스트의 미러 도구 동등성을 추가합니다. |
+| Parameter Batch Transfer | 하나의 ArtMesh 또는 Deformer의 파라미터 바인딩을 다른 파라미터로 일괄 전송하며, 선택적으로 반전할 수 있습니다. |
+| Physics Editor | Physics Settings 그룹 전체 선택과 다시 열 때의 유지 기능을 추가합니다. |
+
+## 워크플로
+
+| 플러그인 | 기능 |
+| --- | --- |
+| Cubism Tab Filter | Parameter, Deformer, Scene 및 Log 팔레트 탭에 키워드 필터 상자를 추가합니다. |
+| PSD Clip Mask Import | 순서가 있는 PSD 클리핑 관계를 명시적인 덮어쓰기 정책과 함께 ArtMesh 클립 마스크 할당으로 가져옵니다. |
+| History Panel | 활성 문서의 네이티브 Undo 기록을 스냅샷에 바인딩된 Undo/Redo 탐색이 있는 Photoshop 스타일 창으로 투영합니다. |
+| Recent Preview | 최근 파일 호버 팝업에서 최근 프로젝트 파일의 범위가 제한된 미리 보기 썸네일을 캡처합니다. |
+| WebDAV Auto-Backup Sync | JDK HTTP 클라이언트를 사용해 Cubism 자동 백업 아티팩트를 WebDAV 엔드포인트에 업로드합니다. |
+
+## 분석 및 성능
+
+| 플러그인 | 기능 |
+| --- | --- |
+| Clip Mask Viewer | 그래프/테이블 검사기와 에디터 선택 강조를 갖춘 읽기 전용 클립 마스크 중복 검사기 및 시각화 도구입니다. |
+| Texture Atlas Statistics | 네이티브 텍스처 아틀라스 에디터 창에 전체 및 현재 텍스처의 모델 이미지 개수를 표시합니다. |
+| Performance Statistics | 실시간 CPU, FPS 및 JVM 메모리 차트를 임베디드 패널과 독립 창으로 제공합니다. |
+
+## 모양
+
+| 플러그인 | 기능 |
+| --- | --- |
+| UI Theme | 레거시 호환 테마 패키지, 내장 테마, 테마 관리자 워크플로 및 정확한 버전의 Cubism 모양 적용을 제공합니다. |
+| Palette Label Style | Deformer, Part 및 Parameter 팔레트 항목의 레이블 텍스트와 배경 색상입니다. |
+| Scene Palette Enhancer | Cubism Scene 팔레트의 항목을 정렬하고 수동으로 재배치합니다. |
+
+## 통합 및 시스템
+
+| 플러그인 | 기능 |
+| --- | --- |
+| Turboism MCP Server | 타입이 지정된 Cubism 검사, 편집, 히스토리 및 Editor 명령 워크플로를 노출하는 루프백 Model Context Protocol 서버입니다. 베어러 인증이 필요합니다. [MCP](../build-a-plugin/mcp)를 참고하세요. |
+| Turboism Core | 내장된 제거 불가능한 Turboism 메뉴, 도구 모음, 설정, 탭 및 플러그인 관리자입니다. 비활성화하거나 제거할 수 없습니다. |
+
+## 관리 방법
+
+- Full 또는 Thin 모드로 설치 프로그램을 실행할 때 개별 플러그인을 선택 해제하세요.
+- 설치된 플러그인은 플러그인 관리에서 사용 또는 사용 안 함으로 설정하세요. 변경 사항은 Cubism 재시작 후에 적용됩니다.
+- [플러그인 관리](./plugin-management)는 설치, 교체, 사용/사용 안 함, 제거 및 각 플러그인이 보관하는 데이터를 다룹니다.
+- [업데이트 정책](./update-policy)은 더 새로운 번들이 기존 설치에 도달하는 방식을 다룹니다.
