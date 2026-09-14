@@ -9,7 +9,7 @@ export function LanguageSwitcher({ language }: { language: Language }) {
     const segments = pathname.split('/');
     if (languages.includes(segments[1] as Language)) segments[1] = next;
     else segments.splice(1, 0, next);
-    router.push(segments.join('/') || `/${next}`);
+    router.push((segments.join('/') || `/${next}`) + window.location.search + window.location.hash);
   }
   return <BrandLanguage locale={language} onChange={changeLanguage}/>;
 }

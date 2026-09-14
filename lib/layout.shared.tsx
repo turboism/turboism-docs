@@ -7,6 +7,7 @@ export const translations = i18n
   .extend(uiTranslations())
   .add({
     en: { displayName: "English" },
+    ko: {"displayName":"한국어","Search(search trigger)":"문서 검색","Search(search dialog)":"검색","No results found(search dialog)":"검색 결과가 없습니다","On this page(table of contents)":"이 페이지의 목차","Previous Page(pagination)":"이전 페이지","Next Page(pagination)":"다음 페이지","Choose a language(language switcher)":"언어 선택","Choose a language(language switcher)(aria-label)":"언어 선택"},
     zh: {
       displayName: "简体中文",
       "Search(search trigger)": "搜索文档",

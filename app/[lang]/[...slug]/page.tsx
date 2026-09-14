@@ -63,9 +63,10 @@ export default async function DocumentationPage({
       <SidebarTrigger className="flex size-11 items-center justify-center self-start rounded-lg border border-slate-200/70 bg-white/70 text-slate-600 shadow-sm backdrop-blur-md transition-colors hover:bg-white/90 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 md:hidden">
         <PanelLeft className="size-5" />
       </SidebarTrigger>
+      {lang === "ko" && !/\.ko\.mdx?$/.test(page.path) && <p role="note" data-language-fallback="en" lang="ko">이 문서의 한국어 번역은 아직 제공되지 않아 영어 원문을 표시합니다.</p>}
       <DocsTitle className="text-blue-600">{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
-      <DocsBody className="[&_a]:text-blue-600">
+      <DocsBody lang={lang === "ko" && !/\.ko\.mdx?$/.test(page.path) ? "en" : lang} className="[&_a]:text-blue-600">
         <MDX components={getMDXComponents()} />
       </DocsBody>
     </DocsPage>
