@@ -47,6 +47,7 @@ jobs:
           server=$!
           trap 'kill "$server" 2>/dev/null || true' EXIT
           node scripts/verify-site-language.mjs 2>&1 | tee artifacts/site-language/check.log
+          node scripts/verify-language-readiness.mjs 2>&1 | tee artifacts/site-language/readiness.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
