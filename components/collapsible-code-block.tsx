@@ -102,6 +102,24 @@ export function CollapsibleCodeBlock({
     ? parsedSourceLineCount
     : metadata.lineCount ?? (code.length === 0 ? 0 : code.split("\n").length);
   const labels = {
+    ko: {
+      code: "코드",
+      lines: "줄",
+      line: "줄",
+      descriptions: {
+        bash: "셸 명령",
+        java: "Java 예제",
+        javascript: "JavaScript 예제",
+        json: "JSON 설정",
+        kotlin: "Kotlin 설정",
+        markdown: "Markdown 내용",
+        plaintext: "텍스트 예제",
+        text: "텍스트 예제",
+        typescript: "TypeScript 예제",
+        xml: "XML 설정",
+        yaml: "YAML 설정",
+      },
+    },
     en: {
       code: "Code",
       lines: "lines",

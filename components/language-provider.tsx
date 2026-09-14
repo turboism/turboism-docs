@@ -28,6 +28,8 @@ type Copy = {
 };
 
 const copy: Record<Language, Copy> = {
+  ko: {"language":"한국어","nav":{"home":"홈","docs":"문서","download":"다운로드","plugins":"플러그인","learn":"튜토리얼","chat":"채팅","github":"GitHub","contact":"문의"},"home":{"eyebrow":"Turboism / 문서","title":"더 명확한 경계 위에서 개발하세요.","description":"Turboism의 기본 사용법과 개발 문서입니다.","useTurboismTitle":"기본 사용법","useTurboismDescription":"Turboism 설치와 사용, 플러그인 관리, 업데이트, 복구 및 제거 방법을 알아보세요.","buildPluginTitle":"개발","buildPluginDescription":"Turboism에 기여하거나 Java 플러그인, GraalJS 및 MCP로 개발하세요.","learnMore":"자세히 보기"}},
+
   en: {
     language: "English",
     nav: { home: "Home", docs: "Docs", download: "Download", plugins: "Plugins", learn: "Learn", chat: "Chat", github: "GitHub", contact: "Contact" },
