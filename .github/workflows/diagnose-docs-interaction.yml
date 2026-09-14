@@ -1,0 +1,63 @@
+name: Diagnose public documentation interaction
+on:
+  push:
+    branches: [tools/language-repair-20260914]
+    paths: [.github/workflows/diagnose-docs-interaction.yml]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '22'
+      - run: npm install --prefix "$RUNNER_TEMP/qa" playwright@1.61.1
+      - run: "$RUNNER_TEMP/qa/node_modules/.bin/playwright install --with-deps chromium"
+      - name: Inspect real public article clicks without changing published content
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/qa/node_modules/playwright
+        run: |
+          node --input-type=module <<'JS'
+          import {createRequire} from 'node:module';import {mkdir,writeFile} from 'node:fs/promises';
+          const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE);
+          const browser=await chromium.launch({headless:true});const report=[];
+          await mkdir('artifacts/docs-interaction',{recursive:true});
+          try {
+            for(const readiness of ['domcontentloaded','load','networkidle'])for(const path of ['/docs/en/use/overview','/docs/en']) {
+              const context=await browser.newContext({viewport:{width:1440,height:844}}),page=await context.newPage();
+              await context.addCookies([{name:'turboism-language',value:'zh',url:'https://turboism.dev/'},{name:'turboism-language',value:'en',domain:'.turboism.dev',path:'/',secure:true}]);
+              const events=[],network=[];const started=Date.now();
+              page.on('pageerror',e=>events.push({at:Date.now()-started,error:e.message}));
+              page.on('console',m=>{if(m.type()==='error')events.push({at:Date.now()-started,console:m.text()});});
+              page.on('request',r=>{if(r.url().includes('_rsc'))network.push({kind:'request',at:Date.now()-started,url:r.url()});});
+              page.on('requestfailed',r=>network.push({kind:'failed',at:Date.now()-started,url:r.url(),failure:r.failure()}));
+              page.on('response',r=>{if(r.url().includes('/_next/')||r.url().includes('_rsc'))network.push({kind:'response',at:Date.now()-started,url:r.url(),status:r.status(),type:r.headers()['content-type']});});
+              const sample=async label=>({label,at:Date.now()-started,url:page.url(),lang:await page.locator('html').getAttribute('lang'),ready:await page.evaluate(()=>document.readyState),cookie:await page.evaluate(()=>document.cookie),pressed:await page.locator('header .tb-header-row > .tb-language button[aria-pressed=true]').allTextContents()});
+              const item={path,readiness,samples:[]};
+              try {
+                await page.goto('https://turboism.dev'+path,{waitUntil:readiness,timeout:45000});
+                const button=page.locator('.tb-header-row > .tb-language button[lang="ja"]');await button.waitFor();
+                item.samples.push(await sample('before'));
+                await button.click();item.samples.push(await sample('after-click'));
+                await page.waitForFunction(()=>document.documentElement.lang==='ja',{},{timeout:5000}).catch(()=>{});
+                item.samples.push(await sample('after-wait'));
+                if(await page.locator('html').getAttribute('lang')!=='ja') {
+                  await page.waitForLoadState('networkidle',{timeout:10000}).catch(()=>{});
+                  await button.click();await page.waitForFunction(()=>document.documentElement.lang==='ja',{},{timeout:5000}).catch(()=>{});
+                  item.samples.push(await sample('second-click'));
+                }
+              } catch(e){item.error=e.message;}
+              item.events=events;item.network=network;report.push(item);console.log('DOCS_DIAG '+JSON.stringify(item));
+              await page.screenshot({path:`artifacts/docs-interaction/${readiness}-${path.endsWith('overview')?'article':'home'}.png`}).catch(()=>{});
+              await context.close();
+            }
+          } finally {await browser.close();await writeFile('artifacts/docs-interaction/report.json',JSON.stringify(report,null,2));}
+          JS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: docs-interaction-diagnosis
+          path: artifacts/docs-interaction
+          retention-days: 7
