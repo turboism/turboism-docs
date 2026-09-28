@@ -76,10 +76,10 @@
       "docs": "문서",
       "sdk": "SDK",
       "plugins": "플러그인",
-      "learn": "학습",
-      "thanks": "감사",
+      "learn": "튜토리얼",
+      "thanks": "감사의 말",
       "download": "다운로드",
-      "menu": "내비게이션 및 언어",
+      "menu": "탐색 및 언어",
       "nav": "Turboism 사이트",
       "sponsor": "후원"
     }
