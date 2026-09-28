@@ -24,7 +24,8 @@ Availability of an individual feature still depends on the Cubism Editor version
 | PSD Clip Mask Import | Imports ordered PSD clipping relationships into ArtMesh clip-mask assignments with an explicit overwrite policy. |
 | History Panel | Projects the active document's native Undo history into a Photoshop-style pane with snapshot-bound Undo/Redo navigation. |
 | Recent Preview | Captures bounded preview thumbnails for recent project files in the Recent Files hover popup. |
-| WebDAV Auto-Backup Sync | Uploads Cubism auto-backup artifacts to a WebDAV endpoint using the JDK HTTP client. |
+| WebDAV Auto-Backup Sync | Uploads Cubism auto-backup artifacts to a WebDAV endpoint using the JDK HTTP client. Plugin ID: `dev.turboism.plugin.webdav`. |
+| Protected Export | Optional protected runtime-model export: works on a task-owned copy, flattens Warp/Rotation deformers, obfuscates ArtMesh identities, validates the complete staged output, and publishes atomically. Admitted only on reviewed Cubism versions and eligible models. |
 
 ## Analysis and performance
 
@@ -47,7 +48,8 @@ Availability of an individual feature still depends on the Cubism Editor version
 | Plugin | What it does |
 | --- | --- |
 | Turboism MCP Server | Loopback Model Context Protocol server exposing typed Cubism inspection, editing, history, and Editor-command workflows. Requires bearer authentication; see [MCP](../build-a-plugin/mcp). |
-| Turboism Core | Built-in, non-removable Turboism menu, toolbar, settings, tab, and plugin manager. Cannot be disabled or uninstalled. |
+
+The built-in Turboism menu, settings, logs, About, plugin management, and update hints are not a plugin. They are provided by the runtime-owned framework shell (`dev.turboism.shell`) under the reserved `turboism.core` identity; plugin management lists it as a built-in, non-removable row that cannot be disabled or uninstalled.
 
 ## How to manage them
 

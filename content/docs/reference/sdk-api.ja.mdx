@@ -237,9 +237,10 @@ UI API は Swing/AWT や host widget ではなく SDK DTO を使います。現�
 - action と menu。
 - main と palette toolbar。
 - typed context menu と context selection。
-- overlay、dialog、status notification、file selection。
+- overlay、dialog、status notification、canvas hint、file selection。
 - toolkit-neutral `PanelView` embedded panel。
 - UI-thread scheduling。
+- canvas-hint notification（`turboism.ui.canvas.hint` 権限）。
 - scene-table、appearance、control-appearance、selected Editor contribution。
 
 各 UI family には独立した capability と Provider evidence があります。ある family が利用可能でも、他の family がすべて有効になるわけではありません。

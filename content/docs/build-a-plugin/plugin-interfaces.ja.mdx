@@ -37,6 +37,7 @@ public interface TurboismPlugin {
 | Events | `eventBus()` | immutable な型付き event を publish/subscribe する |
 | Actions | `actions()` | 再利用可能な plugin action を登録する |
 | Menus and UI | `menus()`, toolbar/context-menu registries, `uiHost()` | toolkit-neutral UI descriptor を提供する |
+| Canvas hints | `uiHost()` | 描画領域上にネイティブ Cubism hint を表示する（`turboism.ui.canvas.hint` 権限） |
 | Configuration | `config()` | 型付き schema を登録し、value を読み、compare-and-set write を行う |
 | Diagnostics | `diagnostics()` | 構造化された Runtime diagnostic を調べる |
 | Cleanup | `disposableScope()` | closeable な lifecycle resource を登録する |

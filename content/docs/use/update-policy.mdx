@@ -3,7 +3,7 @@ title: Update Policy
 description: Update Turboism by rerunning an installer, and choose between the stable, beta, and nightly release channels.
 ---
 
-Turboism publishes product releases in three channels and mirrors every package behind a machine-readable release feed. Installing an update is still an explicit, manual step: the current stable release has no automatic installer update.
+Turboism publishes product releases in three channels and mirrors every package behind a machine-readable release feed. Turboism checks for stable updates automatically, but installing an update is still an explicit, manual step: no installer is downloaded or executed automatically.
 
 ## Release channels
 
@@ -60,10 +60,17 @@ A failed apply restores the previous plugin files from a private backup. This wo
 - Plugin authors should use the declared Turboism API range and test unavailable behavior.
 - Supported Cubism Editor versions are 5.2.03, 5.3.02, and 5.3.03, with Windows x64 as the supported host platform.
 
+## Update checker
+
+Turboism checks for stable updates against the deployed release API (`api.turboism.dev/v1/releases/stable.json`). The comparison uses the authoritative build number embedded in the installed package, so a lower build is never offered as an update and an equal build number with a different version is treated as an identity conflict rather than an update. Installations that predate build numbers keep comparing by version only and are never assigned an invented number.
+
+An available update is presented as a native Cubism hint over the drawing area. Clicking it opens the fixed first-party download page; no URL from the release feed is opened or installed, and no installer is downloaded or executed automatically.
+
+The update checker is non-blocking and runs at most once per 24 hours, with a manual check that is always available. Automatic checks have their own persistent toggle in the Startup settings tab and are independent of Cubism's own update suppression.
+
 ## Not currently available
 
-- automatic download and installation of framework updates;
-- plugin auto-updates;
+- automatic download and installation of framework or plugin updates;
 - a production-enabled marketplace;
 - publisher signatures and revocation;
 - retained immutable JAR generations;

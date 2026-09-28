@@ -28,7 +28,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - 製品リリースは、読み取り専用の candidate build と、明示的に保護された GitHub の promotion ステップに分かれます。失敗した candidate は意図した version を再利用し、promotion だけが annotated tag を作成し、再ビルドせずに検証済みのバイトを公開します。
 - すべての build は、version、channel、build number、source revision、dirty flag というグローバルな build identity を埋め込みます（`FrameworkBuildInfo`）。
 - `api.turboism.dev` の release API は、asset ごとの SHA-256 と checksum file を伴ってすべての channel をミラーし、公式ミラーと GitHub の source を解決し、release ごとの download request を報告します。
-- レビュー済みの release notes は、英語をフォールバックとして簡体字中国語と日本語の翻訳を伴います。digest が正確な英語セクションと一致しなくなった翻訳は、再利用せずに拒否されます。
+- レビュー済みの release notes は、英語をフォールバックとして簡体字中国語、日本語、韓国語の翻訳を伴います。digest が正確な英語セクションと一致しなくなった翻訳は、再利用せずに拒否されます。
 - インストーラーは英語、簡体字中国語、日本語、韓国語で提供されます。インストーラーの言語はインストーラーに限定され、ランタイムの言語はランタイムの `locale` 設定から決まり、プラグインのインターフェース言語は Cubism の Environment Settings の言語に従います。
 
 ## フレームワーク基盤
@@ -38,7 +38,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - ローカルプラグイン JAR の検出、マニフェストと API 範囲の検証、依存関係の解決、プラグインごとの ClassLoader、ライフサイクル実行、逆順シャットダウン、scope/ClassLoader のクリーンアップ。
 - JAR ごとの順序付き複数エントリポイントと、JAR 全体の起動ロールバック。
 - ロギング、パス、ローカライズ、タスク、設定、ストレージ、ユーザーファイル、イベント、アクション、UI 貢献、Cubism アクセス、診断のための `PluginContext` サービス。
-- ローカル JAR の install、replacement、enable、disable、uninstall のマネージド管理。変更は journal にステージングされ、Cubism の再起動後に適用されます。core plugin は無効化もアンインストールもできません。
+- ローカル JAR の install、replacement、enable、disable、uninstall のマネージド管理。変更は journal にステージングされ、Cubism の再起動後に適用されます。組み込みの framework shell は Runtime 所有の framework コードであり plugin ではないため、無効化もアンインストールもできません。
 - startup preflight は適用前にステージング済み payload の identity（SHA-256、size、descriptor hash）を再検証し、private backup/restore が失敗した置換適用を保護します。
 - フレームワークのメッセージカタログは、first-party plugin と同じ locale matrix に従います。カタログが欠けている場合は、黙って英語に縮退するのではなく build gate で失敗します。
 
@@ -61,11 +61,18 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - Cubism 5.3.03 は、独自の認定済み texture-atlas authoring provider、selector contract、layout provider に加え、physics、performance metrics、project lifecycle、model statistics、startup suppression 用の exact-version profile を持ちます。
 - Parameter lifecycle hook は、順序付き同期 `before` 書き換え、変更時のみの `on`、正常完了時の `after`、再帰拒否、上限付き観測処理、アンロード時のクリーンアップをサポートします。
 - 履歴は不変の意味的詳細を投影するようになりました。`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`、および target、coordinate、grouping の上限付き検証です。これらの値はホストへの書き込み権限を与えません。
-- 現在のページの texture-atlas layout contract は、レビュー済みの SDK compatibility baseline（v8）として固定され、保持された constructor の linkage gate を持ちます。
+- 現在のページの texture-atlas layout contract は、レビュー済みの SDK compatibility baseline（v10）として固定され、保持された constructor の linkage gate を持ちます。
+
+## 更新チェッカー
+
+- Turboism はデプロイ済みの release API に対して stable 更新を確認します。比較には、インストール済みパッケージに埋め込まれた正規の build number を使用します。
+- 利用可能な更新は、描画領域上のネイティブ Cubism hint として提示されます。クリックすると固定のファーストパーティダウンロードページが開きます。インストーラーが自動でダウンロードまたは実行されることはありません。
+- 更新チェッカーは UI をブロックせず、24 時間に最大 1 回実行され、手動チェックは常に利用できます。自動チェックは Startup 設定タブに専用の永続トグルを持ちます。
+- plugin は、canvas-hint UI capability（`turboism.ui.canvas.hint` 権限）を通じて、描画領域上にネイティブ Cubism hint を表示できます。検証済みの 5.2.03、5.3.02、5.3.03 ホストルートを通じてバージョンルーティングされます。
 
 ## ファーストパーティプラグイン
 
-レビュー済みバンドルには 17 個のプラグインが含まれます。texture-atlas パッキング、mesh の mirror 軸編集、parameter 一括転送、physics 編集、パレットタブフィルター、PSD クリップマスク取り込み、履歴パネル、最近のプレビューサムネイル、WebDAV 自動バックアップ同期、クリップマスクビューアー、texture-atlas 統計、パフォーマンス統計、UI テーマ、パレットラベルのスタイル、Scene パレット拡張、loopback MCP サーバー、そして組み込みの core plugin です。[ファーストパーティプラグイン](./use/first-party-plugins)を参照してください。
+レビュー済みバンドルには 17 個のプラグインが含まれます。texture-atlas パッキング、mesh の mirror 軸編集、parameter 一括転送、physics 編集、パレットタブフィルター、PSD クリップマスク取り込み、履歴パネル、最近のプレビューサムネイル、WebDAV 自動バックアップ同期、クリップマスクビューアー、texture-atlas 統計、パフォーマンス統計、UI テーマ、パレットラベルのスタイル、Scene パレット拡張、protected export、loopback MCP サーバーです。組み込みの Turboism メニュー、設定、plugin management、更新ヒントは、plugin ではなく Runtime 所有の framework shell によって提供されます。[ファーストパーティプラグイン](./use/first-party-plugins)を参照してください。
 
 ## 共有プラグインサービスと UI
 
@@ -75,7 +82,7 @@ SDK には次の契約が含まれます。
 - main と palette toolbar。
 - 型付き context menu。
 - toolkit-neutral embedded panel。
-- overlay、status notification、dialog、file selection。
+- overlay、status notification、canvas hint、dialog、file selection。
 - 型付きプラグイン設定と migration。
 - プラグイン所有のデータ、状態、cache storage。
 - 上限付きタスクとキャンセル。
@@ -110,7 +117,6 @@ Host validation は監督されたローカルキューを通じて実行され�
 - 完全な Editor-authoring matrix は、いくつかの operation family でまだ不完全であり、family ごとの準備状況は [SDK API ガイド](./reference/sdk-api)に記録されています。
 - Drawable、Deformer、Glue、mesh、PSD、および追加の texture-atlas workflow には、利用者主導の実装と正確な検証が必要です。
 - Host UI attachment、高頻度 hook、実ホスト対応は、正確なバージョンゲートを伴う高リスク境界として残っています。
-- 更新チェックは現在の stable リリースには含まれません。更新はインストーラーの手動再実行です。
 - SDK HTML Javadoc は生成でき、このサイトで公開されていますが、多くの public declaration にはより詳しい説明コメントがまだ必要です。
 
 ## 現在約束されていないもの
@@ -119,7 +125,7 @@ Turboism は現在、次のものを約束していません。
 
 - インストーラーパッケージの署名またはノータリゼーション済みの公開リリースチャネル。
 - 検証済みの macOS Cubism ホスト対応。
-- フレームワークまたはプラグイン更新の自動ダウンロードとインストール。
+- フレームワークまたはプラグイン更新の自動ダウンロードとインストール（更新チェックは利用可能。インストーラーの自動更新は対象外）。
 - 本番有効化されたマーケットプレイス、publisher signing、または revocation。
 - 完全なユーザー向けの install、repair、rollback、recovery、purge UI。
 - Cubism launcher のグローバルな変更。

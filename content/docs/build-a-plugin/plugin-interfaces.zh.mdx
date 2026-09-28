@@ -37,6 +37,7 @@ public interface TurboismPlugin {
 | 事件 | `eventBus()` | 发布和订阅不可变类型化事件 |
 | 操作 | `actions()` | 注册可复用的插件操作 |
 | 菜单和 UI | `menus()`、工具栏/上下文菜单注册表、`uiHost()` | 提供与工具包无关的 UI 描述符 |
+| Canvas 提示 | `uiHost()` | 在绘图区显示原生 Cubism 提示（需要 `turboism.ui.canvas.hint` 权限） |
 | 配置 | `config()` | 注册类型化 schema、读取值并使用 compare-and-set 写入 |
 | 诊断 | `diagnostics()` | 检查结构化 Runtime 诊断信息 |
 | 清理 | `disposableScope()` | 注册可关闭的生命周期资源 |

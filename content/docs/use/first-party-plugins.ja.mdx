@@ -24,7 +24,8 @@ Full インストールには、レビュー済みのファーストパーティ
 | PSD Clip Mask Import | 順序付けされた PSD のクリッピング関係を、明示的な上書きポリシー付きで ArtMesh のクリップマスク割り当てに取り込みます。 |
 | History Panel | アクティブなドキュメントのネイティブ Undo 履歴を、スナップショットに紐付いた Undo/Redo ナビゲーションを備えた Photoshop 風ペインに投影します。 |
 | Recent Preview | Recent Files のホバーポップアップに、最近のプロジェクトファイルの範囲が限定されたプレビューサムネイルを表示します。 |
-| WebDAV Auto-Backup Sync | JDK HTTP client を使用して、Cubism の自動バックアップ生成物を WebDAV エンドポイントへアップロードします。 |
+| WebDAV Auto-Backup Sync | JDK HTTP client を使用して、Cubism の自動バックアップ生成物を WebDAV エンドポイントへアップロードします。Plugin ID: `dev.turboism.plugin.webdav`。 |
+| Protected Export | 任意の保護付きランタイムモデルエクスポート。タスク所有のコピーで動作し、Warp/Rotation deformer をフラット化し、ArtMesh の同一性を難読化し、ステージングされた完全な出力を検証してからアトミックに公開します。審査済みの Cubism バージョンと適格なモデルでのみ利用できます。 |
 
 ## 分析とパフォーマンス
 
@@ -47,7 +48,8 @@ Full インストールには、レビュー済みのファーストパーティ
 | プラグイン | 機能 |
 | --- | --- |
 | Turboism MCP Server | 型付きの Cubism 検査、編集、履歴、Editor コマンドのワークフローを公開する loopback Model Context Protocol サーバー。bearer 認証が必要です。[MCP](../build-a-plugin/mcp)を参照してください。 |
-| Turboism Core | 組み込みで削除できない Turboism のメニュー、ツールバー、設定、タブ、プラグインマネージャー。無効化もアンインストールもできません。 |
+
+組み込みの Turboism メニュー、設定、ログ、About、plugin management、更新ヒントは plugin ではありません。それらは、予約された `turboism.core` identity を持つ Runtime 所有の framework shell（`dev.turboism.shell`）によって提供されます。plugin management には組み込みの削除不可能な行として表示され、無効化もアンインストールもできません。
 
 ## 管理方法
 

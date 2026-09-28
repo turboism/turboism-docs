@@ -24,7 +24,8 @@ Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与
 | PSD Clip Mask Import | 将有序的 PSD 剪贴关系导入为 ArtMesh 剪贴蒙版分配，并提供明确的覆盖策略。 |
 | History Panel | 将活动文档的原生 Undo 历史投影为 Photoshop 风格的面板，并提供绑定快照的 Undo/Redo 导航。 |
 | Recent Preview | 在“最近使用的文件”悬停弹窗中为最近的项目文件截取有界的预览缩略图。 |
-| WebDAV Auto-Backup Sync | 使用 JDK HTTP client 将 Cubism 自动备份产物上传到 WebDAV endpoint。 |
+| WebDAV Auto-Backup Sync | 使用 JDK HTTP client 将 Cubism 自动备份产物上传到 WebDAV endpoint。插件 ID：`dev.turboism.plugin.webdav`。 |
+| Protected Export | 可选的保护式运行时模型导出：在任务专属副本上工作，展平 Warp/Rotation deformer，混淆 ArtMesh 身份，校验完整的暂存输出后原子化发布。仅在已审查的 Cubism 版本和符合条件的模型上可用。 |
 
 ## 分析与性能
 
@@ -47,7 +48,8 @@ Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与
 | 插件 | 功能 |
 | --- | --- |
 | Turboism MCP Server | 提供类型化 Cubism 检查、编辑、历史和 Editor 命令工作流的 loopback Model Context Protocol server。需要 bearer 认证；请参阅 [MCP](../build-a-plugin/mcp)。 |
-| Turboism Core | 内置且不可移除的 Turboism 菜单、工具栏、设置、标签页和插件管理器。无法被禁用或卸载。 |
+
+内置的 Turboism 菜单、设置、日志、关于、插件管理和更新提示不是插件。它们由 Runtime 自有的框架 shell（`dev.turboism.shell`）以保留的 `turboism.core` 身份提供；插件管理将其列为内置、不可移除的行，无法禁用或卸载。
 
 ## 如何管理它们
 

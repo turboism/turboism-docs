@@ -54,7 +54,7 @@ desired state は Turboism home configuration に永続化され、再起動後�
 5. plugin がロードされなくなったことを確認します。
 6. data を保持するか削除するか決めます。
 
-core plugin はアンインストールできません。
+組み込みの framework shell は plugin ではなく、無効化もアンインストールもできません。
 
 plugin JAR を削除しても、plugin 所有の全ファイルが自動的に消去されるわけではありません。
 
@@ -136,5 +136,3 @@ Plugin management は現在、次を提供していません。
 - 保持される履歴バージョン。
 - 完全なユーザー向け修復・ロールバック・リカバリ・purge UI。
 - Cubism installation または launcher の system-level modification。
-
-組み込みの Official Directory client と UI は存在しますが、本番アクティベーションは未準備です。本番 key list は空で、ライブ署名済み catalog の準備は確立されていません。

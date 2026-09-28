@@ -37,6 +37,7 @@ public interface TurboismPlugin {
 | 이벤트 | `eventBus()` | 변경 불가능한 타입 지정 이벤트 게시 및 구독 |
 | 액션 | `actions()` | 재사용 가능한 플러그인 액션 등록 |
 | 메뉴 및 UI | `menus()`, 도구 모음/컨텍스트 메뉴 레지스트리, `uiHost()` | 툴킷 중립적 UI 디스크립터 기여 |
+| 캔버스 힌트 | `uiHost()` | 그리기 영역 위에 네이티브 Cubism 힌트 표시(`turboism.ui.canvas.hint` 권한) |
 | 구성 | `config()` | 타입 지정 스키마 등록, 값 읽기 및 compare-and-set 쓰기 |
 | 진단 | `diagnostics()` | 구조화된 런타임 진단 조회 |
 | 정리 | `disposableScope()` | 닫을 수 있는 수명 주기 리소스 등록 |

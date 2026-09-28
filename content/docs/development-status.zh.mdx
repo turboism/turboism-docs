@@ -28,7 +28,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - 产品发布分为只读候选构建和显式受保护的 GitHub 提升步骤。失败的候选会复用既定版本；只有提升步骤才会创建附注标签，并在不重新构建的情况下发布已验证的字节。
 - 每次构建都会嵌入全局构建身份：版本、渠道、构建号、源修订和 dirty 标记（`FrameworkBuildInfo`）。
 - `api.turboism.dev` 上的发布 API 镜像每个渠道，提供每个资产的 SHA-256 和校验和文件，解析官方镜像与 GitHub 来源，并报告每次发布的下载请求。
-- 已审查的发行说明带有简体中文和日文翻译，并以英文作为回退；摘要不再匹配确切英文段落的翻译会被拒绝，而不是被复用。
+- 已审查的发行说明带有简体中文、日文和韩文翻译，并以英文作为回退；摘要不再匹配确切英文段落的翻译会被拒绝，而不是被复用。
 - 安装程序提供英文、简体中文、日文和韩文。安装器语言的作用范围仅限于安装器；运行时语言来自运行时 `locale` 设置，插件界面语言跟随 Cubism 环境设置的语言。
 
 ## 框架基础
@@ -38,7 +38,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - 本地插件 JAR 发现、manifest 和 API 范围验证、依赖解析、每个插件一个 ClassLoader、生命周期执行、逆序关闭以及 scope/ClassLoader 清理。
 - 每个 JAR 支持有序的多个入口点，并支持整个 JAR 的启动回滚。
 - `PluginContext` 服务涵盖日志、路径、本地化、任务、配置、存储、用户文件、事件、操作、UI 贡献项、Cubism 访问和诊断。
-- 托管本地 JAR 安装、替换、启用、禁用和卸载。变更会写入 journal 暂存，并在 Cubism 重启后应用；核心插件无法被禁用或卸载。
+- 托管本地 JAR 安装、替换、启用、禁用和卸载。变更会写入 journal 暂存，并在 Cubism 重启后应用；内置框架 shell 是 Runtime 自有的框架代码，不是插件，无法被禁用或卸载。
 - 启动 preflight 会在应用前重新验证暂存载荷的身份（SHA-256、大小、描述符哈希），私有 backup/restore 保护失败的替换应用。
 - 框架消息 catalog 与第一方插件遵循相同的 locale 矩阵，因此缺失的 catalog 会使构建门禁失败，而不是静默降级为英文。
 
@@ -61,11 +61,18 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - Cubism 5.3.03 拥有其已接纳的 texture-atlas 创作 provider、selector 契约和 layout provider，以及针对 physics、performance metrics、project lifecycle、model statistics 和 startup suppression 的确切版本 profile。
 - Parameter 生命周期 hooks 支持有序的同步 `before` 重写、仅变更时的 `on`、正常完成后的 `after`、递归拒绝、有界的观察工作和卸载清理。
 - History 现在会投影不可变的语义细节：`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`，并对目标、坐标和分组进行有界验证。这些值不授予任何主机写入权限。
-- 当前页面的 texture-atlas layout 契约被绑定为已审查的 SDK 兼容性基线（v8），并对保留的构造函数设有链接门禁。
+- 当前页面的 texture-atlas layout 契约被绑定为已审查的 SDK 兼容性基线（v10），并对保留的构造函数设有链接门禁。
+
+## 更新检查
+
+- Turboism 会针对已部署的发布 API 检查稳定版更新。比较使用安装包内嵌的权威构建号。
+- 可用更新以绘图区上的原生 Cubism 提示呈现。点击提示会打开固定的官方下载页；不会自动下载或执行安装程序。
+- 更新检查不阻塞界面，最多每 24 小时运行一次，并始终提供手动检查。自动检查在「启动」设置页有独立的持久开关。
+- 插件可以通过 canvas-hint UI 能力（`turboism.ui.canvas.hint` 权限）在绘图区显示原生 Cubism 提示，按版本路由到已校验的 5.2.03、5.3.02 和 5.3.03 宿主路径。
 
 ## 第一方插件
 
-已审查的捆绑包包含十七个插件：texture-atlas 打包、mesh 镜像轴编辑、parameter 批量传输、physics 编辑、调色板标签页过滤器、PSD 剪贴蒙版导入、历史面板、最近预览缩略图、WebDAV 自动备份同步、剪贴蒙版查看器、texture-atlas 统计、性能统计、UI 主题、调色板标签样式、场景调色板增强器、loopback MCP server，以及内置核心插件。请参阅[第一方插件](./use/first-party-plugins)。
+已审查的捆绑包包含十七个插件：texture-atlas 打包、mesh 镜像轴编辑、parameter 批量传输、physics 编辑、调色板标签页过滤器、PSD 剪贴蒙版导入、历史面板、最近预览缩略图、WebDAV 自动备份同步、剪贴蒙版查看器、texture-atlas 统计、性能统计、UI 主题、调色板标签样式、场景调色板增强器、protected export 和 loopback MCP server。内置的 Turboism 菜单、设置、插件管理和更新提示由 Runtime 自有的框架 shell 提供，而不是插件。请参阅[第一方插件](./use/first-party-plugins)。
 
 ## 共享插件服务和 UI
 
@@ -75,7 +82,7 @@ SDK 包含以下契约：
 - 主工具栏和调色板工具栏；
 - 类型化上下文菜单；
 - 与工具包无关的嵌入式面板；
-- 覆盖层、状态通知、对话框和文件选择；
+- 覆盖层、状态通知、canvas 提示、对话框和文件选择；
 - 类型化插件配置和迁移；
 - 插件自有的数据、状态和缓存存储；
 - 有界任务和取消；
@@ -110,7 +117,6 @@ host validation           explicit exact-version Cubism execution for the affect
 - 完整的 Editor 创作矩阵在多个操作系列中仍不完整，每个系列的就绪情况记录在 [SDK API 指南](./reference/sdk-api) 中。
 - Drawable、Deformer、Glue、mesh、PSD 以及额外的 texture-atlas 工作流需要由消费者驱动的实现和精确验证。
 - 主机 UI 附加、高频 hooks 和真实主机就绪度仍是具有精确版本门槛的高风险边界。
-- 更新检查不属于当前稳定版本；更新需要手动重新运行安装器。
 - 可以生成 SDK HTML Javadoc 并托管在本站点上，但许多公开声明仍需要更好的说明性注释。
 
 ## 当前未作承诺
@@ -119,7 +125,7 @@ Turboism 当前不承诺：
 
 - 安装包的签名或公证公开发布渠道；
 - 经过验证的 macOS Cubism 宿主支持；
-- 框架或插件更新的自动下载与安装；
+- 框架或插件更新的自动下载与安装（更新检查已可用；自动安装器更新不可用）；
 - 生产可用的 marketplace、发布者签名或撤销；
 - 完整的用户面向安装、修复、回滚、恢复和清除 UI；
 - 对 Cubism launcher 的全局修改；
