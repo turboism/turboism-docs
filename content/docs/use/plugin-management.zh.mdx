@@ -1,23 +1,63 @@
 ---
 title: 插件管理
-description: 安全地安装、替换、启用、禁用和卸载本地 Turboism 插件 JAR。
+description: 安全地发现、配置、启用、禁用和管理 Turboism 插件。
 ---
 
-Turboism 提供两种本地插件 JAR 安装方式：托管安装（推荐）和手动安装（高级/备用）。它不是系统级 Turboism 安装器。Full 安装已随附已审查的[第一方插件捆绑包](./first-party-plugins)，第三方插件可以用同样的托管流程添加。
+Turboism 提供数种互为补充的插件管理方式：
 
-所有插件管理变更都会分阶段提交，并在 Cubism 重启后应用。它们不会热切换当前已加载的插件实例。
+- **Cubism 内置插件市场**（**Turboism** 菜单 → **插件市场…**）或 [turboism.dev/plugins](https://turboism.dev/plugins)：用于发现和安装第一方及目录收录的插件；
+- 针对已验证第一方插件的**后台自动更新**；
+- **管理插件…**：用于启用、禁用、卸载插件或暂存本地插件 JAR；
+- 专用双栏窗口中的**插件设置…**：用于集中配置插件选项。
 
-## 托管安装（推荐）
+完整版（Full）安装已经预装了所有已审查的[第一方插件捆绑包](./first-party-plugins)。在精简版（Thin）安装中，插件可以按需从插件市场获取。
 
-1. 从你信任的 source 获取或构建插件 JAR。
-2. 打开 Turboism 插件管理。
-3. 选择 **从 JAR 安装…**（Install from JAR…）。
+所有插件生命周期和文件变更均采用安全受控的分阶段处理。暂存的更新在重启 Cubism 后生效；支持热更新（hot-reload）的插件则可以立即生效。
+
+## Turboism 顶部菜单
+
+在 Cubism Editor 中，所有框架与插件功能均汇聚在顶层 **Turboism** 菜单下（旧版中名为“插件”/Plugins 菜单）。菜单项包括：
+
+1. **插件市场…** — 浏览并安装在线目录中的第一方及精选插件。
+2. **管理插件…** — 查看已安装插件、切换启用/停用状态、从本地 JAR 安装以及卸载插件。
+3. **插件设置…** — 打开专用的双栏设置窗口，集中配置各个已安装插件的选项。
+4. **检查更新** — 检查 Turboism 运行时框架的新版本。
+5. **Turboism 设置…** — 配置框架级偏好（更新检查、运行时日志、语言 locale 和启动选项）。
+6. **快捷键…** — 查看和自定义各操作的快捷键绑定。
+7. **日志…** — 打开运行时与诊断日志目录。
+8. **各插件操作** — 活动插件注册的业务操作项。
+9. **关于** — 查看当前安装的 Turboism 版本和构建标识。
+
+## 插件市场与自动更新
+
+自 0.67.0-beta.3 起，第一方插件无需重新安装整个框架即可独立安装并保持最新：
+
+- 打开 **Turboism → 插件市场…** 或访问 [turboism.dev/plugins](https://turboism.dev/plugins) 浏览可用插件。
+- 第一方插件在通过数字签名验证后会在后台自动下载更新。
+- 标有**热更新**（hot-reload）的插件会即刻生效，无需中断建模工作流。
+- 其他插件更新会在下一次重启 Cubism 时应用。
+- 用户可随时在框架设置中关闭官方插件自动更新。
+
+## 插件设置
+
+如需配置各个插件的具体选项，请选择 **Turboism → 插件设置…**：
+
+- 打开专用的双栏窗口：左侧栏列出已安装的插件，右侧栏显示当前选中插件的配置表单。
+- 各项设置在保存到 `config/<pluginId>/` 前会经过严格校验。
+- 框架自身的基础设置继续保留在 **Turboism → Turboism 设置…** 中。
+
+## 托管本地 JAR 安装
+
+如需安装自定义或在本地构建的插件 JAR：
+
+1. 从信任的来源获取或构建插件 JAR。
+2. 在 Cubism 中选择 **Turboism → 管理插件…**。
+3. 点击 **从 JAR 安装…**（Install from JAR…）。
 4. 选择本地 `.jar` 文件。
-5. 确认将 JAR 标记为本地/未验证来源的对话框。
-6. 确认操作显示为 pending。
-7. 正常关闭 Cubism。
-8. 使用同一个 Turboism home 再次启动 Cubism。
-9. 检查插件列表和 Runtime 日志中的生效状态。
+5. 确认提示该 JAR 属于本地/未验证来源的对话框。
+6. 确认操作已显示为待处理（pending）。
+7. 正常关闭 Cubism 并通过同一 Turboism home 重启。
+8. 在 **管理插件…** 界面及运行时日志中确认生效状态。
 
 在暂存之前，Runtime 将所选 JAR 视为不受信任的本地输入。它打开常规非符号链接 JAR（受原始大小、单条目大小、总展开量、条目数量和压缩比等有界归档限制约束），检查恰好一个描述符和插件内容，然后将载荷快照到 pending 状态。
 
@@ -25,114 +65,98 @@ Turboism 提供两种本地插件 JAR 安装方式：托管安装（推荐）和
 
 ## 替换或更新插件
 
-目前没有单独的生产级更新服务。使用相同 plugin ID 安装新版 JAR 会分阶段提交 replacement intent。
+- **第一方插件**：在后台自动更新，或通过**插件市场…**一键更新。
+- **本地/第三方插件**：通过 **管理插件… → 从 JAR 安装…** 安装具有相同 plugin ID 的新版本 JAR，以提交替换意图。
 
-推荐流程：
+本地插件更新的推荐流程：
 
-1. 备份当前 JAR 以及插件的持久化配置/数据。
+1. 备份当前 JAR 以及插件的持久化配置和数据。
 2. 通过插件管理安装新版 JAR。
 3. 重启 Cubism。
-4. 验证显示的版本、生命周期状态、配置迁移和日志。
+4. 验证显示的插件版本、生命周期状态、配置迁移以及日志。
 
-启动 preflight 会重新验证暂存的 JAR；应用失败时，会从私有 backup 恢复之前的插件文件。没有保留历史版本列表，也没有完整的用户面向修复、回滚、恢复或清理 UI。
+启动 preflight 会重新验证暂存的 JAR；应用失败时，会从私有备份恢复之前的插件文件。当前不保留历史版本列表，也没有完整的用户面向回滚或清理 UI。
 
 ## 禁用或启用插件
 
-目标状态会持久化在 Turboism home 配置中，并在重启后生效。
+在 **Turboism → 管理插件…** 中，可以自由切换任意已安装插件的启用/禁用状态：
 
-- Runtime 所有的 `turboism.core` 插件不能禁用；
-- 被禁用的插件会在下一次启动发现期间跳过；
-- 修改开关不会立即卸载活动实例；
-- 正常关闭仍会让插件有机会关闭其 scope 并释放 ClassLoader 引用。
+- 目标状态会持久化到 `config.json` 的 `disabledPlugins` 字段中，并在 Cubism 重启后生效。
+- Runtime 所有的 `turboism.core` 属于内置框架代码，无法禁用。
+- 被禁用的插件会在下一次启动扫描期间被跳过。
+- 跨变体升级会完整保留你的 `disabledPlugins` 清单：在 Thin 上覆盖安装 Full 绝不会静默重新启用此前已被停用的插件。
 
 ## 卸载插件
 
-1. 在插件管理中选择插件。
-2. 选择 **卸载**（Uninstall）。
-3. 确认 pending 操作。
-4. 关闭并重启 Cubism。
-5. 确认插件不再加载。
-6. 决定是否保留其数据。
-
-内置框架 shell 不是插件，无法被禁用或卸载。
+1. 打开 **Turboism → 管理插件…**。
+2. 选择要移除的插件并点击 **卸载**。
+3. 确认待处理操作。
+4. 重启 Cubism。
+5. 确认该插件不再被加载。
+6. 根据需要决定是否保留或删除其持久化数据。
 
 删除插件 JAR 不会自动擦除每个插件所有的文件：
 
-- 如果重新安装后可能还需要设置或业务数据，请保留 `config/<pluginId>/` 和 `data/<pluginId>/`；
-- `cache/<pluginId>/`、`state/<pluginId>/` 和 `logs/<pluginId>/` 通常可以重建或仅用于诊断，但只能在 Turboism 停止时删除；
-- 没有备份时，删除配置或持久化数据不可逆。
+- 若重新安装后可能需要原设置或业务数据，请保留 `config/<pluginId>/` 和 `data/<pluginId>/`；
+- `cache/<pluginId>/`、`state/<pluginId>/` 和 `logs/<pluginId>/` 可在 Turboism 停止时删除；
+- 没有备份时删除配置或持久化数据是不可逆的。
 
-## 手动安装
+## 手动安装（高级备用）
 
-手动安装是面向受信任插件 JAR 的高级/备用路径。它将插件 JAR 直接复制到 Turboism home 的 `plugins/` 目录，而不是走托管暂存流程。普通用户应优先使用上面的托管安装。
+手动安装是面向脱机测试受信任插件 JAR 的备选途径。它将插件 JAR 直接复制到 `<turboism.home>/plugins/` 目录中，不走托管暂存流程。普通用户应优先使用插件市场或托管安装。
 
-手动复制会绕过下方对比中详述的托管保护措施。Runtime 仍会执行启动验证，但启动验证不等同于托管 preflight。
+插件 JAR 是从插件源码构建的 JAR，不是 Turboism 安装程序文件或发行归档。
 
-插件 JAR 是从插件源码构建出的 JAR，不是 Turboism 安装器文件 `TurboismInstaller-<version>.jar`。
-
-### 手动安装插件 JAR
+### 手动安装插件 JAR 步骤
 
 1. 完全关闭 Cubism 和 Turboism。插件 JAR 在启动时扫描，因此变更需要完全停止并重启后才会生效。
-2. 确定 launcher 使用的确切 Turboism home。
-3. 创建或打开 `<turboism.home>/plugins/`。
-4. 将插件 JAR 直接复制到 `<turboism.home>/plugins/` 根下，并保持每个 plugin ID 最多一个 JAR。不要放入嵌套文件夹，也不要使用符号链接。
-5. 使用同一个 Turboism home 再次启动 Cubism。
-6. 检查插件列表/状态和 Runtime 日志。
+2. 确认启动器所使用的确切 Turboism home。
+3. 创建或打开 `<turboism.home>/plugins/` 目录。
+4. 将插件 JAR 直接复制到 `<turboism.home>/plugins/` 根目录下，并保持每个 plugin ID 最多一个 JAR。不要放入嵌套文件夹，也不要使用符号链接。
+5. 使用同一个 Turboism home 重新启动 Cubism。
+6. 在 **管理插件…** 和运行时日志中检查插件生效状态。
 
-`plugins/` 的位置取决于 launcher 和安装模式：
+`plugins/` 目录位置取决于安装路径：
 
-- Windows `.exe` 安装器默认：`%LOCALAPPDATA%\Turboism\plugins\`
-- 自定义 `.exe`/`.jar` 安装器 home：`<selected Turboism directory>/plugins/`
+- Windows 默认安装：%LOCALAPPDATA%\Turboism\plugins\
+- 自定义安装路径：<选定目录>\plugins\
 
 ### 替换或更新手动安装的插件
 
 1. 先停止 Cubism 和 Turboism。
 2. 备份旧 JAR 以及插件的 `config/<pluginId>/` 和 `data/<pluginId>/` 重要内容。
-3. 在复制替换件之前移除旧的同 ID JAR。两个具有相同 plugin ID 的 JAR 会以 `DUPLICATE_PLUGIN_ID` 失败。
+3. 在复制新文件前删除旧的同 ID JAR。如果存在两个相同 plugin ID 的 JAR，会导致启动失败并报错 `DUPLICATE_PLUGIN_ID`。
 4. 使用同一个 Turboism home 重启，并验证版本、状态和日志。
 
 ### 卸载手动安装的插件
 
 1. 停止 Cubism 和 Turboism。
-2. 从 `<turboism.home>/plugins/` 移除插件 JAR。
-3. 重启并确认插件不再加载。
-4. 除非你刻意删除，插件数据会保留。仅在 Turboism 停止时删除 `config/<pluginId>/` 或 `data/<pluginId>/`，并且要有备份。
+2. 从 `<turboism.home>/plugins/` 中移除该插件 JAR。
+3. 重启并确认该插件不再被加载。
+4. 仅在 Turboism 停止且已做好备份时清理 `config/<pluginId>/` 或 `data/<pluginId>/`。
 
-### 托管安装与手动安装对比
+## JAR 拒绝原因
 
-托管安装还提供：
-
-- UI 确认和 pending 操作跟踪；
-- 源路径与严格归档 preflight，受有界归档限制约束；
-- 私有快照、pending journal 和暂存应用；
-- 暂存应用失败时的托管备份/恢复。
-
-手动安装会绕过上述所有保护，但复制的 JAR 仍会经过启动验证：descriptor 解析/schema、插件 JAR 内容契约、保留 ID、Turboism API 范围、依赖、禁用 ID、entrypoint 加载和生命周期。
-
-## JAR 拒绝
-
-受管理的 JAR 可能因以下原因被拒绝：
+托管 JAR 可能会因为以下原因被拒绝：
 
 - 符号链接或非常规源路径；
-- 违反大小、条目、展开量或压缩比上限；
-- ZIP 路径格式错误或有歧义；
+- 违反文件大小、单条目大小、总解压量、条目数量或压缩比限制；
+- 畸形或不明确的 ZIP 路径；
 - 重复条目或特殊文件；
-- `META-INF/turboism/plugin.json` 多于或少于一个；
-- 描述符 ID、版本或 API 范围不一致；
-- 复制的 SDK、Runtime、test 或 Live2D 类；
-- native 或 installer payload；
-- 嵌套 JAR 内容；
-- 缺少 entrypoint class、已声明资源或 i18n catalog。
+- 包含非恰好一个 `META-INF/turboism/plugin.json`；
+- descriptor ID、版本或 API 范围不一致；
+- 包含复制的 SDK、Runtime、测试或 Live2D 类；
+- 包含本地原生或安装器 payload；
+- 包含嵌套 JAR 内容；
+- 缺失 entrypoint 类、已声明资源或 i18n 资源文件。
 
-请从当前插件源码重新构建 JAR。不要手动编辑归档，也不要禁用检查。上述原因描述的是托管 preflight；手动复制会跳过它，只有启动验证强制执行的违规才会出现在 Runtime 启动诊断中。
+遇到上述情况请从当前插件源码重新构建。不要手工篡改归档文件或尝试绕过检查。
 
 ## 当前限制
 
 插件管理当前不提供：
 
-- 第三方插件发现或下载；
-- 发布者签名或撤销；
-- 实时 marketplace；
-- 保留历史版本；
-- 完整的用户面向修复、回滚、恢复或清理 UI；
-- 对 Cubism 安装或 launcher 的系统级修改。
+- 未经验证的第三方签名授权体系或任意公开发布；
+- 任意历史版本的自动保留与一键回滚；
+- 完整的用户面向清理或修复 UI；
+- 对 Cubism 安装目录或官方启动器的系统级修改。

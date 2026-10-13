@@ -3,7 +3,7 @@ title: First-Party Plugins
 description: The reviewed plugin bundle included in Full installations.
 ---
 
-Full installations ship a reviewed bundle of first-party plugins. They use the same public SDK boundary as third-party plugins, and each one is an independent JAR that can be deselected during installation.
+Full installations ship a reviewed bundle of first-party plugins. They use the same public SDK boundary as third-party plugins. Thin installations include zero plugins by default; plugins can be installed from the in-Cubism Plugin Market (**Turboism** menu → **Plugin Market…**) or from [turboism.dev/plugins](https://turboism.dev/plugins).
 
 Availability of an individual feature still depends on the Cubism Editor version and the capability Providers that version exposes. A bundled plugin is not a promise that every feature works on every supported version; see [Compatibility](/docs/use/compatibility) for the per-plugin version ranges and feature deltas.
 
@@ -49,11 +49,15 @@ Availability of an individual feature still depends on the Cubism Editor version
 | --- | --- |
 | Turboism MCP Server | Loopback Model Context Protocol server exposing typed Cubism inspection, editing, history, and Editor-command workflows. Requires bearer authentication; see [MCP](../build-a-plugin/mcp). |
 
-The built-in Turboism menu, settings, logs, About, plugin management, and update hints are not a plugin. They are provided by the runtime-owned framework shell (`dev.turboism.shell`) under the reserved `turboism.core` identity; plugin management lists it as a built-in, non-removable row that cannot be disabled or uninstalled.
+The built-in Turboism menu, settings, logs, About, plugin management, and update hints are not a plugin. They are provided by the runtime-owned framework shell (`dev.turboism.shell`) under the reserved `turboism.core` identity; plugin management lists it as a built-in, non-removable row that cannot be disabled or uninstalled. In Cubism Editor, the top menu is named **Turboism** (previously "插件"/Plugins) and includes items for: **Plugin Market…**, **Manage Plugins…**, **Plugin Settings…** (a dedicated two-pane window), **Check for Updates**, **Turboism Settings…**, **Keybindings…**, **Logs…**, plugin actions, and **About**.
 
 ## How to manage them
 
-- Deselect individual plugins while running the installer in Full or Thin mode.
-- Enable or disable an installed plugin from plugin management; the change applies after Cubism restarts.
+- Installers no longer have mode or plugin-selection pages: the Full installer installs every first-party plugin without per-plugin checkboxes, and the Thin installer installs zero plugins.
+- On Thin (or to add more plugins), open **Turboism → Plugin Market…** or visit [turboism.dev/plugins](https://turboism.dev/plugins).
+- Enable or disable an installed plugin from **Turboism → Manage Plugins…**; the change applies after Cubism restarts.
+- Configure plugin preferences in the dedicated two-pane window via **Turboism → Plugin Settings…**.
+- First-party plugins auto-update in the background after signature verification. Plugins marked hot-reload apply immediately, while others apply after restarting Cubism. Users can turn off automatic plugin updates in settings.
+- Upgrades are safe across variants: running Thin over Full leaves existing plugins untouched; running Full over Thin installs or updates all first-party plugins while keeping existing disabled plugins disabled.
 - [Plugin Management](./plugin-management) covers install, replacement, enable/disable, uninstall, and the data each plugin keeps.
 - [Update Policy](./update-policy) covers how a newer bundle reaches an existing installation.

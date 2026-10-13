@@ -3,7 +3,7 @@ title: 第一方插件
 description: Full 安装中包含的已审查插件捆绑包。
 ---
 
-Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与第三方插件相同的公共 SDK 边界，每个插件都是独立 JAR，可以在安装期间取消勾选。
+Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与第三方插件相同的公共 SDK 边界。Thin 安装默认不包含插件；插件可后续通过 Cubism 内的插件市场（**Turboism** 菜单 → **插件市场…**）或 [turboism.dev/plugins](https://turboism.dev/plugins) 获取。
 
 单个功能的可用性仍取决于 Cubism Editor 版本以及该版本公开的能力 Provider。随包提供某个插件并不代表每个功能在每个受支持的版本上都可用；各插件的支持版本范围与版本差异请参阅[兼容性](/docs/use/compatibility)。
 
@@ -11,37 +11,37 @@ Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与
 
 | 插件 | 功能 |
 | --- | --- |
-| MaxRects-BSSF Layout Algorithm | 注册一个带并行搜索的 MaxRects-BSSF texture-atlas 打包算法。 |
-| Mesh Edit Mirror Axis Enhance | 为 mesh 编辑添加镜像轴旋转，以及与主机镜像工具完全一致的行为。 |
-| Parameter Batch Transfer | 将一个 ArtMesh 或 Deformer 的 parameter bindings 批量转移到其他 parameter，并可选择取反。 |
-| Physics Editor | 为 Physics Settings 组添加全选，以及在重新打开后保留。 |
+| MaxRects-BSSF Layout Algorithm | 注册带并行搜索的 MaxRects-BSSF 纹理集排布算法。 |
+| Mesh Edit Mirror Axis Enhance | 为网格编辑添加对称轴旋转和与宿主完全一致的对称工具。 |
+| Parameter Batch Transfer | 批量将一个 ArtMesh 或 Deformer 的参数绑定转移至其他参数，支持可选的反转。 |
+| Physics Editor | 为物理设置添加全选组和重新打开时保留选中状态。 |
 
 ## 工作流
 
 | 插件 | 功能 |
 | --- | --- |
-| Cubism Tab Filter | 为 Parameter、Deformer、Scene 和 Log 调色板标签页添加关键词筛选框。 |
-| PSD Clip Mask Import | 将有序的 PSD 剪贴关系导入为 ArtMesh 剪贴蒙版分配，并提供明确的覆盖策略。 |
-| History Panel | 将活动文档的原生 Undo 历史投影为 Photoshop 风格的面板，并提供绑定快照的 Undo/Redo 导航。 |
-| Recent Preview | 在“最近使用的文件”悬停弹窗中为最近的项目文件截取有界的预览缩略图。 |
+| Cubism Tab Filter | 为 Parameter、Deformer、Scene 和 Log 面板选项卡添加关键字过滤框。 |
+| PSD Clip Mask Import | 将有序的 PSD 剪贴关系导入为 ArtMesh 剪贴蒙版分配，具备明确的覆盖策略。 |
+| History Panel | 将当前活动文档的内部 Undo 历史投射到 Photoshop 风格的面板中，支持基于快照的撤销/重做导航。 |
+| Recent Preview | 在“最近使用的文件”悬停弹出窗口中为近期项目文件生成有界预览缩略图。 |
 | WebDAV Auto-Backup Sync | 使用 JDK HTTP client 将 Cubism 自动备份产物上传到 WebDAV endpoint。插件 ID：`dev.turboism.plugin.webdav`。 |
-| Protected Export | 可选的保护式运行时模型导出：在任务专属副本上工作，展平 Warp/Rotation deformer，混淆 ArtMesh 身份，校验完整的暂存输出后原子化发布。仅在已审查的 Cubism 版本和符合条件的模型上可用。 |
+| Protected Export | 可选的受保护运行时模型导出：在任务专有副本上工作，展平变形器，混淆 ArtMesh 标识，验证完整的暂存输出，并以原子方式发布。仅在已审核的 Cubism 版本和符合条件的模型上允许使用。 |
 
 ## 分析与性能
 
 | 插件 | 功能 |
 | --- | --- |
-| Clip Mask Viewer | 只读的剪贴蒙版重复检查与可视化工具，带图形/表格检查器和编辑器选择高亮。 |
-| Texture Atlas Statistics | 在原生 texture-atlas 编辑器窗口中显示模型图像总数和当前纹理计数。 |
-| Performance Statistics | 以嵌入式面板和独立窗口提供实时 CPU、FPS 和 JVM 内存图表。 |
+| Clip Mask Viewer | 只读剪贴蒙版重复检查器与可视化工具，提供图/表检查器以及编辑器选择高亮。 |
+| Texture Atlas Statistics | 在原生纹理集编辑器窗口中显示模型图像的总数和当前纹理图像数。 |
+| Performance Statistics | 实时 CPU、FPS 和 JVM 内存图表，提供嵌入式面板与独立窗口两种形式。 |
 
 ## 外观
 
 | 插件 | 功能 |
 | --- | --- |
-| UI Theme | 兼容旧版的主题包、内置主题、主题管理器工作流，以及确切版本的 Cubism 外观应用。 |
-| Palette Label Style | 为 Deformer、Part 和 Parameter 调色板项设置标签文字和背景颜色。 |
-| Scene Palette Enhancer | 对 Cubism Scene 调色板中的项目进行排序和手动重排。 |
+| UI Theme | 兼容旧版的主题包、内置主题、主题管理器工作流，以及针对精确版本的 Cubism 外观应用。 |
+| Palette Label Style | 为 Deformer、Part 和 Parameter 面板条目提供标签文本与背景颜色。 |
+| Scene Palette Enhancer | 排序并手动重新排列 Cubism 场景面板中的条目。 |
 
 ## 集成与系统
 
@@ -49,11 +49,15 @@ Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与
 | --- | --- |
 | Turboism MCP Server | 提供类型化 Cubism 检查、编辑、历史和 Editor 命令工作流的 loopback Model Context Protocol server。需要 bearer 认证；请参阅 [MCP](../build-a-plugin/mcp)。 |
 
-内置的 Turboism 菜单、设置、日志、关于、插件管理和更新提示不是插件。它们由 Runtime 自有的框架 shell（`dev.turboism.shell`）以保留的 `turboism.core` 身份提供；插件管理将其列为内置、不可移除的行，无法禁用或卸载。
+内置的 Turboism 菜单、设置、日志、关于、插件管理和更新提示不是插件。它们由 Runtime 自有的框架 shell（`dev.turboism.shell`）以保留的 `turboism.core` 身份提供；插件管理将其列为内置、不可移除的行，无法禁用或卸载。在 Cubism Editor 中，顶部菜单更名为 **Turboism**（原为“插件”/Plugins 菜单），包含以下菜单项：**插件市场…**、**管理插件…**、**插件设置…**（专用双栏窗口）、**检查更新**、**Turboism 设置…**、**快捷键…**、**日志…**、各插件操作以及**关于**。
 
 ## 如何管理它们
 
-- 在 Full 或 Thin 模式下运行安装器时取消勾选单个插件。
-- 从插件管理中启用或禁用已安装的插件；更改会在 Cubism 重启后生效。
+- 安装器不再包含模式或插件选择页：Full 安装器会安装全部第一方插件，无需逐项勾选；Thin 安装器不包含任何插件。
+- 在 Thin 环境中（或需要添加新插件时），打开 **Turboism → 插件市场…** 或访问 [turboism.dev/plugins](https://turboism.dev/plugins)。
+- 从 **Turboism → 管理插件…** 中启用或停用已安装的插件；更改会在 Cubism 重启后生效。
+- 通过 **Turboism → 插件设置…** 专用的双栏窗口集中配置各插件选项。
+- 第一方插件在通过签名验证后会在后台自动更新。标记为热更新（hot-reload）的插件立即生效；其他插件在重启 Cubism 后生效。用户可在设置中关闭官方插件自动更新。
+- 变体间升级安全可靠：使用 Thin 覆盖 Full 安装时原样保留现有的 `plugins/` 目录；使用 Full 覆盖 Thin 安装时安装或更新全部第一方插件，并保留现有的 `disabledPlugins` 停用设置。
 - [插件管理](./plugin-management)涵盖安装、替换、启用/禁用、卸载，以及每个插件保留的数据。
-- [更新策略](./update-policy)涵盖更新的捆绑包如何到达现有安装。
+- [更新策略](./update-policy)涵盖框架与插件更新如何到达现有安装。

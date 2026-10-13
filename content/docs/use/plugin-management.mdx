@@ -1,23 +1,63 @@
 ---
 title: Plugin Management
-description: Install, replace, enable, disable, and uninstall local Turboism plugin JARs safely.
+description: Discover, configure, enable, disable, and manage Turboism plugins safely.
 ---
 
-Turboism provides two ways to install a local plugin JAR: managed installation (recommended) and manual installation (advanced/fallback). It is not a system-level Turboism installer. A Full installation already ships the reviewed [first-party plugin bundle](./first-party-plugins), and third-party plugins can be added with the same managed flow.
+Turboism provides several complementary ways to manage plugins:
 
-All plugin-management changes are staged and applied after Cubism restarts. They do not hot-swap the currently loaded plugin instance.
+- the **in-Cubism Plugin Market** (**Turboism** menu → **Plugin Market…**) or [turboism.dev/plugins](https://turboism.dev/plugins) to discover and install first-party and catalog plugins;
+- **background auto-updates** for verified first-party plugins;
+- **Manage Plugins…** to enable, disable, uninstall, or stage local plugin JARs;
+- **Plugin Settings…** in a dedicated two-pane window to configure plugin options.
 
-## Managed installation (recommended)
+A Full installation already ships the reviewed [first-party plugin bundle](./first-party-plugins). In Thin installations, plugins are installed on demand from the Plugin Market.
+
+All plugin lifecycle and file changes are staged and applied safely. Staged updates apply after Cubism restarts, while plugins marked with hot-reload support can update immediately.
+
+## The Turboism top menu
+
+In Cubism Editor, all framework and plugin controls are centralized under the top-level **Turboism** menu (previously named "插件"/Plugins). Its items are:
+
+1. **Plugin Market…** — browse and install first-party and curated plugins from the live catalog.
+2. **Manage Plugins…** — view installed plugins, toggle enable/disable state, install local JARs, and uninstall plugins.
+3. **Plugin Settings…** — open the dedicated two-pane settings window to configure options for all installed plugins.
+4. **Check for Updates** — check for new Turboism releases.
+5. **Turboism Settings…** — configure framework-level preferences (updates, runtime logging, locale, and launch options).
+6. **Keybindings…** — inspect and customize action keyboard shortcuts.
+7. **Logs…** — open runtime and diagnostic log directories.
+8. **Plugin actions** — action items contributed by active plugins.
+9. **About** — view the installed Turboism version and build identity.
+
+## Plugin Market and automatic updates
+
+Starting with 0.67.0-beta.3, first-party plugins can be installed and kept up-to-date without reinstalling the framework:
+
+- Open **Turboism → Plugin Market…** or visit [turboism.dev/plugins](https://turboism.dev/plugins) to browse available plugins.
+- First-party plugins auto-update in the background after signature verification.
+- Plugins marked **hot-reload** apply immediately without interrupting your modeling workflow.
+- Other plugin updates apply the next time Cubism restarts.
+- Users can disable automatic plugin updates anytime in framework settings.
+
+## Plugin Settings
+
+To configure plugin-specific options, select **Turboism → Plugin Settings…**:
+
+- Opens a dedicated two-pane window: the left pane lists installed plugins, and the right pane displays the active plugin's configuration form.
+- Settings are validated before being saved to `config/<pluginId>/`.
+- Built-in framework settings remain separate under **Turboism → Turboism Settings…**.
+
+## Managed local JAR installation
+
+To install a custom or locally built plugin JAR:
 
 1. Build or obtain a plugin JAR from a source you trust.
-2. Open Turboism plugin management.
+2. In Cubism, choose **Turboism → Manage Plugins…**.
 3. Choose **Install from JAR…**.
 4. Select the local `.jar` file.
 5. Confirm the dialog that marks the JAR as a local/unverified source.
 6. Confirm that the operation is shown as pending.
-7. Close Cubism normally.
-8. Start Cubism again through the same Turboism home.
-9. Check the plugin list and Runtime logs for the effective state.
+7. Close Cubism normally and restart through the same Turboism home.
+8. Check the plugin list in **Manage Plugins…** and Runtime logs for the effective state.
 
 Before staging, Runtime treats the selected JAR as untrusted local input. It opens a regular non-symlink JAR under bounded archive limits (raw size, per-entry size, total expansion, entry count, and compression ratio), inspects exactly one descriptor and the plugin content, then snapshots the payload into pending state.
 
@@ -25,69 +65,66 @@ The staging journal persists the raw JAR SHA-256 and size, the descriptor hash, 
 
 ## Replace or update a plugin
 
-There is no separate production update service today. Installing a newer JAR with the same plugin ID stages a replacement intent.
+- **First-party plugins**: update automatically in the background or via the **Plugin Market…**.
+- **Local/third-party plugins**: install the newer JAR with the same plugin ID through **Manage Plugins… → Install from JAR…** to stage a replacement intent.
 
-Recommended procedure:
+Recommended procedure for local replacements:
 
 1. Back up the current JAR and the plugin's persistent configuration/data.
 2. Install the newer JAR through plugin management.
 3. Restart Cubism.
 4. Verify the displayed version, lifecycle state, configuration migration, and logs.
 
-Startup preflight revalidates the staged JAR, and a failed apply restores the previous plugin files from a private backup. There is no retained historical version list, and no complete user-facing repair, rollback, recovery, or purge UI.
+Startup preflight revalidates the staged JAR, and a failed apply restores the previous plugin files from a private backup. There is no retained historical version list, and no complete user-facing rollback or purge UI.
 
 ## Disable or enable a plugin
 
-The desired state is persisted in the Turboism home configuration and applies after restart.
+In **Turboism → Manage Plugins…**, toggle the active state for any installed plugin.
 
-- the Runtime-owned `turboism.core` plugin cannot be disabled;
-- disabled plugins are skipped during the next startup discovery;
-- changing the toggle does not immediately unload the active instance;
-- normal shutdown still gives the plugin a chance to close its scope and ClassLoader references.
+- The desired state is persisted in `config.json` under `disabledPlugins` and applies after Cubism restarts.
+- The Runtime-owned `turboism.core` shell is built-in framework code and cannot be disabled.
+- Disabled plugins are skipped during the next startup discovery.
+- Upgrading across variants preserves your `disabledPlugins` list: installing Full over Thin will never silently re-enable plugins you previously disabled.
 
 ## Uninstall a plugin
 
-1. Select the plugin in plugin management.
-2. Choose **Uninstall**.
+1. Open **Turboism → Manage Plugins…**.
+2. Select the plugin and choose **Uninstall**.
 3. Confirm the pending operation.
-4. Close and restart Cubism.
+4. Restart Cubism.
 5. Confirm that the plugin is no longer loaded.
-6. Decide whether to retain or remove its data.
-
-The built-in framework shell is not a plugin and cannot be disabled or uninstalled.
+6. Decide whether to retain or remove its persistent data.
 
 Removing the plugin JAR does not automatically erase every plugin-owned file:
 
-- retain `config/<pluginId>/` and `data/<pluginId>/` if settings or business data may be needed after reinstall;
-- `cache/<pluginId>/`, `state/<pluginId>/`, and `logs/<pluginId>/` are generally rebuildable or diagnostic, but remove them only while Turboism is stopped;
+- retain `config/<pluginId>/` and `data/<pluginId>/` if settings or data may be needed after reinstall;
+- `cache/<pluginId>/`, `state/<pluginId>/`, and `logs/<pluginId>/` can be removed while Turboism is stopped;
 - deleting configuration or persistent data is irreversible without a backup.
 
-## Manual installation
+## Manual installation (advanced fallback)
 
-Manual installation is an advanced/fallback path for trusted plugin JARs. It copies a plugin JAR directly into the Turboism home's `plugins/` directory instead of going through managed staging. Ordinary users should prefer the managed installation above.
+Manual installation is a fallback for testing trusted plugin JARs outside the UI. It copies a JAR directly into `<turboism.home>/plugins/` instead of going through managed staging. Ordinary users should prefer the Plugin Market or managed installation.
 
-Manual copying bypasses the managed safeguards detailed in the comparison below. Runtime still performs startup validation, but startup validation is not equivalent to managed preflight.
-
-A plugin JAR is the JAR built from plugin source. It is not the Turboism installer file, `TurboismInstaller-<version>.jar`.
+A plugin JAR is the JAR built from plugin source. It is not the Turboism installer executable or archive.
 
 ### Install a plugin JAR manually
 
-1. Fully close Cubism and Turboism. Plugin JARs are scanned at startup, so changes only take effect after a full stop and restart.
+1. Fully close Cubism and Turboism. Plugin JARs are scanned at startup, so changes require a full stop and restart.
 2. Identify the exact Turboism home used by the launcher.
 3. Create or open `<turboism.home>/plugins/`.
 4. Copy the plugin JAR directly into the root of `<turboism.home>/plugins/`, and keep at most one JAR for each plugin ID. Do not place it in a nested folder and do not use a symlink.
 5. Start Cubism again through the same Turboism home.
-6. Check the plugin list/state and Runtime logs.
+6. Check the plugin state in **Manage Plugins…** and Runtime logs.
 
-The `plugins/` location depends on the launcher and installation mode:
+The `plugins/` location depends on the installation:
 
-- Windows `.exe` installer default: `%LOCALAPPDATA%\Turboism\plugins\`
-- custom `.exe`/`.jar` installer home: `<selected Turboism directory>/plugins/`
+- Windows installer default: `%LOCALAPPDATA%\Turboism\plugins\`
+- custom home: `<selected Turboism directory>/plugins/`
 
 ### Replace or update a manually installed plugin
 
 1. Stop Cubism and Turboism first.
-2. Back up the old JAR and the plugin's important `config/<pluginId>/` and `data/<pluginId>/` content.
+2. Back up the old JAR and the plugin's `config/<pluginId>/` and `data/<pluginId>/` content.
 3. Remove the old same-ID JAR before copying the replacement. Two JARs with the same plugin ID fail with `DUPLICATE_PLUGIN_ID`.
 4. Restart with the same Turboism home and verify the version, state, and logs.
 
@@ -96,18 +133,7 @@ The `plugins/` location depends on the launcher and installation mode:
 1. Stop Cubism and Turboism.
 2. Remove the plugin JAR from `<turboism.home>/plugins/`.
 3. Restart and confirm the plugin is no longer loaded.
-4. Plugin data remains unless you deliberately remove it. Delete `config/<pluginId>/` or `data/<pluginId>/` only while Turboism is stopped, and only with a backup.
-
-### Managed vs manual installation
-
-Managed installation additionally provides:
-
-- UI confirmation and pending-operation tracking;
-- source-path and strict archive preflight under the bounded archive limits;
-- private snapshot, pending journal, and staged apply;
-- managed backup/restore if the staged apply fails.
-
-Manual installation bypasses all of the above, but the copied JAR still goes through startup validation: descriptor parsing/schema, plugin JAR content contract, reserved IDs, Turboism API range, dependencies, disabled IDs, entrypoint loading, and lifecycle.
+4. Remove `config/<pluginId>/` or `data/<pluginId>/` only while Turboism is stopped, and only with a backup.
 
 ## JAR rejection
 
@@ -124,15 +150,13 @@ A managed JAR can be rejected for reasons including:
 - nested JAR content;
 - missing entrypoint classes, declared resources, or i18n catalogs.
 
-Rebuild the JAR from the current plugin source. Do not edit the archive manually or disable inspection. The reasons above describe managed preflight; manual copying skips it, and only violations enforced by startup validation appear in Runtime startup diagnostics.
+Rebuild the JAR from the current plugin source. Do not edit the archive manually or disable inspection.
 
 ## Current limitations
 
 Plugin management does not currently provide:
 
-- third-party plugin discovery or downloads;
-- publisher signing or revocation;
-- a live marketplace;
-- retained historical versions;
-- a complete user-facing repair, rollback, recovery, or purge UI;
+- arbitrary unverified third-party signature authority or uncurated store uploads;
+- retained arbitrary historical version rollbacks;
+- a complete user-facing purge or repair UI;
 - system-level modification of Cubism installations or launchers.
