@@ -7,7 +7,7 @@ description: Diagnose startup, installer, plugin JAR, lifecycle, permission, and
 
 - Confirm the package matches your platform and that you downloaded it from the published release or the official mirror.
 - Verify the SHA-256 checksum with the matching `.sha256` file. A mismatch means the download is incomplete or altered; download it again.
-- The `.jar` installer needs Java 17 or newer.
+- On Windows, use `TurboismInstaller-<version>-full.exe` or `TurboismInstaller-<version>-thin.exe`. On macOS and Linux, extract either portable ZIP archive. The legacy Java `.jar` installer is retired starting with 0.67.0-beta.3 (releases before 0.67.0-beta.3 used the `.jar` installer and required Java 17 or newer).
 - The installer requires all four acknowledgements and the full runtime declaration to be accepted before it changes any files.
 - Installers are unsigned, so Windows or macOS may show an unknown-publisher prompt. Do not disable operating-system protections; confirm the checksum instead.
 
@@ -29,7 +29,7 @@ Check that:
 - the manifest declares a supported `schemaVersion` (2, 3, or 4) and is valid for that version;
 - the entrypoint class exists, is public, implements `TurboismPlugin`, and has a public no-argument constructor;
 - the Turboism API range and required dependencies resolve;
-- the plugin ID is not disabled or duplicated;
+- the plugin ID is not disabled in **Turboism → Manage Plugins…** (`disabledPlugins` in `config.json`) or duplicated;
 - `environment.requiresCubism` matches the current environment.
 
 ## A JAR is rejected

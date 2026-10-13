@@ -7,7 +7,7 @@ description: 诊断启动、安装器、插件 JAR、生命周期、权限和 Pr
 
 - 确认安装包与你的平台匹配，并且是从已发布的发行版或官方镜像下载的。
 - 使用配对的 `.sha256` 文件验证 SHA-256 校验和。不匹配意味着下载不完整或已被改动；请重新下载。
-- `.jar` 安装器需要 Java 17 或更新版本。
+- 在 Windows 上使用 `TurboismInstaller-<version>-full.exe` 或 `TurboismInstaller-<version>-thin.exe`。在 macOS 和 Linux 上解压便携 ZIP 归档。原 Java `.jar` 安装器自 0.67.0-beta.3 起已退役（0.67.0-beta.3 之前的历史版本使用 `.jar` 安装器且需要 Java 17 或更新版本）。
 - 安装器要求接受全部四项确认和完整的运行时声明，之后才会更改任何文件。
 - 安装器未签名，因此 Windows 或 macOS 可能显示未知发布者提示。不要禁用操作系统保护；请改为核对校验和。
 
@@ -29,7 +29,7 @@ description: 诊断启动、安装器、插件 JAR、生命周期、权限和 Pr
 - manifest 声明了受支持的 `schemaVersion`（2、3 或 4），并且对该版本有效；
 - entrypoint class 存在、是 public、实现 `TurboismPlugin`，并且有 public 无参构造函数；
 - Turboism API 范围和必需依赖可以解析；
-- plugin ID 未被禁用且没有重复；
+- plugin ID 未在 **Turboism → 管理插件…** 中被禁用（对应 `config.json` 中的 `disabledPlugins`），且没有重复；
 - `environment.requiresCubism` 与当前环境匹配。
 
 ## JAR 被拒绝

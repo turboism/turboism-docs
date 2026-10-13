@@ -20,6 +20,18 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - 프로바이더 또는 호스트 버전을 사용할 수 없는 상황을 명시적으로 처리합니다;
 - 리플렉션, 원시 호스트 위젯, 네이티브 핸들 또는 바이트코드 트랜스포머로 런타임을 우회하지 않습니다.
 
+## Cubism Editor에서의 Turboism
+
+실행 시 Turboism은 Live2D Cubism Editor 최상위 **Turboism** 메뉴(0.67.0-beta.3 이전 릴리스에서는 "플러그인"/Plugins)에 직접 통합됩니다:
+
+- **플러그인 마켓…** — 인앱 마켓 또는 [turboism.dev/plugins](https://turboism.dev/plugins)에서 퍼스트 파티 및 추천 플러그인을 탐색하고 설치합니다.
+- **플러그인 관리…** — 플러그인 사용 여부를 설정하고, 제거하거나, 로컬 JAR을 추가합니다.
+- **플러그인 설정…** — 전용 2열 창에서 설치된 모든 플러그인의 설정을 구성합니다.
+- **업데이트 확인** — 최신 프레임워크 릴리스를 확인합니다.
+- **Turboism 설정…**, **키 바인딩…**, **로그…**, 활성 플러그인 액션, **정보**.
+
+0.67.0-beta.3부터 퍼스트 파티 플러그인은 서명 검증을 거쳐 백그라운드에서 자동 업데이트됩니다. 핫 리로드(hot-reload)로 표시된 플러그인은 즉시 적용되며 기타 업데이트는 Cubism 재시작 후 적용됩니다.
+
 ## 문서 범위
 
 Turboism은 하나의 공개 SDK 등급을 제공합니다. 소스 저장소의 검토된 바이너리 API 기준선이 호환성 게이트이며, [SDK API 가이드](./reference/sdk-api)에서 현재 표면을 설명합니다.
@@ -30,6 +42,8 @@ Turboism은 하나의 공개 SDK 등급을 제공합니다. 소스 저장소의 
 - Editor 버전이 지원된다고 해서 모든 플러그인 기능을 그 버전에서 사용할 수 있는 것은 아닙니다.
 
 지원되는 호스트 플랫폼은 Windows x64입니다. 지원되는 Cubism Editor 버전은 Turboism 릴리스에 따라 다르며, Stable 0.44.0은 5.2.03, 5.3.02, 5.3.03을 허용하고 Beta 0.67.0-beta.1은 5.0.00부터 5.3.04까지의 검토된 20개 버전 전체를 허용합니다([호환성](/docs/use/compatibility) 참고). 지원되지 않는 조합은 검증되지 않은 경로로 대체하지 않고 안전하게 실패합니다.
+
+0.67.0-beta.3부터 Turboism은 Full 및 Thin 변형으로 나뉜 4가지 정식 릴리스 자산(`TurboismInstaller-<version>-full.exe`, `TurboismInstaller-<version>-thin.exe`, `turboism-<version>-full.zip`, `turboism-<version>-thin.zip`)을 제공합니다. 0.67.0-beta.3 이전 릴리스에서는 레거시 자산을 사용했으며 크로스 플랫폼 Java 설치 프로그램 JAR은 폐지되었습니다.
 
 이어서 읽기:
 
