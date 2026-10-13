@@ -18,7 +18,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 ## 対応するホストバージョン
 
 - Windows x64 が対応する Cubism ホストプラットフォームです。
-- Cubism Editor **5.2.03**、**5.3.02**、**5.3.03** は、バージョンごとにルーティングされる adapter と Provider を備えた、認定済みの正確なバージョンです。
+- 対応する Cubism Editor バージョンはリリースによって異なります。Stable **0.44.0** は **5.2.03**、**5.3.02**、**5.3.03**、Beta **0.67.0-beta.1** および現在の開発ブランチは **5.0.00 から 5.3.04** までのレビュー済み全 20 バージョンを、バージョンごとにルーティングされる adapter と Provider を備えた正確なバージョンとして認定しています（[互換性](/docs/use/compatibility)を参照）。
 - 一覧にない Editor バージョンは互換性があるとは主張されず、未サポートまたは未検証の capability は fail closed で失敗します。
 - macOS のパッケージングはプレビューのみで検証済みのホスト対応はありません。Linux はインストーラーと payload の挙動に限られます。
 
@@ -57,8 +57,8 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - 統合されたオブジェクトグラフが Canvas、Parameters、Parameter Groups、Parts、Drawables、Deformers、Warp および Rotation Deformers、Glue、パラメータバインディング、texture atlas をカバーします。
 - Core-backed read は、不変のコピー済みデータ、バージョン正規化、generation に束縛された stale-reference 拒否、digest-pinned resolver evidence を使用します。
 - パラメータ編集経路は、`Parameter.setValue` を Editor 操作、権限チェック、Undo、dirty-state 処理、refresh、stale-target 拒否に接続します。
-- Part display-name の書き込みには 5.2.03 と 5.3.02 で実ホストの証拠があります。Part opacity の編集書き込みには 5.3.02 で証拠があり、観測された evaluation setter がネイティブ Part Undo に参加しなかったため、5.2.03 では意図的に利用できません。
-- Cubism 5.3.03 は、独自の認定済み texture-atlas authoring provider、selector contract、layout provider に加え、physics、performance metrics、project lifecycle、model statistics、startup suppression 用の exact-version profile を持ちます。
+- Part display-name の書き込みには 5.2.03 と 5.3.02 で実ホストの証拠があります。Part opacity の編集書き込みには 5.3.00–5.3.04 が必要（5.3.02 で実ホスト検証済み）であり、パーツフォームの不透明度アクセサが Cubism 5.3.00 で導入されたため 5.0.00–5.2.03 では利用できません。
+- 正確なバージョン用の静的検証レコード、selector contract、profile は 5.0.00 から 5.3.04 までのレビュー済み全 20 ビルドを対象としており、プラグインごと・ケイパビリティごとのバージョン境界は[互換性](/docs/use/compatibility)に掲載されています。
 - Parameter lifecycle hook は、順序付き同期 `before` 書き換え、変更時のみの `on`、正常完了時の `after`、再帰拒否、上限付き観測処理、アンロード時のクリーンアップをサポートします。
 - 履歴は不変の意味的詳細を投影するようになりました。`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`、および target、coordinate、grouping の上限付き検証です。これらの値はホストへの書き込み権限を与えません。
 - 現在のページの texture-atlas layout contract は、レビュー済みの SDK compatibility baseline（v10）として固定され、保持された constructor の linkage gate を持ちます。
@@ -68,7 +68,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - Turboism はデプロイ済みの release API に対して stable 更新を確認します。比較には、インストール済みパッケージに埋め込まれた正規の build number を使用します。
 - 利用可能な更新は、描画領域上のネイティブ Cubism hint として提示されます。クリックすると固定のファーストパーティダウンロードページが開きます。インストーラーが自動でダウンロードまたは実行されることはありません。
 - 更新チェッカーは UI をブロックせず、24 時間に最大 1 回実行され、手動チェックは常に利用できます。自動チェックは Startup 設定タブに専用の永続トグルを持ちます。
-- plugin は、canvas-hint UI capability（`turboism.ui.canvas.hint` 権限）を通じて、描画領域上にネイティブ Cubism hint を表示できます。検証済みの 5.2.03、5.3.02、5.3.03 ホストルートを通じてバージョンルーティングされます。
+- plugin は、canvas-hint UI capability（`turboism.ui.canvas.hint` 権限）を通じて、描画領域上にネイティブ Cubism hint を表示できます。検証済みのホストルート（Stable 0.44.0 では 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.1 では 5.0.00–5.3.04。[互換性](/docs/use/compatibility)を参照）を通じてバージョンルーティングされます。
 
 ## ファーストパーティプラグイン
 

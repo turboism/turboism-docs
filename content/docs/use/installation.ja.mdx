@@ -23,7 +23,7 @@ Turboism は [GitHub Releases](https://github.com/turboism/Turboism/releases) �
 ## 対応環境
 
 - **Windows x64** が対応する Cubism ホストプラットフォームです。
-- 対応する Cubism Editor バージョンは **5.2.03**、**5.3.02**、**5.3.03** で、それぞれに正確なバージョン用の adapter があります。一覧にない Editor バージョンは互換性があるとは主張されず、利用できない adapter や機能は fail closed で失敗します。
+- 対応する Cubism Editor バージョンは Turboism のリリースによって異なります。Stable **0.44.0** は **5.2.03**、**5.3.02**、**5.3.03**、Beta **0.67.0-beta.1** は **5.0.00 から 5.3.04** までのレビュー済み全 20 バージョンに対応しています（[互換性](/docs/use/compatibility)を参照）。一覧にない Editor バージョンは互換性があるとは主張されず、利用できない adapter や機能は fail closed で失敗します。
 - 対応する Editor バージョンであることは、すべてのプラグイン機能がそのバージョンで利用できることを意味しません。
 - macOS のパッケージングはプレビューのみです。インストーラーはインストールとアンインストールを行えますが、macOS の Cubism ホスト対応は検証されておらず、macOS ランチャーもインストールされません。
 - Linux の対象はインストーラーと payload の挙動に限られます。Linux は対応する Cubism ホストではありません。
@@ -100,7 +100,7 @@ Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
 
 ## インストール後
 
-1. Windows では、Turboism home にある `configure_turboism.ps1` を実行します。正確にサポート対象の Cubism Editor 5.2.03、5.3.02、5.3.03 のインストールのみを一覧に表示し、選択した各ルートに管理起動エントリを 1 つ作成します。設定をキャンセルしても、フレームワークのみの有効なインストールが残ります。
+1. Windows では、Turboism home にある `configure_turboism.ps1` を実行します。その Turboism リリースが正確に対応する Cubism Editor のインストール（Stable 0.44.0 では 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.1 では 5.0.00–5.3.04。[互換性](/docs/use/compatibility)を参照）のみを一覧に表示し、選択した各ルートに管理起動エントリを 1 つ作成します。設定をキャンセルしても、フレームワークのみの有効なインストールが残ります。
 2. 必要に応じて、選択したインストールについて公式の Cubism 起動 BAT との連携を有効にします。これはハッシュで保護されたバックアップを記録し、暗黙に適用されることはありません。後でユーザーがこれらのファイルを編集すると競合となり、再試行のために state が保持されます。
 3. Cubism ルートの管理ランチャー（Windows では `launch-cubism-turboism.bat`）で Turboism を起動します。
 4. Turboism が起動し、Turboism home に診断情報が書き込まれることを確認します。

@@ -23,7 +23,7 @@ Turboism 通过 [GitHub Releases](https://github.com/turboism/Turboism/releases)
 ## 受支持的环境
 
 - **Windows x64** 是受支持的 Cubism 宿主平台。
-- 受支持的 Cubism Editor 版本为 **5.2.03**、**5.3.02** 和 **5.3.03**，每个版本都有确切版本的 adapter。未列出的 Editor 版本不被声称为兼容，不可用的 adapter 或功能会安全地失败关闭。
+- 受支持的 Cubism Editor 版本取决于所安装的 Turboism 发行版：Stable **0.44.0** 支持 **5.2.03**、**5.3.02** 和 **5.3.03**，Beta **0.67.0-beta.1** 支持 **5.0.00 至 5.3.04** 的全部 20 个已审核版本；请参阅[兼容性](/docs/use/compatibility)。未列出的 Editor 版本不被声称为兼容，不可用的 adapter 或功能会安全地失败关闭。
 - 受支持的 Editor 版本并不意味着每个插件功能在该版本上都可用。
 - macOS 打包仅处于 preview：安装器可以安装和卸载，但 macOS Cubism 宿主支持尚未验证，且不会安装 macOS launcher。
 - Linux 只涵盖安装器和 payload 行为；Linux 不是受支持的 Cubism 宿主。
@@ -100,7 +100,7 @@ Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
 
 ## 安装之后
 
-1. 在 Windows 上，运行 Turboism home 中的 `configure_turboism.ps1`。它只列出确切受支持的 Cubism Editor 5.2.03、5.3.02 和 5.3.03 安装，并为每个选中的根目录创建一个托管启动入口。取消配置器会留下一个有效的仅框架安装。
+1. 在 Windows 上，运行 Turboism home 中的 `configure_turboism.ps1`。它只列出该 Turboism 发行版确切支持的 Cubism Editor 安装（Stable 0.44.0 为 5.2.03、5.3.02 和 5.3.03；Beta 0.67.0-beta.1 为 5.0.00–5.3.04；请参阅[兼容性](/docs/use/compatibility)），并为每个选中的根目录创建一个托管启动入口。取消配置器会留下一个有效的仅框架安装。
 2. 可选地为选定的安装启用与官方 Cubism 启动 BAT 的集成。它会记录一份带哈希保护的备份，且绝不会被隐式应用；之后用户对这些文件的编辑会变成冲突，并保留状态以便重试。
 3. 通过所选 Cubism 根目录的托管 launcher 启动 Turboism（Windows 上为 `launch-cubism-turboism.bat`）。
 4. 确认 Turboism 启动，并在 Turboism home 中写入诊断信息。

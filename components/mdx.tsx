@@ -11,12 +11,25 @@ import {
   CompatibilityReleaseTable,
 } from "@/components/compatibility-tables";
 
+const DefaultLink = defaultMdxComponents.a;
+
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
     CompatibilityReleaseTable,
     CompatibilityPluginTable,
     CompatibilityCapabilityTable,
+    a: (props) => {
+      const href =
+        typeof props.href === "string" && props.href.startsWith("/docs/")
+          ? props.href.slice("/docs".length)
+          : props.href;
+      return DefaultLink ? (
+        <DefaultLink {...props} href={href} />
+      ) : (
+        <a {...props} href={props.href} />
+      );
+    },
     pre: (props) => {
       const codeProps = props as typeof props & {
         "data-code-language"?: string;

@@ -18,7 +18,7 @@ Plugins depend on the Turboism SDK only. Runtime owns host access, lifecycle, sa
 ## Supported host versions
 
 - Windows x64 is the supported Cubism host platform.
-- Cubism Editor **5.2.03**, **5.3.02**, and **5.3.03** are admitted exact versions with version-routed adapters and Providers.
+- Supported Cubism Editor versions are release-dependent: Stable **0.44.0** admits **5.2.03**, **5.3.02**, and **5.3.03**, while Beta **0.67.0-beta.1** and the current development branch admit all 20 reviewed versions from **5.0.00 to 5.3.04**, each with version-routed adapters and Providers (see [Compatibility](/docs/use/compatibility)).
 - Unlisted Editor versions are not claimed compatible, and unsupported or unverified capabilities fail closed.
 - macOS packaging is preview-only with no verified host support; Linux is limited to installer and payload behavior.
 
@@ -57,8 +57,8 @@ Both installers gate installation behind four required acknowledgements and a fu
 - A unified object graph covers Canvas, Parameters, Parameter Groups, Parts, Drawables, Deformers, Warp and Rotation Deformers, Glue, parameter bindings, and texture atlases.
 - Core-backed reads use immutable copied data, version normalization, generation-bound stale-reference rejection, and digest-pinned resolver evidence.
 - The parameter authoring path connects `Parameter.setValue` to Editor operations, permission checks, Undo, dirty-state handling, refresh, and stale-target rejection.
-- Part display-name writes have real-host evidence on 5.2.03 and 5.3.02. Part opacity authoring writes have evidence on 5.3.02 and are intentionally unavailable on 5.2.03 because the observed evaluation setter did not participate in native Part Undo.
-- Cubism 5.3.03 has its own admitted texture-atlas authoring providers, selector contract, and layout provider, plus exact-version profiles for physics, performance metrics, project lifecycle, model statistics, and startup suppression.
+- Part display-name writes have real-host evidence on 5.2.03 and 5.3.02. Part opacity authoring writes require 5.3.00–5.3.04 (real-host verified on 5.3.02) and are unavailable on 5.0.00–5.2.03 because part-form opacity accessors were introduced in Cubism 5.3.00.
+- Exact-version verification records, selector contracts, and profiles now cover all 20 reviewed builds from 5.0.00 to 5.3.04; per-plugin and per-capability version boundaries are generated on [Compatibility](/docs/use/compatibility).
 - Parameter lifecycle hooks support ordered synchronous `before` rewriting, changed-only `on`, normal-completion `after`, recursion rejection, bounded observation work, and unload cleanup.
 - History now projects immutable semantic detail: `HistoryEntry`, `HistoryChange`, `HistoryEditContext`, `HistoryGroup`, `HistoryOrigin`, `HistoryTarget`, and bounded validation of targets, coordinates, and grouping. These values grant no host write authority.
 - The current-page texture-atlas layout contract is bound as a reviewed SDK compatibility baseline (v10), with linkage gates for retained constructors.
@@ -68,7 +68,7 @@ Both installers gate installation behind four required acknowledgements and a fu
 - Turboism checks for stable updates against the deployed release API. The comparison uses the authoritative build number embedded in the installed package.
 - An available update is presented as a native Cubism hint over the drawing area. Clicking it opens the fixed first-party download page; no installer is downloaded or executed automatically.
 - The update checker is non-blocking and runs at most once per 24 hours, with a manual check always available. Automatic checks have their own persistent toggle in the Startup settings tab.
-- Plugins can show native Cubism hints over the drawing area through the canvas-hint UI capability (`turboism.ui.canvas.hint` permission), version-routed through verified 5.2.03, 5.3.02, and 5.3.03 host routes.
+- Plugins can show native Cubism hints over the drawing area through the canvas-hint UI capability (`turboism.ui.canvas.hint` permission), version-routed through verified host routes (5.2.03, 5.3.02, and 5.3.03 on Stable 0.44.0; 5.0.00–5.3.04 on Beta 0.67.0-beta.1; see [Compatibility](/docs/use/compatibility)).
 
 ## First-party plugins
 

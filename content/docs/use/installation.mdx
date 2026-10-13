@@ -23,7 +23,7 @@ All four formats carry the same release version. Use the channel that provided y
 ## Supported environments
 
 - **Windows x64** is the supported Cubism host platform.
-- Supported Cubism Editor versions are **5.2.03**, **5.3.02**, and **5.3.03**, each with exact-version adapters. Unlisted Editor versions are not claimed compatible, and unavailable adapters or features fail closed.
+- Supported Cubism Editor versions depend on the Turboism release: Stable **0.44.0** supports **5.2.03**, **5.3.02**, and **5.3.03**, while Beta **0.67.0-beta.1** supports all 20 reviewed versions from **5.0.00 to 5.3.04**; see [Compatibility](/docs/use/compatibility). Unlisted Editor versions are not claimed compatible, and unavailable adapters or features fail closed.
 - A supported Editor version does not mean every plugin feature is available on that version.
 - macOS packaging is preview-only: the installer can install and uninstall, but macOS Cubism host support is not verified and no macOS launcher is installed.
 - Linux coverage is limited to installer and payload behavior; Linux is not a supported Cubism host.
@@ -100,7 +100,7 @@ Compare the result with the published value. A SHA-256 checksum proves file inte
 
 ## After installation
 
-1. On Windows, run `configure_turboism.ps1` in the Turboism home. It lists only exact supported Cubism Editor 5.2.03, 5.3.02, and 5.3.03 installations and creates one managed launch entry per selected root. Canceling the configurator leaves a valid framework-only install.
+1. On Windows, run `configure_turboism.ps1` in the Turboism home. It lists only the exact Cubism Editor installations supported by that Turboism release (5.2.03, 5.3.02, and 5.3.03 on Stable 0.44.0; 5.0.00–5.3.04 on Beta 0.67.0-beta.1; see [Compatibility](/docs/use/compatibility)) and creates one managed launch entry per selected root. Canceling the configurator leaves a valid framework-only install.
 2. Optionally enable integration with the official Cubism startup BAT for selected installations. It records a hash-guarded backup and is never applied implicitly; later user edits to those files become conflicts and preserve state for retry.
 3. Start Turboism through the managed launcher for your Cubism root (`launch-cubism-turboism.bat` on Windows).
 4. Confirm that Turboism starts and writes diagnostics in the Turboism home.

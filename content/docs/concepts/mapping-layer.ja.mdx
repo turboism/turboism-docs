@@ -15,7 +15,7 @@ Cubism Editor の internals は public API ではありません。class 名、m
 
 - plugin は公開された SDK の型を対象とし、`com.live2d.*` クラスを読み込みません。
 - Runtime は、検出した host build に対して正確なバージョンの adapter と Provider を選択します。
-- Cubism Editor 5.2.03、5.3.02、5.3.03 が認定された正確なバージョンです。一覧にないバージョンが黙って互換として扱われることはありません。
+- 認定された正確な Cubism Editor バージョンはリリースによって異なります（Stable 0.44.0 では 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.1 では 5.0.00 から 5.3.04 までのレビュー済み全 20 バージョン。[互換性](/docs/use/compatibility)を参照）。一覧にないバージョンが黙って互換として扱われることはありません。
 - host member の選択は記録され、レビュー済みの evidence として固定されます。固定された identity と一致しない build は、推測せずに失敗します。
 - 公開された Cubism の値は、plugin code に届く前に、Turboism が所有する immutable な型へコピーされます。
 - model object と reference は generation に紐付き、project の close、document の切り替え、model の reload、object の削除、plugin の無効化、Provider の置換、未サポートの version 遷移の後に無効になります。
@@ -24,4 +24,4 @@ Cubism Editor の internals は public API ではありません。class 名、m
 
 利用できない状態に対処する必要があることに変わりはありませんが、対処する場所は 1 つの予測可能な場所、つまり型付きの「unsupported」または「unavailable」の結果です。独自の reflection layer は必要なく、書くべきでもありません。host に直接到達する plugin は、mapping、permission model、および失敗を理解可能にする diagnostic を迂回してしまいます。
 
-object API と capability model については [SDK API ガイド](../reference/sdk-api)を、現在認定されているバージョンについては[開発状況](../development-status)を参照してください。
+object API と capability model については [SDK API ガイド](../reference/sdk-api)を、リリースごと・ケイパビリティごとのバージョンマトリクスについては[互換性](/docs/use/compatibility)を、現在のブランチ状況については[開発状況](../development-status)を参照してください。
