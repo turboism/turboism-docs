@@ -1,0 +1,60 @@
+---
+title: 호환성
+description: Turboism 릴리스별 지원 Cubism Editor 버전, 퍼스트파티 플러그인 호환 범위, 마이너 라인별 capability 커버리지 및 근거 기반 호스트 경계입니다.
+---
+
+Turboism의 Cubism Editor 버전 지원은 설치한 Turboism 릴리스와 사용하는 개별 플러그인 또는 SDK capability에 따라 달라집니다. 지원되는 Cubism 호스트 플랫폼은 **Windows x64**입니다. 목록에 없는 Editor 버전은 호환성을 주장하지 않으며, 사용할 수 없는 어댑터나 capability는 검증되지 않은 경로로 대체하지 않고 안전하게 실패(fail closed)합니다.
+
+## Turboism 릴리스별 지원 버전
+
+각 Turboism 릴리스 채널에는 검토된 지원 Cubism Editor 버전 집합이 포함되어 있습니다:
+
+- **Stable `0.44.0`**(및 **Nightly `0.44.1-0.nightly.11`**)은 Windows x64에서 정확한 Cubism Editor 버전 **5.2.03**, **5.3.02**, **5.3.03**을 지원합니다.
+- **Beta `0.67.0-beta.1`**(및 현재 `main`)은 Windows x64에서 **5.0.00부터 5.3.04까지의 검토된 Cubism Editor 20개 버전 전체**(`5.0.00–5.0.06`, `5.1.00–5.1.03`, `5.2.00–5.2.03`, `5.3.00–5.3.04`)를 지원합니다.
+
+<CompatibilityReleaseTable locale="ko" />
+
+## 동일 마이너 라인 내 패치 연속성
+
+같은 Cubism Editor 마이너 라인(`5.0.x`, `5.1.x`, `5.2.x` 또는 `5.3.x`) 안에서 새 패치 릴리스는 항상 이전 패치 릴리스의 상위 집합입니다. `5.x.y`에서 허용된 capability와 Editor 명령은 모든 `y' > y`인 `5.x.y'`에서도 그대로 허용됩니다. 같은 마이너 라인 안에서 더 새로운 패치로 업데이트해도 기능이 사라지지 않습니다.
+
+마이너 라인을 넘는 차이(예: `5.0.06`과 `5.1.00`, `5.1.03`과 `5.2.00`, 또는 `5.2.03`과 `5.3.00` 사이)는 Cubism Editor 자체가 기반 기능을 추가하거나 변경한 실제 호스트 경계이며, 회귀가 아닙니다.
+
+## 퍼스트파티 플러그인 호환성
+
+아래 표의 모든 행은 Turboism 소스 저장소의 검토된 호환성 매트릭스에서 생성됩니다. **지원 버전**은 플러그인이 선언한 capability가 해석되는 검토된 Cubism Editor 빌드를 나열하며, **버전별 차이**는 일부 검토 버전에서만 사용할 수 있는 기능을 설명합니다.
+
+Cubism을 **FREE** 라이선스로 실행하면 저장이 FREE 파라미터 수 등의 제한을 받으며, **PRO** 라이선스(PRO 체험판 포함)에서는 이 제한이 해제됩니다. Turboism 플러그인의 버전 지원은 라이선스 등급과 무관합니다. 라이선스 제한은 런타임이 허용하는 API가 아니라 편집기가 저장할 수 있는 내용에 적용됩니다.
+
+<CompatibilityPluginTable locale="ko" />
+
+## 마이너 라인별 capability 커버리지
+
+Turboism은 호스트 기능을 **37개 capability 그룹**(총 **143개 capability**)으로 구성합니다. 검토된 20개 버전(`5.0.00–5.3.04`) 전체에서 **27개 그룹**은 모든 버전에서 완전히 허용되며, **10개 그룹**은 Cubism Editor가 해당 하위 시스템을 도입한 버전에 따른 하한선을 가집니다.
+
+<CompatibilityCapabilityTable locale="ko" />
+
+## 근거 기반 버전 경계
+
+Turboism은 특정 Cubism Editor 빌드에서 기능이 동작하는지 추측하지 않습니다. 런타임 허용은 세 가지 근거 계층을 결합합니다:
+
+1. **해시 고정 정적 검증 레코드(`VERIFIED_STATIC`)** — 허용된 모든 버전은 정확한 `Live2D_Cubism.jar` 및 `Live2DCubismCore.jar` 아티팩트 다이제스트에 바인딩된 검토된 바이트코드 선택자 레코드를 가집니다.
+2. **선택자 계약 및 클래스 핀 게이트** — 특정 어댑터나 클래스 핀 테이블이 일부 버전에만 연결된 경우, 런타임 계약이 capability를 해당 버전 집합으로 좁힙니다.
+3. **확인된 호스트 경계(`version-boundaries.json`)** — Cubism Editor 자체에 기능이 없는 경우, Turboism은 공식 Live2D Cubism 업데이트 기록과 검토된 JAR 바이트코드를 모두 대조해 부재를 입증한 뒤에만 호스트 경계로 표시합니다. 확인되지 않은 공백을 편집기 기능 부재로 단정하지 않습니다.
+
+`5.0.00–5.3.04` 범위의 주요 버전 경계는 다음과 같습니다:
+
+- **`5.0.x`(`5.0.00–5.0.06`)에는 자동 백업과 보호된 내보내기가 없음** — `CModelingDocument::getDocumentUID()`(`cubism.autobackup.backup`, `cubism.autobackup.settings`, `EditorAutoBackupService`가 의존하는 문서 UID 식별 체인)는 모든 `5.0.x` JAR에 존재하지 않습니다(`5.0.x`는 `getFileContentInstanceGuid()`만 노출). 보호된 내보내기(`cubism.protected-export.orchestration` 및 `ExportSettingsContributionService`) 역시 스테이징된 내보내기 드라이버 콜백과 모션 싱크 설정 소스가 **5.1.00**에 도입되었기 때문에 `5.0.x`에서는 사용할 수 없습니다. 상단 메뉴 외부 앱 통합(`cubism.editor-ui.top-menu`), `EditorCommandService`, 자동 흔들림 읽기(`cubism.editor-model.auto-yure.read`)도 **5.1.00**부터 시작됩니다.
+- **편집 프로토콜(`CubismFacade#edit()`, `cubism.integration.edit-api-bridge.dispatch`)은 `5.1.02` 이상이 필요함** — `5.0.x`에는 `com/live2d/cubism/doc/webSocket` 패키지가 아예 없으며, `5.1.00`과 `5.1.01`에서는 세션 조회 메서드가 private이고 외부 앱 인증 관리자가 `5.1.02+` 공개 브리지 계약과 다른 단일 인수 호출 시그니처를 사용합니다.
+- **애니메이션 타임라인 쓰기와 일반 뷰 모델링 선택 브러시는 `5.2.00` 이상이 필요함** — 타임라인 커브 타입 쓰기(`cubism.editor-model.animation-timeline.write`)와 평가된 파라미터 베이크(`cubism.editor-model.animation-eval`)는 **5.2.00**에 도입된 애니메이션 트랙 및 커브 API에 의존합니다. 일반 뷰 모델링 선택 브러시(`cubism.modeling-tool.selection-brush`, `ModelingBrush`, `ModelingToolRegistry`) 또한 **5.2.00**에 도입된 모델링 도구 뷰 컨텍스트 리스너 API를 필요로 합니다(**5.3.00**에서 변형 브러시 확장/축소와 원/사각형/선 브러시 모양이 추가됨). Core 디포머/글루 지오메트리 읽기(`cubism.geometry.read`), 폴리곤 인식 텍스처 아틀라스 레이아웃(`TextureAtlasPolygonLayoutService`), 네이티브 PSD 원본 이미지 내보내기/교체(`ModelTextures#exportRawImagePsd()`, `replaceRawImagePsd()`)도 **5.2.00** 이상이 필요합니다.
+- **파트 불투명도/인스펙터 쓰기, 알파 합성 및 공식 MOC 5.3 내보내기는 `5.3.00` 이상이 필요함** — 파트 폼 불투명도 접근자(`cubism.editor-model.part-opacity.write`), 확장 파트 인스펙터 마스크/블렌드 모드 쓰기(`cubism.editor-model.part-inspector.write`), `AlphaComposition`, 그리고 `cubism.editor-model.moc-export.read`는 **5.3.00–5.3.04**에서만 존재합니다.
+
+### 런타임 capability 조회
+
+플러그인은 원시 Cubism Editor 버전 문자열로 분기하지 말고 capability 준비 상태를 조회해야 합니다:
+
+- 모든 `CubismFacade` 접근자는 현재 호스트가 해당 capability를 허용하는지 보고하는 `isAvailable()` 메서드를 가진 센티널을 반환합니다;
+- `EditorCommand#supports(String)`과 `supportedVersions()`는 명령별 지원 버전 집합을 런타임에 노출합니다;
+- `@CubismEditor` 어노테이션이 있는 SDK 표면은 호스트가 허용하지 않을 때 `CubismEditorApiUnavailableException`으로 안전하게 실패 차단됩니다.
+
+Turboism이 버전별 호스트 접근을 격리하는 방식에 대한 자세한 내용은 [SDK API 가이드](../reference/sdk-api)와 [매핑 계층](../concepts/mapping-layer)을 참고하세요.

@@ -1,0 +1,60 @@
+---
+title: 互換性
+description: Turboism リリース別の対応 Cubism Editor バージョン、ファーストパーティプラグインの対応範囲、マイナーライン別のケイパビリティカバレッジ、および証拠に基づくホスト境界。
+---
+
+Turboism における Cubism Editor のバージョン対応は、インストールする Turboism のリリースと、使用する個々のプラグインまたは SDK ケイパビリティの両方に依存します。対応する Cubism ホストプラットフォームは **Windows x64** です。一覧にない Editor バージョンは互換性があるとは主張されず、利用できない adapter やケイパビリティは未検証の経路へフォールバックせず fail closed で失敗します。
+
+## Turboism リリース別の対応バージョン
+
+各 Turboism リリースチャンネルには、レビュー済みの対応 Cubism Editor バージョン集合が組み込まれています。
+
+- **Stable `0.44.0`**（および **Nightly `0.44.1-0.nightly.11`**）は、Windows x64 上の正確な Cubism Editor バージョン **5.2.03**、**5.3.02**、**5.3.03** に対応しています。
+- **Beta `0.67.0-beta.1`**（および現在の `main`）は、Windows x64 上の **5.0.00 から 5.3.04 までのレビュー済み全 20 バージョン**（`5.0.00–5.0.06`、`5.1.00–5.1.03`、`5.2.00–5.2.03`、`5.3.00–5.3.04`）に対応しています。
+
+<CompatibilityReleaseTable locale="ja" />
+
+## 同一マイナーライン内のパッチ継続性
+
+同一の Cubism Editor マイナーライン（`5.0.x`、`5.1.x`、`5.2.x`、または `5.3.x`）内では、新しいパッチリリースは常に古いパッチリリースの上位集合です。`5.x.y` で許可されるケイパビリティと Editor コマンドは、すべての `y' > y` である `5.x.y'` でも引き続き許可されます。同じマイナーライン内で新しいパッチへ更新しても、機能が失われることはありません。
+
+マイナーラインを跨ぐ差異（たとえば `5.0.06` と `5.1.00`、`5.1.03` と `5.2.00`、または `5.2.03` と `5.3.00` の間）は、Cubism Editor 側で基盤機能が追加・変更されたことによる実際のホスト境界であり、回帰ではありません。
+
+## ファーストパーティプラグインの互換性
+
+以下の各行は、Turboism ソースリポジトリのレビュー済み互換性マトリクスから生成されています。**対応バージョン**はプラグインの宣言ケイパビリティが解決されるレビュー済み Cubism Editor ビルドを示し、**バージョン差分**は一部のバージョンでのみ利用可能な機能を示します。
+
+Cubism を **FREE** ライセンスで実行すると、保存は FREE のパラメータ数などの制限を受けます。**PRO** ライセンス（PRO トライアルを含む）ではこの制限はありません。Turboism プラグインのバージョン対応はライセンス階層とは無関係であり、制限はランタイムが許可する API ではなく、エディタが保存できる内容に適用されます。
+
+<CompatibilityPluginTable locale="ja" />
+
+## マイナーライン別のケイパビリティカバレッジ
+
+Turboism はホスト機能を **37 個のケイパビリティグループ**（合計 **143 個のケイパビリティ**）に分類しています。レビュー済み全 20 バージョン（`5.0.00–5.3.04`）のうち、**27 グループ**はすべてのバージョンで完全に許可されており、残りの **10 グループ**には Cubism Editor が該当サブシステムを導入したバージョンに応じた下限があります。
+
+<CompatibilityCapabilityTable locale="ja" />
+
+## 証拠に基づくバージョン境界
+
+Turboism は、特定の Cubism Editor ビルドで機能が動作するかどうかを推測しません。実行時の許可は 3 つの層の証拠を組み合わせて判定されます。
+
+1. **ハッシュ固定された静的検証レコード（`VERIFIED_STATIC`）** — 許可されたすべてのバージョンは、正確な `Live2D_Cubism.jar` および `Live2DCubismCore.jar` の成果物ダイジェストに紐付くレビュー済みバイトコードセレクタレコードを持ちます。
+2. **セレクタコントラクトとクラスピンゲート** — 特定の adapter やクラスピンテーブルが一部のバージョンにのみ配線されている場合、ランタイムコントラクトがケイパビリティを該当バージョン集合に絞り込みます。
+3. **確認済みホスト境界（`version-boundaries.json`）** — Cubism Editor のビルドに機能が存在しない場合、Turboism は Live2D Cubism の公式更新履歴とレビュー済み JAR バイトコードの両方で不在を検証したうえで確認済みホスト境界として記録します。未確認のギャップを「Editor 側に機能がない」と誤記することはありません。
+
+`5.0.00–5.3.04` における主なバージョン境界は次のとおりです。
+
+- **`5.0.x`（`5.0.00–5.0.06`）には自動バックアップと保護付きエクスポートがない** — `CModelingDocument::getDocumentUID()`（`cubism.autobackup.backup`、`cubism.autobackup.settings`、`EditorAutoBackupService` が依存するドキュメント UID 識別チェーン）はすべての `5.0.x` JAR に存在しません（`5.0.x` には `getFileContentInstanceGuid()` のみ存在）。保護付きエクスポート（`cubism.protected-export.orchestration` と `ExportSettingsContributionService`）も、ステージング出力コールバックとモーションシンク設定ソースが **5.1.00** で導入されたため `5.0.x` では利用できません。トップメニューの外部アプリ統合（`cubism.editor-ui.top-menu`）、`EditorCommandService`、自動揺れ読み取り（`cubism.editor-model.auto-yure.read`）も **5.1.00** 以降が対象です。
+- **編集プロトコル（`CubismFacade#edit()`、`cubism.integration.edit-api-bridge.dispatch`）には `5.1.02` 以降が必要** — `5.0.x` には `com/live2d/cubism/doc/webSocket` パッケージ自体が存在せず、`5.1.00` と `5.1.01` ではセッション検索メソッドが private であり外部アプリ認証マネージャの呼び出し形式も `5.1.02+` の契約と異なります。
+- **アニメーションタイムライン書き込みと通常ビューのモデリング選択ブラシには `5.2.00` 以降が必要** — タイムラインのカーブ種別書き込み（`cubism.editor-model.animation-timeline.write`）と評価済みパラメータベイク（`cubism.editor-model.animation-eval`）は **5.2.00** で導入されたトラック・カーブ API に依存します。通常ビューのモデリング選択ブラシ（`cubism.modeling-tool.selection-brush`、`ModelingBrush`、`ModelingToolRegistry`）も **5.2.00** で導入されたモデリングツールのビューコンテキストリスナー API を必要とします（**5.3.00** でブラシの拡張/収縮および円/四角/線ブラシ形状が追加）。Core のデフォーマ/グルージオメトリ読み取り（`cubism.geometry.read`）、ポリゴン対応テクスチャアトラス配置（`TextureAtlasPolygonLayoutService`）、ネイティブ PSD 原画像のエクスポート/置き換え（`ModelTextures#exportRawImagePsd()`、`replaceRawImagePsd()`）も **5.2.00** 以降が必要です。
+- **パーツ不透明度/インスペクタ書き込み、アルファ合成、公式 MOC 5.3 エクスポートには `5.3.00` 以降が必要** — パーツフォームの不透明度アクセサ（`cubism.editor-model.part-opacity.write`）、拡張パーツインスペクタのマスク/ブレンドモード書き込み（`cubism.editor-model.part-inspector.write`）、`AlphaComposition`、および `cubism.editor-model.moc-export.read` は **5.3.00–5.3.04** でのみ利用できます。
+
+### 実行時のケイパビリティ照会
+
+プラグインは Cubism Editor のバージョン文字列で直接分岐せず、ケイパビリティの利用可否を照会してください。
+
+- `CubismFacade` の各アクセサは `isAvailable()` を持つセンチネルを返し、現在のホストがそのケイパビリティを許可しているかを報告します。
+- `EditorCommand#supports(String)` と `supportedVersions()` は、コマンドごとの対応バージョン集合を実行時に公開します。
+- `@CubismEditor` 注釈付きの SDK サーフェスは、ホストが許可しない場合に `CubismEditorApiUnavailableException` で fail closed します。
+
+Turboism がバージョン固有のホストアクセスをどのように分離しているかについては、[SDK API ガイド](../reference/sdk-api)および[マッピング層](../concepts/mapping-layer)を参照してください。

@@ -5,10 +5,18 @@ import {
   CollapsibleCodeBlock,
   CollapsiblePre,
 } from "@/components/collapsible-code-block";
+import {
+  CompatibilityCapabilityTable,
+  CompatibilityPluginTable,
+  CompatibilityReleaseTable,
+} from "@/components/compatibility-tables";
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
+    CompatibilityReleaseTable,
+    CompatibilityPluginTable,
+    CompatibilityCapabilityTable,
     pre: (props) => {
       const codeProps = props as typeof props & {
         "data-code-language"?: string;
