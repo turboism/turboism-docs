@@ -11,7 +11,7 @@ plugin は `127.0.0.1` のみで listen し、認証済み Streamable HTTP を�
 
 ## local client を接続する
 
-1. Full または Thin のインストールを開始し、**Turboism MCP Server** plugin が有効になっていることを確認します。
+1. Full のインストール（または Thin の場合はプラグインマーケットから **Turboism MCP Server** を導入）を開始し、プラグインが有効になっていることを確認します。
 2. 信頼できる local MCP client で、plugin が示す loopback endpoint への Streamable HTTP connection を作成します。
 3. その connection に bearer secret を送るよう client を設定します。
 4. client に `initialize` を送らせ、session 中は返された `MCP-Session-Id` を保持します。

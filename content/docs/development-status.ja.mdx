@@ -44,13 +44,16 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 
 ## インストーラーと配布
 
-3 つのパッケージング経路が、1 つのステージング済み payload と Full/Thin/Lite プラグインモデルを共有しています。
+0.67.0-beta.3 以降、Turboism は Full と Thin の 2 つのバリアントに分かれた 4 つの正式リリース資産を提供します。
 
-- Windows ネイティブの NSIS インストーラー（`TurboismInstaller-<version>.exe`）。Full と Lite、およびオプションのマネージド GraalVM コンポーネントを提供します。
-- Java 17 の IzPack インストーラー（`TurboismInstaller-<version>.jar`）。Full、Thin、Lite を提供し、Windows、macOS、Linux にインストールできます。
-- ポータブルな `turboism-<version>-full.zip` と `turboism-<version>-lite.zip` アーカイブ。
+- Windows ネイティブの NSIS インストーラー（`TurboismInstaller-<version>-full.exe` および `TurboismInstaller-<version>-thin.exe`）。オプションのマネージド GraalVM コンポーネントおよびバリアント間の安全なアップグレードを提供します。
+- ポータブルな `turboism-<version>-full.zip` と `turboism-<version>-thin.zip` アーカイブ。
 
-どちらのインストーラーも、4 つの必須の確認事項と、完全なローカライズ済みランタイム宣言をインストールの前提条件とします。どちらも Cubism のインストールファイルを変更しません。`config.json` は更新の所有権を明示しています。既存の有効なドキュメントでは、インストーラーは管理対象のプラグイン選択だけを変更し、認識された legacy schema は payload を変更する前に移行して検証されます。Windows の設定ツールは、正確にサポート対象の Cubism インストールのみを一覧に表示し、Turboism が所有するショートカットを、オプションでハッシュで保護された公式 BAT 連携とは分離して保ちます。
+0.67.0-beta.3 未満の旧リリースでは従来の資産（`TurboismInstaller-<version>.exe`、Java 17 IzPack インストーラー `TurboismInstaller-<version>.jar`、`turboism-<version>-lite.zip`）が使用されていました。Java インストーラー JAR は廃止されました。
+
+インストーラーにモード選択や個別プラグイン選択の画面はありません。Full はすべてのファーストパーティプラグインを導入し、Thin はプラグインを導入しません。Cubism Editor 内では、トップメニュー名が **Turboism**（以前は「プラグイン」/「插件」）になり、アプリ内の**プラグインマーケット…**、**プラグイン管理…**、**プラグイン設定…**（専用の 2 ペインウィンドウ）、**更新を確認**、および署名検証付きファーストパーティプラグインのバックグラウンド自動更新を提供します。
+
+どちらのインストーラーも、4 つの必須の確認事項と完全なローカライズ済みランタイム宣言を前提とします。Cubism のインストールファイルを変更しません。`config.json` は更新の所有権を明示しており、既存の有効な設定ではユーザー構成が保持され、Full と Thin 間のアップグレードも安全です（Thin を Full に上書きしても `plugins/` は保持され、Full を Thin に上書きしても既存の `disabledPlugins` 設定が尊重されます）。Windows の設定ツールは正確に対応する Cubism インストールのみを一覧表示し、Turboism 所有のショートカットをオプションの公式 BAT 連携とは分離して管理します。
 
 ## Cubism と Editor API の進捗
 
@@ -107,9 +110,9 @@ host validation           explicit exact-version Cubism execution for the affect
 
 Host validation は監督されたローカルキューを通じて実行されます。build と prepare の作業は並行して実行できますが、単一の host-admission lock が実際の Cubism セッションを直列化し、完了には一致する構造化された lifecycle と cleanup の evidence が必要で、所有権が不明な場合は無関係なセッションを終了させるのではなく、検査のためにホストを隔離します。
 
-## Official Directory の状況
+## 公式ディレクトリとプラグインマーケットの状況
 
-組み込みの署名済み Official Directory client と UI は実装されていますが、本番アクティベーションは未準備です。本番 key list は空で、ライブ署名済み catalog の準備は確立されていません。ライブマーケットプレイスではありません。
+Cubism 内のプラグインマーケットクライアントと UI は稼働しており、`turboism.dev/plugins` の検証済みディレクトリから署名済みファーストパーティおよびカタログプラグインを直接検索・導入できます。ファーストパーティプラグインは署名検証付きのバックグラウンド自動更新およびホットリロードに対応しています。
 
 ## 進行中またはバージョン制限付き
 
@@ -125,7 +128,7 @@ Turboism は現在、次のものを約束していません。
 
 - インストーラーパッケージの署名またはノータリゼーション済みの公開リリースチャネル。
 - 検証済みの macOS Cubism ホスト対応。
-- フレームワークまたはプラグイン更新の自動ダウンロードとインストール（更新チェックは利用可能。インストーラーの自動更新は対象外）。
+- フレームワークインストーラーの自動ダウンロードとバックグラウンド実行（更新チェックとプラグインのバックグラウンド自動更新は利用可能。フレームワークインストーラー自体の自動更新は対象外）。
 - 本番有効化されたマーケットプレイス、publisher signing、または revocation。
 - 完全なユーザー向けの install、repair、rollback、recovery、purge UI。
 - Cubism launcher のグローバルな変更。

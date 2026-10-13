@@ -44,13 +44,16 @@ Plugins depend on the Turboism SDK only. Runtime owns host access, lifecycle, sa
 
 ## Installer and delivery
 
-Three packaging paths share one staged payload and the Full/Thin/Lite plugin model:
+Starting with 0.67.0-beta.3, Turboism ships four product downloads across Full and Thin variants:
 
-- the Windows-native NSIS installer (`TurboismInstaller-<version>.exe`), which offers Full and Lite plus an optional managed GraalVM component;
-- the Java 17 IzPack installer (`TurboismInstaller-<version>.jar`), which offers Full, Thin, and Lite and installs on Windows, macOS, and Linux;
-- the portable `turboism-<version>-full.zip` and `turboism-<version>-lite.zip` archives.
+- the Windows-native NSIS installers (`TurboismInstaller-<version>-full.exe` and `TurboismInstaller-<version>-thin.exe`), offering an optional managed GraalVM component and safe upgrades;
+- the portable `turboism-<version>-full.zip` and `turboism-<version>-thin.zip` archives.
 
-Both installers gate installation behind four required acknowledgements and a full localized runtime declaration. Neither modifies Cubism installation files. `config.json` has explicit update ownership: on an existing valid document the installer changes only the managed plugin selection, and a recognized legacy schema is migrated and validated before any payload mutation. The Windows configurator lists only exact supported Cubism installations and keeps Turboism-owned shortcuts separate from optional, hash-guarded official BAT integration.
+Releases before 0.67.0-beta.3 used the legacy assets (`TurboismInstaller-<version>.exe`, the Java 17 IzPack installer `TurboismInstaller-<version>.jar`, and `turboism-<version>-lite.zip`). The Java installer JAR is retired.
+
+Installers no longer feature mode or plugin-selection pages: Full installs all first-party plugins, and Thin installs zero plugins. Inside Cubism Editor, the top menu is named **Turboism** (previously "插件"/Plugins), offering the in-Cubism **Plugin Market…**, **Manage Plugins…**, **Plugin Settings…** (a dedicated two-pane window), **Check for Updates**, and background auto-updates for verified first-party plugins.
+
+The installer gates installation behind four required acknowledgements and a full localized runtime declaration. It does not modify Cubism installation files. `config.json` has explicit update ownership: on an existing valid document the installer preserves user configuration, and upgrades between Full and Thin are safe (Thin over Full leaves `plugins/` untouched; Full over Thin respects `disabledPlugins`). The Windows configurator lists only exact supported Cubism installations and keeps Turboism-owned shortcuts separate from optional, hash-guarded official BAT integration.
 
 ## Cubism and Editor API progress
 
@@ -107,9 +110,9 @@ host validation           explicit exact-version Cubism execution for the affect
 
 Host validation runs through a supervised local queue: build and prepare work may run in parallel, but a single host-admission lock serializes real Cubism sessions, completion requires matching structured lifecycle and cleanup evidence, and unknown ownership quarantines the host for inspection instead of killing unrelated sessions.
 
-## Official Directory status
+## Official Directory and Plugin Market status
 
-A built-in signed Official Directory client and UI are implemented, but production activation is not ready: the production key list is empty and live signed catalog readiness is not established. It is not a live marketplace.
+The in-Cubism Plugin Market client and UI are active for browsing and installing verified first-party and catalog plugins directly from the live signed directory at `turboism.dev/plugins`. First-party plugins support background automatic updates with signature verification and hot-reload.
 
 ## In progress or version-limited
 
@@ -125,7 +128,7 @@ Turboism does not currently promise:
 
 - a signed or notarized public release channel for installer packages;
 - verified macOS Cubism host support;
-- automatic download and installation of framework or plugin updates (update checks are available; automatic installer updates are not);
+- automatic download and silent execution of framework installer packages (update checks and background plugin updates are available; automatic framework installer updates are not);
 - a production-enabled marketplace, publisher signing, or revocation;
 - a complete user-facing install, repair, rollback, recovery, and purge UI;
 - global modification of Cubism launchers;
