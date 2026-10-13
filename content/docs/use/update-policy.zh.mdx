@@ -1,9 +1,9 @@
 ---
 title: 更新策略
-description: 通过重新运行安装器更新 Turboism，并在 stable、beta 和 nightly 发布渠道之间选择。
+description: 安全更新 Turboism 及插件，了解后台自动更新，并在各发布渠道之间做出选择。
 ---
 
-Turboism 在三个渠道发布产品版本，并在机器可读的发布信息源后镜像每个安装包。Turboism 会自动检查稳定版更新，但安装更新仍是明确的手动步骤：不会自动下载或执行任何安装程序。
+Turboism 在三个渠道发布产品版本，并在机器可读的发布信息源后镜像每个安装包。Turboism 会自动检查更新并在后台自动更新经签名验证的第一方插件，而框架更新仍需明确的手动步骤。
 
 ## 发布渠道
 
@@ -15,7 +15,7 @@ Turboism 在三个渠道发布产品版本，并在机器可读的发布信息�
 
 - 渠道可以合法地报告 `status: not_published`；这表示渠道为空，而不是错误。
 - nightly 构建是开发构建：使用前请备份项目。
-- 每个渠道都产出相同的四种安装包格式以及相同的每包 SHA-256 伴随文件。
+- 自 **0.67.0-beta.3** 起，每个渠道严格产出四种产品构件：`TurboismInstaller-<version>-full.exe`、`TurboismInstaller-<version>-thin.exe`、`turboism-<version>-full.zip` 和 `turboism-<version>-thin.zip`，并附带配对的 `.sha256` 校验和。0.67.0-beta.3 之前的历史版本采用旧版构件（`TurboismInstaller-<version>.exe`、Java 安装器 `TurboismInstaller-<version>.jar` 以及 `turboism-<version>-lite.zip`）。Java 安装器 JAR 已退役。
 
 ## 机器可读的信息源
 
@@ -36,21 +36,34 @@ https://api.turboism.dev/v1/releases/nightly.json
 1. 备份 `config.json` 以及任何重要的持久化插件 `config/` 和 `data/` 内容。
 2. 下载适用于你的平台和渠道的更新安装包，并验证其 SHA-256 校验和。
 3. 运行新版安装器并指向同一个 Turboism home 目录，或替换你解压出的便携归档中的文件。
-4. 在更新过程中重新运行插件选择（Full、Thin 或 Lite）。
+4. 变体间升级安全可靠：安装器不再包含模式或插件选择页。使用 Thin 覆盖 Full 安装时原样保留现有的 `plugins/` 目录；使用 Full 覆盖 Thin 安装时安装或更新全部随包第一方插件，并保留现有的 `disabledPlugins` 停用设置。
 5. 更新后验证启动、插件发现、宿主 capability 状态和日志。
 
-重新运行安装器会更新同一个 home 和选择，不会盲目覆盖无关配置。不要把覆盖或重写 Cubism 安装文件作为更新机制。
+重新运行安装器会更新同一个 home，不会盲目覆盖无关配置。不要把覆盖或重写 Cubism 安装文件作为更新机制。
 
-## 替换或更新插件
+## 插件更新与后台自动更新
 
-安装具有相同 plugin ID 的新版插件 JAR 会分阶段提交替换意图，并在 Cubism 重启后生效。
+### 第一方插件自动更新
+
+自 0.67.0-beta.3 起，第一方插件可在后台自动更新：
+
+- 运行时会对照官方在线目录检查第一方插件更新。
+- 下载的更新在暂存前经过严格的数字签名与文件完整性校验。
+- 标记为**热更新**（hot-reload）的插件会在当前会话中即刻生效，无需重启 Cubism。
+- 其他插件更新会在下一次重启 Cubism 时应用。
+- 用户可在设置中随时关闭官方插件自动更新（`settings.plugins.automatic-updates`）。
+- 你也可以随时通过 **Turboism → 插件市场…** 或访问 [turboism.dev/plugins](https://turboism.dev/plugins) 手动浏览和更新插件。
+
+### 本地与第三方插件
+
+通过 **Turboism → 管理插件… → 从 JAR 安装…** 安装具有相同 plugin ID 的新版插件 JAR 会提交替换意图，并在 Cubism 重启后生效。
 
 1. 在重要时备份当前插件 JAR 以及插件的持久化 `config/<pluginId>/` 和 `data/<pluginId>/` 内容。
 2. 通过插件管理安装新版 JAR。
 3. 重启 Cubism。
 4. 验证显示的版本、生命周期状态、配置迁移和日志。
 
-应用失败时，会从私有 backup 恢复之前的插件文件。此工作流不会保留历史 generation，也不提供完整的用户面向修复、回滚或清理 UI。
+应用失败时，会从私有备份恢复之前的插件文件。
 
 ## 兼容性预期
 
@@ -62,19 +75,15 @@ https://api.turboism.dev/v1/releases/nightly.json
 
 ## 更新检查
 
-Turboism 会针对已部署的发布 API（`api.turboism.dev/v1/releases/stable.json`）检查稳定版更新。比较使用安装包内嵌的权威构建号，因此更低的构建号永远不会被当作更新提供，构建号相同但版本不同的情况会被视为身份冲突而不是更新。早于构建号机制的安装仍然只按版本比较，并且永远不会被赋予臆造的编号。
+Turboism 会针对已部署的发布 API（`api.turboism.dev/v1/releases/stable.json`）检查稳定版更新。比较使用安装包内嵌的权威构建号，因此更低的构建号永远不会被当作更新提供，构建号相同但版本不同的情况会被视为身份冲突而不是更新。
 
-可用更新以绘图区上的原生 Cubism 提示呈现。点击提示会打开固定的官方下载页；不会打开或安装来自发布源的任何 URL，也不会自动下载或执行安装程序。
+可用更新以绘图区上的原生 Cubism 提示呈现。点击提示会打开固定的官方下载页；不会自动下载或执行安装程序。你也可以通过顶部菜单中的 **Turboism → 检查更新** 随时进行手动检查。
 
-更新检查不阻塞界面，最多每 24 小时运行一次，并始终提供手动检查。自动检查在「启动」设置页有独立的持久开关，且不受 Cubism 自身更新抑制设置的影响。
+更新检查不阻塞界面，最多每 24 小时运行一次，并始终提供手动检查。自动检查在设置中有独立的持久开关，且不受 Cubism 自身更新抑制设置的影响。
 
 ## 当前不可用
 
-- 框架或插件更新的自动下载与安装；
-- 生产可用的 marketplace；
-- 发布者签名和撤销；
-- 保留不可变的 JAR generation；
-- 完整的用户面向修复、回滚或恢复 UI；
-- 对 Cubism launcher 的全局修改。
-
-内置的 Official Directory 客户端和 UI 已存在，但生产激活尚未就绪：生产密钥列表为空，实时签名 catalog 就绪性尚未建立。
+- 框架安装程序的自动静默下载与后台执行（框架更新需手动运行安装器或解压 ZIP）；
+- 未经验证的第三方签名权威机构；
+- 保留不可变的 JAR 历史版本回滚 UI；
+- 对 Cubism 官方启动文件的全局系统级修改。

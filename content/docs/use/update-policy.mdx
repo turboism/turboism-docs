@@ -1,9 +1,9 @@
 ---
 title: Update Policy
-description: Update Turboism by rerunning an installer, and choose between the stable, beta, and nightly release channels.
+description: Update Turboism and its plugins safely, understand background updates, and choose between release channels.
 ---
 
-Turboism publishes product releases in three channels and mirrors every package behind a machine-readable release feed. Turboism checks for stable updates automatically, but installing an update is still an explicit, manual step: no installer is downloaded or executed automatically.
+Turboism publishes product releases in three channels and mirrors every package behind a machine-readable release feed. Turboism checks for updates and auto-updates verified first-party plugins in the background, while framework updates remain an explicit step.
 
 ## Release channels
 
@@ -15,7 +15,7 @@ Turboism publishes product releases in three channels and mirrors every package 
 
 - A channel can legitimately report `status: not_published`; that is an empty channel, not an error.
 - Nightly builds are development builds: back up projects before use.
-- Every channel produces the same four package formats and the same per-package SHA-256 sidecars.
+- Starting with **0.67.0-beta.3**, every channel produces exactly four package downloads: `TurboismInstaller-<version>-full.exe`, `TurboismInstaller-<version>-thin.exe`, `turboism-<version>-full.zip`, and `turboism-<version>-thin.zip`, with matching `.sha256` checksums. Releases before 0.67.0-beta.3 used the legacy assets (`TurboismInstaller-<version>.exe`, the Java installer `TurboismInstaller-<version>.jar`, and `turboism-<version>-lite.zip`). The Java installer JAR is retired.
 
 ## Machine-readable feeds
 
@@ -35,22 +35,35 @@ The product website uses the same data for [turboism.dev/download](https://turbo
 
 1. Back up `config.json` and any persistent plugin `config/` and `data/` content that matters.
 2. Download the newer package for your platform and channel, and verify its SHA-256 checksum.
-3. Run the newer installer and target the same Turboism home directory, or replace the files of a portable archive you extracted.
-4. Rerun the plugin selection (Full, Thin, or Lite) as part of the update.
+3. Run the newer installer targeting the same Turboism home directory, or replace the files of a portable archive you extracted.
+4. Upgrades across variants are safe: the installers no longer have mode or plugin-selection pages. Running Thin over Full leaves existing plugins untouched; running Full over Thin installs or updates all bundled first-party plugins and keeps existing `disabledPlugins` entries disabled.
 5. Verify startup, plugin discovery, host capability status, and logs after the update.
 
-Rerunning the installer updates the same home and selection without blindly overwriting unrelated configuration. Do not overwrite or rewrite Cubism installation files as an update mechanism.
+Rerunning the installer updates the same home without overwriting unrelated configuration. Do not overwrite or rewrite Cubism installation files as an update mechanism.
 
-## Replace or update a plugin
+## Plugin updates and automatic background updates
 
-Installing a newer plugin JAR with the same plugin ID stages a replacement intent that applies after Cubism restarts.
+### First-party plugin auto-updates
 
-1. Back up the current plugin JAR and the plugin's persistent `config/<pluginId>/` and `data/<pluginId>/` content when it matters.
+Starting with 0.67.0-beta.3, first-party plugins auto-update in the background:
+
+- The runtime checks for signed first-party updates against the catalog.
+- Downloaded updates undergo strict signature and payload verification before staging.
+- Plugins marked **hot-reload** apply immediately to the running session without restarting Cubism.
+- Other plugin updates apply the next time Cubism restarts.
+- Users can disable automatic first-party plugin updates anytime in framework settings (`settings.plugins.automatic-updates`).
+- You can also manually browse, install, or update plugins via **Turboism → Plugin Market…** or [turboism.dev/plugins](https://turboism.dev/plugins).
+
+### Custom and third-party plugins
+
+Installing a newer plugin JAR with the same plugin ID through **Turboism → Manage Plugins… → Install from JAR…** stages a replacement intent that applies after Cubism restarts.
+
+1. Back up the current plugin JAR and the plugin's persistent `config/<pluginId>/` and `data/<pluginId>/` content.
 2. Install the newer JAR through plugin management.
 3. Restart Cubism.
 4. Verify the displayed version, lifecycle state, configuration migration, and logs.
 
-A failed apply restores the previous plugin files from a private backup. This workflow does not retain historical generations and does not provide a complete user-facing repair, rollback, or purge UI.
+A failed apply restores the previous plugin files from a private backup.
 
 ## Compatibility expectations
 
@@ -62,19 +75,16 @@ A failed apply restores the previous plugin files from a private backup. This wo
 
 ## Update checker
 
-Turboism checks for stable updates against the deployed release API (`api.turboism.dev/v1/releases/stable.json`). The comparison uses the authoritative build number embedded in the installed package, so a lower build is never offered as an update and an equal build number with a different version is treated as an identity conflict rather than an update. Installations that predate build numbers keep comparing by version only and are never assigned an invented number.
+Turboism checks for stable framework updates against the deployed release API (`api.turboism.dev/v1/releases/stable.json`). The comparison uses the authoritative build number embedded in the installed package, so a lower build is never offered as an update and an equal build number with a different version is treated as an identity conflict rather than an update.
 
-An available update is presented as a native Cubism hint over the drawing area. Clicking it opens the fixed first-party download page; no URL from the release feed is opened or installed, and no installer is downloaded or executed automatically.
+An available update is presented as a native Cubism hint over the drawing area. Clicking it opens the fixed first-party download page; no URL from the release feed is executed automatically. You can also trigger a check manually anytime via the top menu (**Turboism → Check for Updates**).
 
-The update checker is non-blocking and runs at most once per 24 hours, with a manual check that is always available. Automatic checks have their own persistent toggle in the Startup settings tab and are independent of Cubism's own update suppression.
+The update checker is non-blocking and runs at most once per 24 hours, with a manual check always available. Automatic checks have their own persistent toggle in settings and are independent of Cubism's own update suppression.
 
 ## Not currently available
 
-- automatic download and installation of framework or plugin updates;
-- a production-enabled marketplace;
-- publisher signatures and revocation;
-- retained immutable JAR generations;
-- a complete user-facing repair, rollback, or recovery UI;
+- automatic silent execution of framework installers (framework updates require running the installer or extracting the ZIP);
+- unverified third-party signature authority;
+- retained immutable historical JAR generations;
+- a complete user-facing rollback or recovery UI;
 - global modification of Cubism launchers.
-
-The built-in Official Directory client and UI exist, but production activation is not ready: the production key list is empty and live signed catalog readiness is not established.
