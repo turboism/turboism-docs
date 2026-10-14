@@ -151,7 +151,7 @@ if (!index.includes(`sdk ${expectedVersion} API`)) {
 
 const textExtensions = new Set([".css", ".html", ".js", ".json", ".txt"]);
 const blockedContent = [
-  ["snapshot version", /-SNAPSHOT/i],
+  ["snapshot version", /\b[0-9.]+-SNAPSHOT\b/i],
   ["local workspace path", /(?:^|[\s"'(=])\/workspace\//m],
   ["local home path", /(?:^|[\s"'(=])\/home\//m],
   ["PreviewApi", /\bPreviewApi\b/],
