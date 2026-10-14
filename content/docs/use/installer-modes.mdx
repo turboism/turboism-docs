@@ -1,37 +1,63 @@
 ---
-title: Installer Modes
-description: Compare the Full, Thin, and Lite installation selections and the optional managed GraalVM component.
+title: Full and Thin Variants
+description: Compare the Full and Thin download variants, understand safe upgrades, and view legacy package history.
 ---
 
-Turboism installers and portable archives ship the same runtime with different plugin selections. A mode selects files; it never changes your Cubism installation.
+Starting with **0.67.0-beta.3**, Turboism ships exactly four product downloads across two variants instead of wizard-based installer modes:
 
-## Modes
+- **Full** (`TurboismInstaller-<version>-full.exe`, `turboism-<version>-full.zip`) — runtime framework plus every bundled first-party plugin.
+- **Thin** (`TurboismInstaller-<version>-thin.exe`, `turboism-<version>-thin.zip`) — runtime framework only, with zero first-party plugins.
 
-- **Full** — the agent plus the reviewed first-party plugin bundle. The installer preselects every approved release plugin and lets you deselect individual plugins.
-- **Thin** — the same approved plugin roster without the additional managed native runtime payload. Available in the Java installer, which also accepts an explicit custom executable path.
-- **Lite** — the agent and common files only. No first-party plugin JAR is copied.
+In Thin installations, plugins are installed later from the in-Cubism Plugin Market (**Turboism** menu → **Plugin Market…**) or from [turboism.dev/plugins](https://turboism.dev/plugins).
 
-The Windows `.exe` installer offers **Full** and **Lite**. The cross-platform `.jar` installer offers **Full**, **Thin**, and **Lite**. The portable archives ship as `full` and `lite` variants of the same payload.
+Neither variant alters Cubism installation files or licensing state.
 
-## Optional managed GraalVM
+## Full vs Thin boundary
 
-The installers offer an optional managed GraalVM component:
+| Capability | Full variant | Thin variant |
+| --- | --- | --- |
+| Runtime framework & Java agent | Included | Included |
+| Configurator (`configure_turboism.ps1`) | Included | Included |
+| Bundled first-party plugins | All included in `plugins/` | None included |
+| Plugin acquisition | Pre-installed | From in-Cubism Plugin Market or web directory |
+| Plugin management & toggles | **Turboism → Manage Plugins…** | **Turboism → Manage Plugins…** |
+| Background auto-updates | Verified first-party plugin updates | Verified first-party plugin updates |
 
-- it downloads the pinned archive from the GraalVM official GitHub release and verifies it before use;
-- leaving it unchecked keeps the installation valid and complete for the plugin bundle;
-- you can install it later from Turboism settings.
+### No mode or plugin-selection wizard pages
 
-The development-only `Turboism with fx` plugin and its managed runtime bytes are not part of any release package.
+The installers no longer have mode selection or per-plugin selection pages:
 
-## What a mode does not change
+- `TurboismInstaller-<version>-full.exe` installs all first-party plugins without individual checkboxes.
+- `TurboismInstaller-<version>-thin.exe` installs only the framework files.
+- Plugins can be enabled or disabled later inside Cubism via **Turboism → Manage Plugins…**; changes apply after restarting Cubism.
+- Verified first-party plugins auto-update in the background. Plugins marked hot-reload apply immediately, while other updates apply after restarting Cubism. Users can turn off automatic plugin updates in settings.
 
-- The runtime home, configuration, logs, and plugin data are the same in every mode.
-- Rerunning the installer applies a different selection to the same home and changes only the managed plugin state.
-- Unknown files and third-party plugin JARs are never deleted by a mode change.
-- A mode label does not guarantee that a plugin feature is available on your Cubism version. Availability remains capability- and version-specific.
+## Safe upgrades between variants
 
-## Before choosing
+Running installers across variants is safe and idempotent:
 
-1. Back up `config.json` and any plugin `config/` or `data/` content that matters.
-2. Review [Update Policy](./update-policy) for how installer reruns and release channels work.
-3. Use [Downgrade and Recovery](./downgrade-recovery) if a change does not behave as expected.
+- **Thin over Full**: running the Thin installer over an existing Full installation updates the framework while leaving your existing `plugins/` directory untouched.
+- **Full over Thin**: running the Full installer over an existing Thin installation installs or updates all bundled first-party plugins while respecting existing `disabledPlugins` entries in `config.json`.
+
+In both cases, user settings in `config.json` and Cubism installation links in `cubism-installations.json` are preserved.
+
+## Optional engine and GraalVM components
+
+The Windows installer offers an optional component to acquire the JavaScript engine and GraalVM dependencies:
+
+- Leaving it unselected keeps the framework and Java plugins complete and fully operational.
+- You can install or download the engine later via `install-script-engine.ps1` or settings.
+- The development-only `Turboism with fx` plugin and managed fx runtime bytes are never included in release packages.
+
+## Legacy packages (releases before 0.67.0-beta.3)
+
+Releases before **0.67.0-beta.3** used a legacy packaging model:
+
+- A single Windows installer `TurboismInstaller-<version>.exe` that featured wizard pages for selecting between Full and Lite modes, as well as per-plugin component checkboxes.
+- A cross-platform IzPack Java installer `TurboismInstaller-<version>.jar` (requiring Java 17 or newer) that offered Full, Thin, and Lite modes.
+- Portable archives distributed as `turboism-<version>-full.zip` and `turboism-<version>-lite.zip`.
+
+Starting with 0.67.0-beta.3:
+- The Java installer JAR is retired. macOS and Linux use the portable ZIP packages.
+- The "Lite" tier is replaced by the standalone Thin variant (`-thin.exe` and `-thin.zip`).
+- Per-plugin installer selection is superseded by the in-Cubism Plugin Market and Manage Plugins windows.

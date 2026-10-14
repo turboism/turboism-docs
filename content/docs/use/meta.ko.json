@@ -3,6 +3,7 @@
   "pagesIndex": "overview",
   "pages": [
     "installation",
+    "compatibility",
     "installer-modes",
     "quick-start",
     "plugin-management",

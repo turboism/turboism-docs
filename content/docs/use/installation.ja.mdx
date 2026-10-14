@@ -5,124 +5,114 @@ description: 公開リリースパッケージから、Cubism のインストー
 
 Turboism は [GitHub Releases](https://github.com/turboism/Turboism/releases) と、公式ダウンロードミラーである [turboism.dev/download](https://turboism.dev/download) を通じて配布されます。すべてのパッケージには、対応する `.sha256` チェックサムファイルが付属します。Turboism をソースからビルドすることは開発者・メンテナー向けの作業であり、通常の利用には必要ありません。
 
-どのパッケージも、Cubism JAR、DLL、公式 launcher file、licensing state、既存 project を変更しません。
+どのパッケージも、Cubism JAR、DLL、公式ランチャーファイル、ライセンス状態、既存プロジェクトを変更しません。
 
 インストーラーは現在署名されていません。実行する前に、ダウンロードしたファイルをチェックサムで検証してください。
 
 ## パッケージを選ぶ
 
+**0.67.0-beta.3** 以降、Turboism は 2 つのバリアントに分かれた 4 つの正式リリース資産を提供します。
+
 | パッケージ | プラットフォーム | 目的 |
 | --- | --- | --- |
-| `TurboismInstaller-<version>.exe` | Windows | ガイド付き NSIS インストーラー。Windows では推奨。 |
-| `TurboismInstaller-<version>.jar` | Windows、macOS、Linux | ガイド付き IzPack インストーラー。Java 17 以降が必要。 |
-| `turboism-<version>-full.zip` | 手動セットアップ | ランタイムと、レビュー済みのファーストパーティプラグインバンドル。 |
-| `turboism-<version>-lite.zip` | 手動セットアップ | ランタイムのみ。プラグイン JAR は自分で追加します。 |
+| `TurboismInstaller-<version>-full.exe` | Windows | Full ガイド付き NSIS インストーラー。ランタイムフレームワークとすべての同梱ファーストパーティプラグインを含む。 |
+| `TurboismInstaller-<version>-thin.exe` | Windows | Thin ガイド付き NSIS インストーラー。ランタイムフレームワークのみ（プラグインなし）。 |
+| `turboism-<version>-full.zip` | Windows、macOS、Linux（手動） | Full ポータブルアーカイブ。ランタイムとすべての同梱ファーストパーティプラグインを含む。 |
+| `turboism-<version>-thin.zip` | Windows、macOS、Linux（手動） | Thin ポータブルアーカイブ。ランタイムフレームワークのみ（プラグインなし）。 |
 
-4 つの形式はすべて同じリリースバージョンを持ちます。ビルドを提供したチャンネルを使用してください。[リリースチャンネル](./update-policy)と、`api.turboism.dev` 配下の 3 つの JSON フィードを参照してください。
+**0.67.0-beta.3** より前のリリースでは従来の配布資産（単一の Windows インストーラー `TurboismInstaller-<version>.exe`、Java インストーラー `TurboismInstaller-<version>.jar`、およびポータブルアーカイブ `turboism-<version>-full.zip` と `turboism-<version>-lite.zip`）が使用されていました。Java インストーラー JAR は廃止され、macOS および Linux ではポータブル ZIP パッケージを使用します。
+
+すべての形式は同じリリースバージョンを持ちます。ビルドを提供したチャンネルを使用してください。[リリースチャンネル](./update-policy)と、`api.turboism.dev` 配下の 3 つの JSON フィードを参照してください。
 
 ## 対応環境
 
 - **Windows x64** が対応する Cubism ホストプラットフォームです。
-- 対応する Cubism Editor バージョンは **5.2.03**、**5.3.02**、**5.3.03** で、それぞれに正確なバージョン用の adapter があります。一覧にない Editor バージョンは互換性があるとは主張されず、利用できない adapter や機能は fail closed で失敗します。
+- 対応する Cubism Editor バージョンは Turboism のリリースによって異なります。Stable **0.44.0** は **5.2.03**、**5.3.02**、**5.3.03**、Beta **0.67.0-beta.1** は **5.0.00 から 5.3.04** までのレビュー済み全 20 バージョンに対応しています（[互換性](/docs/use/compatibility)を参照）。一覧にない Editor バージョンは互換性があるとは主張されず、利用できない adapter や機能は fail closed で失敗します。
 - 対応する Editor バージョンであることは、すべてのプラグイン機能がそのバージョンで利用できることを意味しません。
-- macOS のパッケージングはプレビューのみです。インストーラーはインストールとアンインストールを行えますが、macOS の Cubism ホスト対応は検証されておらず、macOS ランチャーもインストールされません。
-- Linux の対象はインストーラーと payload の挙動に限られます。Linux は対応する Cubism ホストではありません。
+- macOS のパッケージングはプレビュー段階です。macOS の Cubism ホスト対応は未検証で、macOS ランチャーもインストールされません。
+- Linux の対象はインストーラーとランタイムファイルの配置挙動に限られます。Linux は対応する Cubism ホストではありません。
 
 ## インストーラーの言語
 
 すべての Turboism インストーラーは **英語、簡体字中国語、日本語、韓国語** で提供されます。
 
-- EXE ウィザードは、ウェルカムページの前に言語選択ステップを表示し、ホストの言語にかかわらずすべての言語を一覧に保ちます。
-- JAR ウィザードは言語選択ダイアログから始まります。`-language eng|chn|jpn|kor` を渡すと 1 つを事前選択し、そのダイアログをスキップできます。
-- インストーラーの言語はインストーラーに限定され、`config.json` に書き込まれることはありません。Turboism が実行時に使用する言語はランタイムの `locale` 設定から決まり、プラグインのインターフェース言語は Cubism Editor の **ファイル → 環境設定 → 一般 → 言語**（File → Environment Settings → General → Language）に従います。
+- EXE ウィザードは、ようこそページの前に言語選択画面を表示し、ホスト環境にかかわらずすべての言語を選択肢として表示します。
+- インストーラーの言語はインストーラー自身の表示にのみ適用され、`config.json` に書き込まれることはありません。
+- Turboism が実行時に使用する言語は `config.json` の `locale` 設定で決まり、プラグインのインターフェース言語は Cubism Editor の **ファイル → 環境設定 → 一般 → 言語** に従います。
 
-## インストールモード
+## インストールバリアント（Full と Thin）
 
-インストーラーは 3 つのプラグイン選択を提供します。ZIP パッケージは、同じ payload のポータブルな `full` と `lite` バリアントとして配布されます。
+Turboism は用途に合わせて 2 つのバリアントを提供します。
 
-- **Full** — agent と、レビュー済みのファーストパーティプラグインバンドル。個々のプラグインはインストーラーで選択解除できます。
-- **Thin** — 同じプラグイン構成から、追加のマネージドネイティブランタイムペイロードを除いたもの。Thin は明示的なカスタム実行ファイルパスも受け付けます。
-- **Lite** — agent と共通ファイルのみで、ファーストパーティのプラグイン JAR は含まれません。
+- **Full**（`-full.exe`、`-full.zip`）— ランタイムフレームワークとすべての同梱ファーストパーティプラグイン。
+- **Thin**（`-thin.exe`、`-thin.zip`）— ランタイムフレームワークのみ（プラグインなし）。プラグインは後から Cubism 内のプラグインマーケット（**Turboism** メニュー → **プラグインマーケット…**）または [turboism.dev/plugins](https://turboism.dev/plugins) から導入します。
 
-開発専用の Turboism with fx plugin とマネージド fx ランタイムバイトは、どのリリースパッケージにも含まれません。詳細は[インストーラーモード](./installer-modes)を参照してください。
+インストーラーにはモード選択や個別プラグイン選択の画面はありません。Full インストーラーは個別選択なしですべてのファーストパーティプラグインをインストールし、Thin インストーラーはプラグインをインストールしません。プラグインは Cubism 起動後に **Turboism → プラグイン管理…** で有効化・無効化できます。
+
+ファーストパーティプラグインは署名検証を経てバックグラウンドで自動更新されます。ホットリロード（hot-reload）対応プラグインは即座に反映され、その他の更新は Cubism 再起動後に反映されます。設定で公式プラグインの自動更新を無効化することも可能です。
+
+開発専用の Turboism with fx プラグインとマネージド fx ランタイムは、どのリリースパッケージにも含まれません。詳細は[Full / Thin バリアント](./installer-modes)を参照してください。
 
 ## 必要な確認事項
 
-両方のインストーラーは、4 つの明示的な確認事項と、完全なローカライズ済みランタイム宣言をインストールの前提条件とします。確認事項は、Turboism の独立したサードパーティとしての立場、適法な Cubism の利用許可、許可された内容変更の自動化の前に行う独立したバックアップ、互換性や復旧を保証しないオープンソースの現状有姿での動作を対象とします。このゲートは、グラフィカル、コンソール、自動化の各モードで同じように動作します。
+インストーラーは、4 つの明示的な確認事項と完全なローカライズ済みランタイム宣言を前提とします。確認事項は、Turboism の独立したサードパーティとしての立場、適法な Cubism の利用許可、許可された内容変更自動化の前に行う独立したバックアップ、互換性や復旧を保証しないオープンソースの現状有姿での動作を対象とします。
 
 ## Windows `.exe` インストーラー
 
-`TurboismInstaller-<version>.exe` は Windows ネイティブの NSIS インストーラーで、Windows では推奨される経路です。
+`TurboismInstaller-<version>-full.exe`（Full）または `TurboismInstaller-<version>-thin.exe`（Thin）を実行します。Windows では推奨される経路です。
 
 - ユーザー単位で実行され、管理者権限を要求しません。
-- 既定では `%LOCALAPPDATA%\Turboism` にインストールされます。別のディレクトリも選択できます。
+- 既定では `%LOCALAPPDATA%\Turboism` にインストールされます（別のディレクトリも選択可能）。
 - ユーザー単位のスタートメニュー項目を追加し、現在のユーザーの「プログラムと機能」にアンインストールを登録します。
+- バリアント間の安全なアップグレード: Full 環境に Thin を上書きしても既存の `plugins/` ディレクトリは保持されます。Thin 環境に Full を上書きすると、既存の `disabledPlugins` 設定を維持しながらすべてのファーストパーティプラグインが導入・更新されます。
 - インストール後に `configure_turboism.ps1` を開き、Cubism ルートと管理起動エントリを設定できます。
 - 後で削除するための `uninstall.exe` を書き込みます。
 - Cubism のインストールファイルを変更しません。
 
-## クロスプラットフォーム `.jar` インストーラー
+## ポータブル ZIP パッケージ
 
-`TurboismInstaller-<version>.jar` は IzPack ベースのインストーラーです。Java 17 以降が必要です。
+Windows（手動セットアップ）、macOS、Linux の場合:
 
-```bash
-java -jar TurboismInstaller-<version>.jar
-```
-
-- 既定のインストール先：Windows では `%LOCALAPPDATA%\Turboism`、macOS では `~/Library/Application Support/Turboism`、Linux では `${XDG_DATA_HOME:-~/.local/share}/Turboism`。別のディレクトリも選択できます。
-- インストーラーを再実行すると、同じ Turboism home とプラグイン選択が更新されます。無関係な設定を上書きすることはありません。
-- 削除用に、Turboism home 配下へ `Uninstaller/uninstaller.jar` を生成します。
-
-macOS や Linux にファイルをインストールしても、それらの環境で Cubism ホストとして互換性があることを意味しません。
-
-## ZIP パッケージ
-
-1. アーカイブ全体を、Cubism のインストールディレクトリではなく、独立した Turboism フォルダに展開します。
-2. 展開したフォルダで設定ツールを実行します。
+1. 同梱プラグインを使う場合は `turboism-<version>-full.zip`、プラグインなしのランタイムを使う場合は `turboism-<version>-thin.zip` を選びます。
+2. **アーカイブ全体**を Cubism のインストール先ではなく、独立した Turboism フォルダに展開します。
+3. Windows の場合、展開先フォルダで設定ツールを実行します。
 
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File ".\configure_turboism.ps1"
    ```
 
-   実行ポリシーのオプションは、その PowerShell プロセスにのみ適用されます。
-3. 使用する Cubism インストールとプラグインを選択して保存します。
-4. 生成された Turboism ショートカット、またはそのフォルダの `launch-cubism-turboism.bat` から Cubism を起動します。
+   実行ポリシーのオプションは、その PowerShell プロセスにのみ適用されます。使用する Cubism インストールとプラグインを選択して保存します。
+4. 作成された Turboism ショートカット、またはそのフォルダの `launch-cubism-turboism.bat` から Cubism を起動します。
+
+ZIP 手動セットアップにはアンインストーラーがなく、公式 BAT 統合も行われません。アンインストール時は Cubism を終了して Turboism フォルダを削除してください。
 
 ## ダウンロードの検証
 
-各パッケージには、同じファイル名に `.sha256` を加えた `.sha256` サイドカーが付属します。たとえば PowerShell では:
+各パッケージには、同じファイル名に `.sha256` を加えたサイドカーが付属します。たとえば PowerShell では:
 
 ```powershell
-Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
+Get-FileHash ".\TurboismInstaller-<version>-full.exe" -Algorithm SHA256
 ```
 
 結果を公開されている値と比較してください。SHA-256 チェックサムはファイルの完全性を証明するものであり、コード署名証明書ではありません。
 
 ## インストール後
 
-1. Windows では、Turboism home にある `configure_turboism.ps1` を実行します。正確にサポート対象の Cubism Editor 5.2.03、5.3.02、5.3.03 のインストールのみを一覧に表示し、選択した各ルートに管理起動エントリを 1 つ作成します。設定をキャンセルしても、フレームワークのみの有効なインストールが残ります。
-2. 必要に応じて、選択したインストールについて公式の Cubism 起動 BAT との連携を有効にします。これはハッシュで保護されたバックアップを記録し、暗黙に適用されることはありません。後でユーザーがこれらのファイルを編集すると競合となり、再試行のために state が保持されます。
-3. Cubism ルートの管理ランチャー（Windows では `launch-cubism-turboism.bat`）で Turboism を起動します。
-4. Turboism が起動し、Turboism home に診断情報が書き込まれることを確認します。
-5. [プラグイン管理](./plugin-management)で追加のプラグインをインストールします。プラグイン JAR はステージングされ、Cubism の再起動後に適用されます。
+1. Windows では、Turboism home の `configure_turboism.ps1` を実行します。そのリリースが正確に対応している Cubism Editor インストールのみが一覧表示され、選択したルートごとに 1 つの管理起動エントリが作成されます。0 件で保存しても有効なフレームワーク単体インストールが保持されます。
+2. 任意で公式 Cubism 起動 BAT との統合を有効化できます。ハッシュ検証付きバックアップが記録され、勝手に適用されることはありません。
+3. 選択した Cubism ルートの管理ランチャー（Windows では `launch-cubism-turboism.bat`）から起動します。
+4. Turboism が正常に起動し、Turboism home に診断ログが出力されることを確認します。
+5. Cubism 上の **Turboism** トップメニューから、**プラグインマーケット…**、**プラグイン管理…**、**プラグイン設定…**、**更新を確認** などの機能を利用できます。
 
 ## アンインストール
 
-- `.exe` インストーラーで作成した Windows インストール：Turboism home ディレクトリの `uninstall.exe` を実行します。確認時に `config.json` を保持するかどうかが尋ねられます。
-- `.jar` インストーラーで作成した Windows インストール：以下を実行します。
+- **`.exe` インストーラーでインストールした場合**: Turboism home ディレクトリの `uninstall.exe` を実行します。Turboism が記録した管理ショートカットや管理ファイルのみを削除します。確認画面で `config.json` を保持するか選択できます（既定でチェックあり）。Full アンインストーラーはインストールされた第一方プラグイン JAR のみを削除し、不明なファイルやサードパーティプラグインは保持します。Thin インストーラーはプラグインを削除しません。
+- **ZIP 手動インストールの場合**: Cubism を終了し、Turboism フォルダを削除します。
+- **0.67.0-beta.3 未満の旧インストール**: 廃止された Java インストーラーでインストールした環境では、Windows/Linux では `java -jar <home>\Uninstaller\uninstaller.jar`、macOS では `uninstall.command` を使用していました。
 
-  ```text
-  java -jar <home>\Uninstaller\uninstaller.jar
-  ```
+## 現在の制限事項
 
-- `.jar` インストーラーで作成した macOS インストール：home ディレクトリの `uninstall.command` をダブルクリックするか、ターミナルで実行します。
-
-アンインストーラーは、インストーラー所有のファイルとランタイムの `logs`、`state`、`cache` データを削除します。Java のアンインストーラーは既定で `config.json` を保持し、NSIS のアンインストーラーと一致します。不明なファイルと third-party plugin JAR は保持されます。
-
-## 現在の制限
-
-- インストーラーパッケージは署名もノータリゼーションもされていません。
-- macOS の Cubism ホスト対応は未検証で、macOS ランチャーもインストールされません。
-- インストーラーの自動更新はありません。Turboism は stable 更新を確認して通知しますが、更新は新しいインストーラーの再実行を意味します。
-- プラグイン置換の失敗は内部の backup/restore で保護されますが、完全なユーザー向け修復・履歴 UI はまだ存在しません。
-- feature readiness は capability と version に依存します。
+- インストーラーパッケージはコード署名・公証されていません。
+- macOS の Cubism ホスト対応は未検証で、macOS ランチャーは提供されません。
+- フレームワークインストーラー自体の自動更新はありません。Turboism は更新を確認して通知しますが、フレームワークの更新には新しいインストーラーの実行または新しい ZIP の展開が必要です。
+- 機能の利用可否は capability およびバージョンに依存します。

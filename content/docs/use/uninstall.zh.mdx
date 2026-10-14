@@ -5,38 +5,33 @@ description: 使用 Turboism 自带的卸载器移除它，并决定是否保留
 
 请使用安装你的构建时所用安装器生成的卸载器。在 Turboism 或 Cubism 仍在运行时，不要删除文件。
 
-## 使用安装器的卸载器
+## 按安装方式卸载
 
-- **Windows，`.exe` 安装** — 运行 Turboism home 目录中的 `uninstall.exe`。
-- **Windows，`.jar` 安装** — 运行：
+- **Windows `.exe` 安装**（`TurboismInstaller-<version>-full.exe` 或 `TurboismInstaller-<version>-thin.exe`）：运行 Turboism home 目录中的 `uninstall.exe`。
+- **便携式 ZIP 安装**（Windows 手动配置、macOS 或 Linux）：便携归档没有卸载器，也不启用官方启动 BAT 集成。完全退出 Cubism 后，直接删除 Turboism 文件夹即可。
+- **历史版本安装（0.67.0-beta.3 之前）**：通过已退役的 Java IzPack 安装器创建的安装，Windows/Linux 上运行 `java -jar <home>\Uninstaller\uninstaller.jar`，macOS 上运行 `uninstall.command`。
 
-  ```text
-  java -jar <home>\Uninstaller\uninstaller.jar
-  ```
-
-- **macOS，`.jar` 安装** — 双击 home 目录中的 `uninstall.command`，或在终端中运行它。
-
-然后：
+`.exe` 安装的卸载步骤：
 
 1. 正常关闭 Turboism 和 Cubism。
-2. 启动对应的卸载器。
-3. 按照其确认步骤操作。
-4. 出现提示时，选择是否保留配置。若可能重新安装或之后还需要相同的偏好设置，请保留；只有在确实不再需要且已保存重要内容时才删除。
-5. 完成后，确认 Cubism 不会再通过已移除的安装启动。
+2. 运行 Turboism home 目录中的 `uninstall.exe`。
+3. 按照确认步骤操作。
+4. 出现提示时，确认是否勾选“保留 config.json（用户配置）”。该复选框默认勾选；若需彻底删除配置可取消勾选。
+5. 完成后，确认 Cubism 不会再通过 Turboism 快捷方式或托管启动入口启动。
 
 ## 会移除什么、会保留什么
 
-- 卸载器会移除安装器所有的文件以及 runtime 的 `logs`、`state` 和 `cache` 数据。
-- `config.json` 只在你选择删除时才会被移除。NSIS 和 Java 卸载器都默认保留它。
-- 未知文件和第三方插件 JAR 会被保留，因为卸载器不会删除无法识别为自有的材料。
-- `data/<pluginId>/` 下的插件数据不会被静默丢弃。
+- 卸载器会清理 Turboism 记录的托管快捷方式、状态，以及安装器自有的运行时文件和 `logs`、`state`、`cache` 数据。
+- `config.json` 默认保留，仅在取消勾选保留选项时才会被删除。
+- 完整版卸载器仅删除安装器部署的第一方插件 JAR；未知文件和第三方插件 JAR 会妥善保留。精简版安装器不携带插件，也不会删除插件。
+- `data/<pluginId>/` 下的持久化数据和 `config/<pluginId>/` 下的配置不会被卸载器静默删除。
 
-卸载后请检查剩余的 Turboism home，并备份你可能需要的任何内容。不要把卸载当作删除无关宿主文件或项目的方式。
+卸载后请检查剩余的 Turboism 文件夹，并备份你可能需要的任何内容。
 
 ## 启动器集成
 
-如果你启用了与官方 Cubism 启动 BAT 的集成，该集成会在移除期间从其带哈希保护的备份恢复。如果托管文件此后被编辑过，清理会报告冲突，并保留状态和备份，而不是覆盖你的更改。
+如果你启用了与官方 Cubism 启动 BAT 的集成，该集成会在卸载期间从其带哈希保护的备份自动恢复。如果托管文件此后被手动编辑过，清理程序会报告冲突并保留状态和备份，而不是覆盖你的更改。
 
 ## 卸载前后
 
-替换安装前请阅读[更新策略](./update-policy)。如果更新或模式变更失败，请先查看[降级与恢复](./downgrade-recovery)，不要假定旧构建能够安全还原。
+替换安装前请阅读[更新策略](./update-policy)。如果更新或变体切换失败，请先查看[降级与恢复](./downgrade-recovery)，不要假定旧构建能够安全还原。

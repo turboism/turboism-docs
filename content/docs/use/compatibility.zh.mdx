@@ -1,0 +1,60 @@
+---
+title: 兼容性
+description: 各 Turboism 发行版支持的 Cubism Editor 版本、第一方插件兼容范围、按小版本线的能力覆盖，以及基于证据的宿主边界。
+---
+
+Turboism 对 Cubism Editor 的版本支持同时取决于你安装的 Turboism 发行版本以及所使用的具体插件或 SDK 能力。**Windows x64** 是受支持的 Cubism 宿主平台。未列出的 Editor 版本不被声称为兼容，不可用的 adapter 或能力会安全地失败关闭，而不是回退到未经验证的代码路径。
+
+## 各 Turboism 版本的支持范围
+
+每个 Turboism 发布渠道都内嵌了其经过审核的 Cubism Editor 支持版本集合：
+
+- **Stable `0.44.0`**（以及 **Nightly `0.44.1-0.nightly.11`**）支持 Windows x64 上的精确 Cubism Editor 版本 **5.2.03**、**5.3.02** 和 **5.3.03**。
+- **Beta `0.67.0-beta.1`**（以及当前 `main` 分支）支持 Windows x64 上从 **5.0.00 到 5.3.04 的全部 20 个已审核 Cubism Editor 版本**（涵盖 `5.0.00–5.0.06`、`5.1.00–5.1.03`、`5.2.00–5.2.03` 和 `5.3.00–5.3.04`）。
+
+<CompatibilityReleaseTable locale="zh" />
+
+## 同一小版本线内的补丁连续性
+
+在同一个 Cubism Editor 小版本线（`5.0.x`、`5.1.x`、`5.2.x` 或 `5.3.x`）内，较新的补丁版本始终是较旧补丁版本的超集：在 `5.x.y` 上准入的能力与 Editor 命令，在所有满足 `y' > y` 的 `5.x.y'` 上同样保持准入。在同一小版本线内升级到更新的补丁版本绝不会丢失功能。
+
+跨小版本线之间的差异（例如 `5.0.06` 与 `5.1.00`、`5.1.03` 与 `5.2.00`、或 `5.2.03` 与 `5.3.00` 之间）反映的是 Cubism Editor 新增或调整底层功能所形成的真实宿主边界，而非回退。
+
+## 第一方插件兼容性
+
+下表中的每一行均由 Turboism 源码仓库中已审核的兼容性矩阵生成。**支持版本**列出插件声明能力可解析的已审核 Cubism Editor 构件；**版本差异**列出仅在部分已审核版本上可用的功能。
+
+当 Cubism 以 **FREE** 许可运行时，保存受 FREE 参数数量等限制；使用 **PRO** 许可（含 PRO 试用）则无此限制。Turboism 插件的版本支持与许可层级无关——许可约束的是编辑器允许保存的内容，而非运行时准入的 API。
+
+<CompatibilityPluginTable locale="zh" />
+
+## 按小版本线的能力覆盖
+
+Turboism 将宿主能力划分为 **37 个能力组**（共 **143 项能力**）。在全部 20 个已审核版本（`5.0.00–5.3.04`）中，**27 个能力组**在所有已审核版本上均完整准入，其余 **10 个能力组**则因 Cubism Editor 在特定版本才引入相应底层子系统而存在版本下限。
+
+<CompatibilityCapabilityTable locale="zh" />
+
+## 基于证据的版本边界
+
+Turboism 绝不猜测某项功能在特定 Cubism Editor 构建上是否可用。运行时准入结合了三层证据：
+
+1. **哈希固定的静态验证记录（`VERIFIED_STATIC`）** — 每个已准入版本都绑定了针对精确 `Live2D_Cubism.jar` 与 `Live2DCubismCore.jar` 构件摘要的字节码选择器审核记录。
+2. **选择器契约与类 pin 门禁** — 当特定 adapter 或类 pin 表仅针对部分版本接线时，运行时契约会将能力收窄到对应版本集合。
+3. **已确认宿主边界（`version-boundaries.json`）** — 当某个 Cubism Editor 版本缺少某项功能时，Turboism 会同时核对官方 Live2D Cubism 更新历史与已审核 JAR 字节码，确认后才将其标记为宿主边界；未经确认的缺口绝不会被误标为编辑器缺少该功能。
+
+`5.0.00–5.3.04` 范围内的关键证据边界包括：
+
+- **`5.0.x`（`5.0.00–5.0.06`）无自动备份与受保护导出** — `CModelingDocument::getDocumentUID()`（`cubism.autobackup.backup`、`cubism.autobackup.settings` 与 `EditorAutoBackupService` 依赖的文档 UID 身份链）在所有 `5.0.x` JAR 中均不存在（`5.0.x` 仅暴露 `getFileContentInstanceGuid()`）。受保护导出（`cubism.protected-export.orchestration` 与 `ExportSettingsContributionService`）在 `5.0.x` 上同样不可用，因为分阶段导出驱动回调与动态同步设置源是在 **5.1.00** 引入的。顶部菜单外部应用集成（`cubism.editor-ui.top-menu`）、`EditorCommandService` 与自动摇动读取（`cubism.editor-model.auto-yure.read`）同样始于 **5.1.00**。
+- **编辑协议（`CubismFacade#edit()`、`cubism.integration.edit-api-bridge.dispatch`）要求 `5.1.02` 或更高版本** — `5.0.x` 中完全不存在 `com/live2d/cubism/doc/webSocket` 包；而在 `5.1.00` 与 `5.1.01` 中，会话查找方法为私有且外部应用认证管理器使用单参数调用签名，尚不具备 `5.1.02+` 的公共编辑桥接契约。
+- **动画时间线写入与普通视图建模选区笔刷要求 `5.2.00` 或更高版本** — 时间线曲线类型写入（`cubism.editor-model.animation-timeline.write`）与求值参数烘焙（`cubism.editor-model.animation-eval`）依赖 **5.2.00** 引入的动画轨道与曲线 API；普通视图建模选区笔刷（`cubism.modeling-tool.selection-brush`、`ModelingBrush`、`ModelingToolRegistry`）依赖 **5.2.00** 引入的建模工具视图上下文监听器 API（**5.3.00** 进一步新增了笔刷扩张/收缩与圆/方/线笔刷形状）。Core 变形器/胶水几何读取（`cubism.geometry.read`）、多边形感知纹理图集布局（`TextureAtlasPolygonLayoutService`）以及原生 PSD 原图导出/替换（`ModelTextures#exportRawImagePsd()`、`replaceRawImagePsd()`）也要求 **5.2.00** 或更高版本。
+- **部件不透明度/检查器写入、Alpha 合成与官方 MOC 5.3 导出要求 `5.3.00` 或更高版本** — 部件形态不透明度访问器（`cubism.editor-model.part-opacity.write`）、扩展部件检查器蒙版与混合模式写入（`cubism.editor-model.part-inspector.write`）、`AlphaComposition` 以及 `cubism.editor-model.moc-export.read` 仅存在于 **5.3.00–5.3.04**。
+
+### 运行时能力查询
+
+插件绝不应直接按 Cubism Editor 版本号字符串分支，而应查询能力就绪状态：
+
+- `CubismFacade` 的每个访问器都会返回带 `isAvailable()` 方法的哨兵对象，用于报告当前宿主是否准入该能力；
+- `EditorCommand#supports(String)` 与 `supportedVersions()` 在运行时暴露逐命令的支持版本集合；
+- 带有 `@CubismEditor` 注解的 SDK 表面在宿主未准入时，会以 `CubismEditorApiUnavailableException` 失败关闭。
+
+关于 Turboism 如何隔离特定版本的宿主访问，请参阅 [SDK API 指南](../reference/sdk-api)与[映射层](../concepts/mapping-layer)。

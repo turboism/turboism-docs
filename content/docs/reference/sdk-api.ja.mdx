@@ -265,10 +265,10 @@ schema 4 を使用する plugin descriptor は、自身が export および impo
 
 ## バージョンと準備状況に関する注意
 
+- 対応する Cubism Editor バージョンはリリースによって異なります。Stable 0.44.0 は 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.1 は 5.0.00 から 5.3.04 までのレビュー済み全 20 バージョンを認定しています。認定は capability 単位であり、すべての operation family に対する包括的な保証ではありません。完全な capability および SDK サーフェスマトリクスは[互換性](/docs/use/compatibility)を参照してください。
 - Parameter authoring write には検証済みの Cubism 5.3.02 path がありますが、caller は引き続き unavailable と stale target を処理しなければなりません。
 - Part display-name write には 5.2.03 と 5.3.02 で実ホストの証拠があります。
-- Part opacity authoring write は 5.2.03 で主張してはいけません。
-- Cubism 5.3.03 は認定された正確なバージョンであり、独自の texture-atlas authoring provider、selector contract、layout provider に加え、physics、performance metrics、project lifecycle、model statistics、startup suppression 用の exact-version profile を持ちます。認定は capability 単位であり、すべての operation family に対する包括的な保証ではありません。
+- Part opacity authoring write には 5.3.00–5.3.04 が必要であり、5.0.00–5.2.03 で主張してはいけません。
 - History DTO（`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`）は、範囲が限定された immutable な semantic projection です。host への write 権限を与えることはありません。
 - Fake と static test が証明するのは、それぞれが名指しした layer だけです。
 - Snapshot/query/transaction compatibility surface は現在、unified object graph と併存しています。

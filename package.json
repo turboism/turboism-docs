@@ -14,6 +14,7 @@
     "verify:production": "npm run verify:deployment -- https://docs.turboism.dev",
     "generate:sdk-api": "node scripts/sync-sdk-api.mjs",
     "sync:sdk-api": "node scripts/sync-sdk-api.mjs --sync",
+    "sync:compatibility": "node scripts/sync-compatibility.mjs",
     "test:brand": "node --test brand/brand.test.mjs tests/sdk-style.test.mjs tests/sdk-fonts.test.mjs"
   },
   "dependencies": {

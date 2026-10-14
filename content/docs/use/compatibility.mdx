@@ -1,0 +1,60 @@
+---
+title: Compatibility
+description: Supported Cubism Editor versions by Turboism release, first-party plugin compatibility ranges, capability coverage by minor line, and evidence-based host boundaries.
+---
+
+Cubism Editor version support in Turboism depends on both the Turboism release you install and the specific plugin or SDK capability being used. **Windows x64** is the supported Cubism host platform. Unlisted Editor versions are not claimed compatible, and unavailable adapters or capabilities fail closed rather than falling back to unverified code paths.
+
+## Supported versions by Turboism release
+
+Each Turboism release channel embeds its reviewed Cubism Editor version set:
+
+- **Stable `0.44.0`** (and **Nightly `0.44.1-0.nightly.11`**) supports exact Cubism Editor versions **5.2.03**, **5.3.02**, and **5.3.03** on Windows x64.
+- **Beta `0.67.0-beta.1`** (and current `main`) supports all **20 reviewed Cubism Editor versions from 5.0.00 to 5.3.04** (`5.0.00–5.0.06`, `5.1.00–5.1.03`, `5.2.00–5.2.03`, and `5.3.00–5.3.04`) on Windows x64.
+
+<CompatibilityReleaseTable locale="en" />
+
+## Patch continuity within a minor line
+
+Within a single Cubism Editor minor line (`5.0.x`, `5.1.x`, `5.2.x`, or `5.3.x`), a newer patch release is always a superset of an older patch release: capabilities and Editor commands admitted on `5.x.y` remain admitted on `5.x.y'` for every `y' > y`. Upgrading to a newer patch within the same minor line never loses features.
+
+Differences across minor lines (for example between `5.0.06` and `5.1.00`, `5.1.03` and `5.2.00`, or `5.2.03` and `5.3.00`) reflect genuine host boundaries where Cubism Editor added or changed the underlying feature, not regressions.
+
+## First-party plugin compatibility
+
+Every row below is generated from the reviewed compatibility matrix in the Turboism source repository. **Supported versions** lists the reviewed Cubism Editor builds on which the plugin's declared capabilities resolve; **Feature deltas** lists functions that exist only on a subset of reviewed versions.
+
+When Cubism runs under a **FREE** licence, saving is subject to the FREE parameter-count limit; a **PRO** licence (including the PRO trial) lifts that limit. Turboism plugin version support is independent of the licence tier — the licence constrains what the editor may save, not which APIs the runtime admits.
+
+<CompatibilityPluginTable locale="en" />
+
+## Capability coverage by minor line
+
+Turboism organizes host capabilities into **37 capability groups** (**143 capabilities** total). Across the 20 reviewed versions (`5.0.00–5.3.04`), **27 of 37 groups** are fully admitted on every reviewed version, while **10 groups** have version floors where Cubism Editor introduced the underlying subsystem.
+
+<CompatibilityCapabilityTable locale="en" />
+
+## Evidence-based boundaries
+
+Turboism does not guess whether a feature works on a given Cubism Editor build. Runtime admission combines three layers of evidence:
+
+1. **Hash-pinned static verification records (`VERIFIED_STATIC`)** — every admitted version has reviewed bytecode selector records bound to the exact `Live2D_Cubism.jar` and `Live2DCubismCore.jar` artifact digests.
+2. **Selector contracts and class-pin gates** — runtime contracts narrow capabilities when a specific adapter or pin table is only wired for a subset of versions.
+3. **Proven host boundaries (`version-boundaries.json`)** — when a feature is absent from a Cubism Editor build, Turboism verifies the absence against both the official Live2D Cubism update history and the reviewed JAR bytecode before labeling it a host boundary. Unconfirmed gaps are never mislabeled as missing Editor features.
+
+Key version boundaries across the `5.0.00–5.3.04` range include:
+
+- **`5.0.x` (`5.0.00–5.0.06`) has no auto-backup or protected export** — `CModelingDocument::getDocumentUID()` (the document-UID identity chain required by `cubism.autobackup.backup`, `cubism.autobackup.settings`, and `EditorAutoBackupService`) is absent on every `5.0.x` JAR (`5.0.x` exposes only `getFileContentInstanceGuid()`). Protected export (`cubism.protected-export.orchestration` and `ExportSettingsContributionService`) is also unavailable on `5.0.x` because the staged multi-argument export driver callback and motion-sync settings source were introduced in **5.1.00**. Top-menu external-app integration (`cubism.editor-ui.top-menu`), `EditorCommandService`, and Auto Sway (`cubism.editor-model.auto-yure.read`) likewise start at **5.1.00**.
+- **The edit protocol (`CubismFacade#edit()`, `cubism.integration.edit-api-bridge.dispatch`) requires `5.1.02` or later** — on `5.0.x`, the `com/live2d/cubism/doc/webSocket` package does not exist; on `5.1.00` and `5.1.01`, the session-lookup method is private and the external-app authentication manager uses a single-argument call shape rather than the `5.1.02+` contract.
+- **The animation timeline writes and the normal-view selection brush require `5.2.00` or later** — timeline curve-type writes (`cubism.editor-model.animation-timeline.write`) and evaluated-parameter bake (`cubism.editor-model.animation-eval`) depend on track and curve methods introduced in **5.2.00**. The normal-view modeling selection brush (`cubism.modeling-tool.selection-brush`, `ModelingBrush`, `ModelingToolRegistry`) requires the view-context listener API introduced in **5.2.00** (with additional brush shapes and expand/shrink controls added in **5.3.00**). Core deformer/glue geometry read (`cubism.geometry.read`), polygon-aware texture-atlas packing (`TextureAtlasPolygonLayoutService`), and native PSD raw-image export/replacement (`ModelTextures#exportRawImagePsd()`, `replaceRawImagePsd()`) also require **5.2.00** or later.
+- **Part opacity/inspector writes, alpha composition, and official MOC 5.3 export require `5.3.00` or later** — part-form opacity accessors (`cubism.editor-model.part-opacity.write`), extended part-inspector mask and blend-mode writes (`cubism.editor-model.part-inspector.write`), `AlphaComposition`, and `cubism.editor-model.moc-export.read` exist only on **5.3.00–5.3.04**.
+
+### Querying availability at runtime
+
+Plugins should never branch on raw Cubism Editor version strings. Query capability readiness instead:
+
+- every `CubismFacade` accessor returns a sentinel whose `isAvailable()` method reports whether the active host admits the capability;
+- `EditorCommand#supports(String)` and `supportedVersions()` expose per-command version sets at runtime; and
+- `@CubismEditor`-annotated SDK surfaces fail closed with `CubismEditorApiUnavailableException` when called on a host that does not admit them.
+
+See [SDK API Guide](../reference/sdk-api) and [Mapping Layer](../concepts/mapping-layer) for details on how Turboism isolates version-specific host access.

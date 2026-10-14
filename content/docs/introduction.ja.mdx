@@ -20,6 +20,18 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - Provider またはホストバージョンが利用できない場合を明示的に処理する。
 - リフレクション、ホストの生ウィジェット、ネイティブハンドル、バイトコードトランスフォーマーで Runtime を迂回しない。
 
+## Cubism Editor における Turboism
+
+実行時、Turboism は Live2D Cubism Editor の最上位 **Turboism** メニュー（0.67.0-beta.3 未満の旧リリースでは「プラグイン」/「插件」）に統合されます。
+
+- **プラグインマーケット…** — アプリ内マーケットまたは [turboism.dev/plugins](https://turboism.dev/plugins) からファーストパーティおよび厳選プラグインを検索・導入。
+- **プラグイン管理…** — プラグインの有効化・無効化、アンインストール、ローカル JAR の追加。
+- **プラグイン設定…** — 専用の 2 ペイン設定ウィンドウで、インストール済み全プラグインの設定を一元管理。
+- **更新を確認** — 最新のフレームワークリリースを確認。
+- **Turboism 設定…**、**キーバインド…**、**ログ…**、アクティブプラグインのアクション、**バージョン情報**。
+
+0.67.0-beta.3 以降、ファーストパーティプラグインは署名検証を経てバックグラウンドで自動更新されます。ホットリロード（hot-reload）対応プラグインは即座に反映され、その他の更新は Cubism 再起動後に反映されます。
+
 ## ドキュメントの範囲
 
 Turboism は単一の public SDK 階層を公開します。ソースリポジトリのレビュー済みバイナリ API ベースラインが互換性のゲートであり、[SDK API ガイド](./reference/sdk-api)が現在のサーフェスを説明します。
@@ -29,7 +41,9 @@ Turboism は単一の public SDK 階層を公開します。ソースリポジ�
 - SDK に API が存在することは、対応するすべての Cubism Editor バージョンで実行できることを意味しません。
 - 対応する Editor バージョンであることは、すべてのプラグイン機能がそのバージョンで利用できることを意味しません。
 
-Windows x64 が対応するホストプラットフォームであり、Cubism Editor 5.2.03、5.3.02、5.3.03 が正確な対応バージョンとして認定されています。未対応の組み合わせは、未検証の経路へフォールバックせず、fail closed で失敗します。
+Windows x64 が対応するホストプラットフォームです。対応する Cubism Editor バージョンは Turboism のリリースによって異なり、Stable 0.44.0 は 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.1 は 5.0.00 から 5.3.04 までのレビュー済み全 20 バージョンに対応しています（[互換性](/docs/use/compatibility)を参照）。未対応の組み合わせは、未検証の経路へフォールバックせず、fail closed で失敗します。
+
+0.67.0-beta.3 以降、Turboism は Full と Thin の 2 つのバリアントに分かれた 4 つの正式リリース資産（`TurboismInstaller-<version>-full.exe`、`TurboismInstaller-<version>-thin.exe`、`turboism-<version>-full.zip`、`turboism-<version>-thin.zip`）を提供します。0.67.0-beta.3 未満の旧リリースでは従来の資産が使用され、クロスプラットフォーム Java インストーラー JAR は廃止されました。
 
 次に進むには:
 

@@ -1,138 +1,129 @@
 ---
 title: プラグイン管理
-description: ローカル Turboism プラグイン JAR を安全にインストール、置換、有効化、無効化、アンインストールする。
+description: Turboism プラグインの安全な検索、設定、有効化、無効化、および管理。
 ---
 
-Turboism は、ローカルプラグイン JAR のインストール方法として、管理インストール（推奨）と手動インストール（上級/フォールバック）の 2 つを提供しています。これは system-level Turboism installer ではありません。Full インストールにはレビュー済みの[ファーストパーティプラグインバンドル](./first-party-plugins)が既に含まれており、サードパーティのプラグインは同じ管理フローで追加できます。
+Turboism は、プラグインを管理するための複数の補完的な手段を提供します。
 
-すべての plugin-management 変更はステージングされ、Cubism の再起動後に適用されます。現在ロードされている plugin instance を hot-swap することはありません。
+- **Cubism 内のプラグインマーケット**（**Turboism** メニュー → **プラグインマーケット…**）または [turboism.dev/plugins](https://turboism.dev/plugins): ファーストパーティおよびカタログ掲載プラグインの検索と導入。
+- 検証済みファーストパーティプラグインの**バックグラウンド自動更新**。
+- **プラグイン管理…**: プラグインの有効化・無効化、アンインストール、ローカル JAR のステージング。
+- 専用の 2 ペインウィンドウでの**プラグイン設定…**: プラグイン設定の一元的な構成。
 
-## 管理インストール（推奨）
+Full インストールにはレビュー済みの[ファーストパーティプラグインバンドル](./first-party-plugins)があらかじめ同梱されています。Thin インストールでは、プラグインマーケットから必要なプラグインをいつでも導入できます。
 
-1. 信頼できる source からプラグイン JAR を入手または build します。
-2. Turboism プラグイン管理を開きます。
-3. **JAR からインストール…**（Install from JAR…）を選択します。
-4. ローカル `.jar` file を選択します。
-5. JAR をローカル/未検証ソースと示すダイアログを確認します。
-6. operation が pending と表示されることを確認します。
-7. Cubism を通常どおり閉じます。
-8. 同じ Turboism home を通じて Cubism を再起動します。
-9. plugin list と Runtime logs で有効な state を確認します。
+すべてのプラグインライフサイクルとファイルの変更は安全にステージングされて適用されます。ステージングされた変更は Cubism 再起動後に適用され、ホットリロード（hot-reload）対応プラグインは即座に適用されます。
 
-ステージング前に、Runtime は選択された JAR を信頼できないローカル入力として扱います。アーカイブの上限（raw size、entry ごとの size、総展開量、entry 数、圧縮率）の範囲内で通常の非シンボリックリンク JAR を開き、descriptor が正確に 1 つであることと plugin content を厳格に検査し、payload を pending state にスナップショットします。
+## Turboism トップメニュー
 
-staging journal は、raw JAR の SHA-256 と size、descriptor hash、plugin ID、version を永続化します。次の起動時に Runtime は、適用前にステージング済み JAR をその identity と照合して再検証します。
+Cubism Editor では、すべてのフレームワークおよびプラグイン機能が最上位の **Turboism** メニュー（以前は「プラグイン」/「插件」）に統合されています。メニュー項目:
 
-## プラグインを置換または更新する
+1. **プラグインマーケット…** — カタログからファーストパーティおよび厳選プラグインを検索・導入。
+2. **プラグイン管理…** — インストール済みプラグインの一覧、有効/無効の切り替え、ローカル JAR の追加、アンインストール。
+3. **プラグイン設定…** — 専用の 2 ペイン設定ウィンドウを開き、各プラグインのオプションを設定。
+4. **更新を確認** — Turboism フレームワークの新しいリリースを確認。
+5. **Turboism 設定…** — フレームワーク全体の設定（更新確認、ランタイムログ、言語ロケール、起動設定）。
+6. **キーバインド…** — 各種アクションのショートカットキーを確認・編集。
+7. **ログ…** — ランタイムおよび診断ログの保存先フォルダを開く。
+8. **プラグインのアクション** — アクティブなプラグインが追加した操作項目。
+9. **バージョン情報** — インストールされている Turboism のバージョンとビルド情報を表示。
 
-現在、production update service は別に存在しません。同じ plugin ID を持つ新しい JAR をインストールすると、replacement intent がステージングされます。
+## プラグインマーケットと自動更新
 
-推奨手順:
+0.67.0-beta.3 以降、ファーストパーティプラグインはフレームワーク全体を再インストールすることなく個別に導入・更新できます。
 
-1. 現在の JAR と plugin の persistent configuration/data を backup します。
-2. plugin management を通じて新しい JAR をインストールします。
+- **Turboism → プラグインマーケット…** または [turboism.dev/plugins](https://turboism.dev/plugins) からプラグインを導入できます。
+- ファーストパーティプラグインは署名検証を経てバックグラウンドで自動更新されます。
+- **ホットリロード**（hot-reload）対応プラグインはモデリング作業を中断することなく即座に反映されます。
+- その他のプラグイン更新は次回の Cubism 再起動時に反映されます。
+- ユーザーは設定画面から公式プラグインの自動更新をいつでも無効化できます。
+
+## プラグイン設定
+
+プラグインごとの設定を行うには、**Turboism → プラグイン設定…** を選択します。
+
+- 専用の 2 ペインウィンドウが開きます（左ペインにインストール済みプラグイン一覧、右ペインに選択中のプラグイン設定フォーム）。
+- 設定値は保存前に検証され、`config/<pluginId>/` に保存されます。
+- フレームワーク本体の設定は **Turboism → Turboism 設定…** に分離されています。
+
+## ローカル JAR のマネージドインストール
+
+独自にビルドしたプラグイン JAR を追加する場合:
+
+1. 信頼できるソースからプラグイン JAR を取得またはビルドします。
+2. Cubism で **Turboism → プラグイン管理…** を選択します。
+3. **JAR からインストール…**（Install from JAR…）をクリックします。
+4. ローカルの `.jar` ファイルを選択します。
+5. JAR がローカル/未検証のソースであることを示す確認ダイアログを承認します。
+6. 操作が保留中（pending）と表示されたことを確認します。
+7. Cubism を終了し、同じ Turboism home から再起動します。
+8. **プラグイン管理…** とランタイムログで有効な状態を確認します。
+
+ステージング前、Runtime は選択された JAR を未検証の入力として扱います。アーカイブ制限（サイズ、展開サイズ、圧縮比など）の範囲内で単一の記述子とプラグイン内容を検査し、安全に保留状態へとスナップショットします。
+
+## プラグインの置換または更新
+
+- **ファーストパーティプラグイン**: バックグラウンドで自動更新されるか、プラグインマーケットから更新します。
+- **ローカル/サードパーティプラグイン**: **プラグイン管理… → JAR からインストール…** で同じプラグイン ID の新しい JAR を導入し、置換操作をステージングします。
+
+ローカルプラグイン更新の推奨手順:
+
+1. 現在の JAR と重要な `config/`・`data/` の内容をバックアップします。
+2. プラグイン管理から新しい JAR をインストールします。
 3. Cubism を再起動します。
-4. 表示された version、lifecycle state、configuration migration、logs を確認します。
+4. 表示バージョン、状態、ログを確認します。
 
-startup preflight はステージング済み JAR を再検証し、適用失敗時は private backup から以前の plugin file を復元します。保持される履歴バージョンの一覧はなく、完全なユーザー向け修復・ロールバック・リカバリ・purge UI もありません。
+起動時チェックで検証が行われ、適用に失敗した場合は以前のプラグインファイルが自動復元されます。
 
-## プラグインを無効化または有効化する
+## プラグインの有効化と無効化
 
-desired state は Turboism home configuration に永続化され、再起動後に適用されます。
+**Turboism → プラグイン管理…** で、任意のプラグインの有効/無効を切り替えられます。
 
-- Runtime 所有の `turboism.core` plugin は無効化できません。
-- 無効化された plugin は、次の startup discovery で skip されます。
-- toggle の変更によって active instance が直ちに unload されることはありません。
-- 通常の shutdown では、plugin が scope と ClassLoader reference を閉じる機会が引き続き与えられます。
+- 設定は `config.json` の `disabledPlugins` に保存され、Cubism 再起動後に反映されます。
+- Runtime 所有の `turboism.core` は組み込みコードであり無効化できません。
+- 無効化されたプラグインは次回の起動時にロードがスキップされます。
+- バリアント間のアップグレード時も `disabledPlugins` の設定は保持されます。Thin 環境に Full を上書きしても、以前無効化したプラグインが勝手に有効化されることはありません。
 
-## プラグインをアンインストールする
+## プラグインのアンインストール
 
-1. plugin management で plugin を選択します。
-2. **アンインストール**（Uninstall）を選択します。
-3. pending operation を確認します。
-4. Cubism を閉じて再起動します。
-5. plugin がロードされなくなったことを確認します。
-6. data を保持するか削除するか決めます。
+1. **Turboism → プラグイン管理…** を開きます。
+2. 削除するプラグインを選択し、**アンインストール** をクリックします。
+3. 保留中の操作を確認します。
+4. Cubism を再起動します。
+5. プラグインがロードされていないことを確認します。
+6. 必要に応じて永続化データを保持または削除します。
 
-組み込みの framework shell は plugin ではなく、無効化もアンインストールもできません。
+プラグイン JAR を削除しても、プラグイン所有のデータがすべて消えるわけではありません:
 
-plugin JAR を削除しても、plugin 所有の全ファイルが自動的に消去されるわけではありません。
+- 再インストール後に設定やデータが必要な場合は `config/<pluginId>/` や `data/<pluginId>/` を残してください。
+- `cache/`、`state/`、`logs/` は Cubism 停止時に安全に削除できます。
 
-- 再インストール後に設定または business data が必要になる可能性がある場合は、`config/<pluginId>/` と `data/<pluginId>/` を保持します。
-- `cache/<pluginId>/`、`state/<pluginId>/`、`logs/<pluginId>/` は通常再構築可能または診断用ですが、Turboism を停止しているときだけ削除します。
-- configuration または persistent data の削除は backup なしでは取り消せません。
+## 手動インストール（高度な代替手順）
 
-## 手動インストール
+手動インストールは、UI を介さずにローカル JAR をテストするための代替経路です。`<turboism.home>/plugins/` に直接 JAR を配置します。通常はプラグインマーケットまたはマネージドインストールを推奨します。
 
-手動インストールは、信頼できるプラグイン JAR のための上級/フォールバック経路です。プラグイン JAR をマネージド・ステージングではなく、Turboism home の `plugins/` directory に直接コピーします。通常のユーザーは、上記の管理インストールを推奨します。
+プラグイン JAR はプラグインのソースからビルドされたものであり、Turboism のインストーラー実行ファイルやアーカイブとは異なります。
 
-手動コピーは、下記の比較で詳述するマネージドの保護を迂回します。Runtime は引き続き startup validation を実行しますが、startup validation はマネージド preflight と同等ではありません。
+### 手動インストール手順
 
-plugin JAR は plugin source から build した JAR であり、Turboism インストーラーファイルである `TurboismInstaller-<version>.jar` とは別物です。
-
-### プラグイン JAR を手動でインストールする
-
-1. Cubism と Turboism を完全に閉じます。plugin JAR は起動時にスキャンされるため、変更は完全に停止して再起動した後にのみ反映されます。
-2. launcher が使用する正確な Turboism home を確認します。
-3. `<turboism.home>/plugins/` を作成するか開きます。
-4. plugin JAR を `<turboism.home>/plugins/` の直下に直接コピーし、plugin ID ごとに JAR を最大 1 つにします。ネストした folder に置かず、symlink も使用しないでください。
+1. Cubism と Turboism を完全に終了します。
+2. 使用している正確な Turboism home を確認します。
+3. `<turboism.home>/plugins/` フォルダを開きます。
+4. プラグイン JAR を `plugins/` 直下にコピーします（プラグイン ID ごとに 1 ファイル）。
 5. 同じ Turboism home で Cubism を再起動します。
-6. plugin list/state と Runtime logs を確認します。
+6. **プラグイン管理…** とログで状態を確認します。
 
-`plugins/` の場所は launcher とインストールモードによって異なります。
+### 手動インストールしたプラグインのアンインストール
 
-- Windows `.exe` インストーラーの既定: `%LOCALAPPDATA%\Turboism\plugins\`
-- カスタム `.exe`/`.jar` インストーラーの home: `<selected Turboism directory>/plugins/`
+1. Cubism と Turboism を終了します。
+2. `<turboism.home>/plugins/` から対象の JAR を削除します。
+3. 再起動してプラグインが読み込まれていないことを確認します。
 
-### 手動インストールしたプラグインを置換または更新する
+## 現在の制限事項
 
-1. 最初に Cubism と Turboism を停止します。
-2. 古い JAR と、plugin の重要な `config/<pluginId>/`・`data/<pluginId>/` の内容を backup します。
-3. 置換 JAR をコピーする前に、同じ ID の古い JAR を削除します。同じ plugin ID の JAR が 2 つあると `DUPLICATE_PLUGIN_ID` で失敗します。
-4. 同じ Turboism home で再起動し、version、state、logs を確認します。
+プラグイン管理では、現時点で以下を提供していません:
 
-### 手動インストールしたプラグインをアンインストールする
-
-1. Cubism と Turboism を停止します。
-2. `<turboism.home>/plugins/` から plugin JAR を削除します。
-3. 再起動し、plugin がロードされなくなったことを確認します。
-4. 意図的に削除しない限り plugin data は残ります。`config/<pluginId>/` や `data/<pluginId>/` を削除するのは Turboism 停止中のみ、backup を取ってからにしてください。
-
-### 管理インストールと手動インストールの比較
-
-管理インストールはさらに次を提供します。
-
-- UI 確認と pending operation の追跡。
-- source path と、アーカイブ上限の範囲内での厳格な archive preflight。
-- private snapshot、pending journal、staged apply。
-- staged apply が失敗したときの managed backup/restore。
-
-手動インストールは上記すべてを迂回しますが、コピーした JAR は引き続き startup validation（descriptor の解析/schema、plugin JAR content contract、予約済み ID、Turboism API range、dependency、disabled ID、entrypoint の読み込み、lifecycle）を受けます。
-
-## JAR の拒否
-
-マネージド JAR は、次のような理由で拒否されることがあります。
-
-- シンボリックリンクまたは通常ファイルでない source path。
-- size、entry、展開量、圧縮率の上限違反。
-- malformed または ambiguous ZIP path。
-- duplicate entry または special file。
-- `META-INF/turboism/plugin.json` が 1 つより多い、または少ない。
-- descriptor の ID、version、API range の不一致。
-- copied SDK、Runtime、test、または Live2D class。
-- native または installer payload。
-- ネストされた JAR content。
-- entrypoint class、宣言済み resource、i18n catalog の欠落。
-
-現在の plugin source から JAR を再ビルドしてください。archive を手動で編集したり inspection を無効化したりしないでください。上記の理由はマネージド preflight の説明です。手動コピーはこれをスキップし、startup validation で強制される違反のみが Runtime の startup diagnostics に現れます。
-
-## 現在の制限
-
-Plugin management は現在、次を提供していません。
-
-- サードパーティプラグインの discovery または download。
-- publisher signing または revocation。
-- ライブマーケットプレイス。
-- 保持される履歴バージョン。
-- 完全なユーザー向け修復・ロールバック・リカバリ・purge UI。
-- Cubism installation または launcher の system-level modification。
+- 未検証のサードパーティ署名管理や自由な公開ストアへの登録。
+- 過去バージョンの無制限な履歴保存と一括ロールバック。
+- 完全な自動復旧 UI。
+- Cubism 本体のインストール先や公式ランチャーのシステムレベルの変更。

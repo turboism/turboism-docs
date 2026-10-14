@@ -20,6 +20,18 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - 明确处理 Provider 或宿主版本不可用的情况；
 - 永远不要通过反射、原始宿主 widget、native handle 或字节码转换器绕过 Runtime。
 
+## Cubism Editor 中的 Turboism
+
+在运行时，Turboism 直接集成在 Live2D Cubism Editor 的顶层 **Turboism** 菜单下（0.67.0-beta.3 之前的版本中名为“插件”/Plugins 菜单）：
+
+- **插件市场…** — 在应用内市场浏览并安装第一方及收录的插件，或访问 [turboism.dev/plugins](https://turboism.dev/plugins)。
+- **管理插件…** — 启用、停用和卸载插件，或从本地暂存插件 JAR。
+- **插件设置…** — 在专用的双栏设置窗口中集中配置所有已安装插件的选项。
+- **检查更新** — 检查最新的框架发行版。
+- **Turboism 设置…**、**快捷键…**、**日志…**、活动插件操作以及**关于**。
+
+自 0.67.0-beta.3 起，第一方插件在通过数字签名验证后会在后台自动更新。标记为热更新（hot-reload）的插件即刻生效，其他插件在重启 Cubism 后生效。
+
 ## 文档范围
 
 Turboism 发布单一的公共 SDK 层级。源代码仓库中已审查的二进制 API 基线是兼容性门禁，[SDK API 指南](./reference/sdk-api)描述了当前接口。
@@ -29,7 +41,9 @@ Turboism 发布单一的公共 SDK 层级。源代码仓库中已审查的二进
 - SDK 中存在某个 API，并不意味着每个受支持的 Cubism Editor 版本都能执行它；
 - 受支持的 Editor 版本，并不意味着每个插件功能在该版本上都可用。
 
-Windows x64 是受支持的宿主平台，Cubism Editor 5.2.03、5.3.02 和 5.3.03 被接纳为确切版本。不支持的组合会安全地失败关闭，而不是回退到未经验证的路径。
+Windows x64 是受支持的宿主平台。受支持的 Cubism Editor 版本取决于所安装的 Turboism 发行版：Stable 0.44.0 接纳 5.2.03、5.3.02 和 5.3.03，Beta 0.67.0-beta.1 接纳 5.0.00 至 5.3.04 的全部 20 个已审核版本（请参阅[兼容性](/docs/use/compatibility)）。不支持的组合会安全地失败关闭，而不是回退到未经验证的路径。
+
+自 0.67.0-beta.3 起，Turboism 提供两种产品变体的四种正式发行产物（`TurboismInstaller-<version>-full.exe`、`TurboismInstaller-<version>-thin.exe`、`turboism-<version>-full.zip`、`turboism-<version>-thin.zip`）。0.67.0-beta.3 之前的历史版本使用旧版构件，且跨平台 Java 安装器 JAR 已退役。
 
 继续阅读：
 

@@ -7,8 +7,8 @@ description: 安装已发布的 Turboism 安装包，进行配置，并验证首
 
 ## 1. 安全准备
 
-- Windows x64 是受支持的 Cubism 宿主平台。受支持的 Editor 版本为 5.2.03、5.3.02 和 5.3.03。
-- `.jar` 安装器需要 Java 17+ 运行时。
+- Windows x64 是受支持的 Cubism 宿主平台。受支持的 Editor 版本取决于 Turboism 发行版：Stable 0.44.0 支持 5.2.03、5.3.02 和 5.3.03，Beta 0.67.0-beta.1 支持 5.0.00–5.3.04；请参阅[兼容性](/docs/use/compatibility)。
+- 自 0.67.0-beta.3 起，原 Java 安装器 JAR 已退役；macOS 和 Linux 请使用便携 ZIP 归档。
 - 备份要打开的项目，或使用一次性副本。
 - 将 Turboism home 与 Cubism 安装分开。
 - 不要编辑 Cubism JAR、DLL、BAT 文件或许可状态。
@@ -16,11 +16,13 @@ description: 安装已发布的 Turboism 安装包，进行配置，并验证首
 ## 2. 下载与验证
 
 1. 打开 [turboism.dev/download](https://turboism.dev/download) 并选择渠道：**Stable**、**Beta** 或 **Nightly**。
-2. 下载一个安装包及其配对的 `.sha256` 文件。
+2. 下载一个安装包及其配对的 `.sha256` 文件：
+   - `TurboismInstaller-<version>-full.exe` 或 `turboism-<version>-full.zip`：包含运行时框架及全部随包第一方插件。
+   - `TurboismInstaller-<version>-thin.exe` 或 `turboism-<version>-thin.zip`：仅包含运行时框架。
 3. 验证文件哈希，例如在 PowerShell 中：
 
    ```powershell
-   Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
+   Get-FileHash ".\TurboismInstaller-<version>-full.exe" -Algorithm SHA256
    ```
 
 安装器未签名，因此校验和是你可以自行完成的完整性检查。
@@ -29,31 +31,21 @@ description: 安装已发布的 Turboism 安装包，进行配置，并验证首
 
 ### Windows `.exe` 安装器
 
-1. 运行 `TurboismInstaller-<version>.exe`。
-2. 选择安装器语言（英文、简体中文、日文或韩文）。
+1. 运行 `TurboismInstaller-<version>-full.exe`（完整版）或 `TurboismInstaller-<version>-thin.exe`（精简版）。
+2. 选择安装器语言（英语、简体中文、日语或韩语）。
 3. 阅读许可协议，并确认全部四项必需确认。
-4. 选择 **Full** 或 **Lite**，然后选择安装目录（默认为 `%LOCALAPPDATA%\Turboism`）。在 Full 模式下可以取消勾选单个插件。
-5. 决定是否下载可选的托管 GraalVM 组件。
+4. 选择安装目录（默认为 `%LOCALAPPDATA%\Turboism`）。安装器不再包含模式选择页或插件勾选页：完整版安装全部第一方插件，精简版不安装插件。
+5. 决定是否下载可选的托管 GraalVM / JavaScript 引擎组件。
 6. 当安装器打开 `configure_turboism.ps1` 时，选择要使用的 Cubism 安装并保存。取消配置器会留下一个有效的仅框架安装。
-7. 通过所选 Cubism 根目录的托管 launcher 启动 Cubism（`launch-cubism-turboism.bat`）。
-
-### 跨平台 `.jar` 安装器
-
-1. 运行安装器：
-
-   ```bash
-   java -jar TurboismInstaller-<version>.jar
-   ```
-
-   传入 `-language eng|chn|jpn|kor` 可预先选择安装器语言。
-2. 完成各项声明，并选择 **Full**、**Thin** 或 **Lite**，然后选择目标目录。
-3. 在 Windows 上，运行已安装的 `configure_turboism.ps1`，选择 Cubism 安装，并通过托管 launcher 启动。在 macOS 上，此安装器仅覆盖安装和卸载：macOS Cubism 宿主支持尚未验证，且未安装 macOS launcher。
+7. 通过所选 Cubism 根目录的托管启动器启动 Cubism（`launch-cubism-turboism.bat`）。
 
 ### 便携式 ZIP
 
-1. 将整个归档解压到独立文件夹中。
+1. 将整个归档（`turboism-<version>-full.zip` 或 `turboism-<version>-thin.zip`）解压到独立文件夹中。
 2. 从该文件夹运行 `configure_turboism.ps1`，并选择 Cubism 安装。
 3. 通过生成的快捷方式或 `launch-cubism-turboism.bat` 启动 Cubism。
+
+**0.67.0-beta.3** 之前的历史版本使用旧版构件（`TurboismInstaller-<version>.exe`、IzPack `.jar` 安装器以及 `turboism-<version>-lite.zip`）。Java 安装器 JAR 已退役。
 
 安装器语言只影响安装器。Turboism 在运行时使用的语言来自运行时 `locale` 设置，插件界面语言跟随 Cubism Editor 的 **File → Environment Settings → General → Language**。
 
@@ -64,21 +56,32 @@ description: 安装已发布的 Turboism 安装包，进行配置，并验证首
 - Cubism 正常启动；
 - Turboism runtime 报告启动成功；
 - runtime 使用预期的 Turboism home；
-- 已安装的插件出现在插件管理器和 runtime diagnostics 中；
-- 不可用的宿主 capability 会 fail closed，而不是导致 Cubism 崩溃；
+- 顶部菜单名称为 **Turboism**（原为“插件”/Plugins 菜单）；
+- **Turboism** 菜单包含：**插件市场…**、**管理插件…**、**插件设置…**（专用双栏窗口）、**检查更新**、**Turboism 设置…**、**快捷键…**、**日志…**、各插件操作以及**关于**；
+- 已安装的插件出现在插件管理器和运行时诊断中；
+- 不可用的宿主能力会安全地失败关闭，而不是导致 Cubism 崩溃；
 - 关闭 Cubism 后，插件 scope 和框架所有的 executor 都会释放。
 
-## 5. 添加插件
+## 5. 添加与管理插件
 
-Full 选项已安装已审查的第一方插件捆绑包。如需添加本地插件 JAR：
+完整版（Full）已预装所有第一方插件。使用精简版（Thin）或需要获取新插件时：
 
-1. 打开 Turboism，选择 **插件管理**（Plugin Management）。
+- 打开 Cubism，点击 **Turboism → 插件市场…**（或访问 [turboism.dev/plugins](https://turboism.dev/plugins)）浏览并安装插件。
+- 第一方插件在通过签名验证后会在后台自动更新。标记为热更新（hot-reload）的插件立即生效；其他插件在重启 Cubism 后生效。用户可在设置中关闭官方插件自动更新。
+- 随时通过 **Turboism → 管理插件…** 启用或停用已安装的插件；变更在重启 Cubism 后生效。
+- 通过 **Turboism → 插件设置…** 专用的双栏窗口集中配置各插件选项。
+
+### 本地插件 JAR 安装
+
+如需添加本地或第三方插件 JAR：
+
+1. 打开 Turboism，选择 **Turboism → 管理插件…**。
 2. 选择 **从 JAR 安装…**（Install from JAR…）。
 3. 选择本地 `.jar` 文件。
 4. 确认将 JAR 标记为本地/未验证来源的对话框。
 5. 当操作显示为 pending 时重启 Cubism。
 
-确认后插件 JAR 会被暂存，并在重启后生效。插件变更不会热切换当前已加载的插件实例。插件 JAR 与 Turboism 安装器 JAR 是分开的。
+确认后插件 JAR 会被暂存，并在重启后生效。插件变更不会热切换当前已加载的插件实例。插件 JAR 与 Turboism 安装程序是相互独立的。
 
 ### 手动安装（备选）
 
@@ -88,13 +91,13 @@ Full 选项已安装已审查的第一方插件捆绑包。如需添加本地插
 2. 将受信任的插件 JAR 直接复制到 `<turboism.home>/plugins/` 根下。
 3. 保持每个 plugin ID 最多一个 JAR。
 4. 使用同一个 Turboism home 重启。
-5. 验证插件状态和 runtime 日志。
+5. 验证插件状态和运行时日志。
 
 手动安装会绕过托管保护。完整流程请参见[插件管理](./plugin-management)。
 
 ## 6. 查找日志
 
-使用已安装的 Turboism home 的 `logs/` 目录。报告启动、JAR、依赖、权限或 Provider 故障时，请保留日志。
+使用已安装的 Turboism home 的 `logs/` 目录，或点击顶部菜单中的 **Turboism → 日志…**。报告启动、JAR、依赖、权限或 Provider 故障时，请保留日志。
 
 ## 后续步骤
 

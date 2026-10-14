@@ -7,7 +7,7 @@ description: 起動、インストーラー、プラグイン JAR、ライフサ
 
 - パッケージが自分のプラットフォーム向けであり、公開リリースまたは公式ミラーからダウンロードしたものであることを確認します。
 - 対応する `.sha256` ファイルで SHA-256 チェックサムを検証します。一致しない場合、ダウンロードが不完全か改変されているため、もう一度ダウンロードしてください。
-- `.jar` インストーラーには Java 17 以降が必要です。
+- Windows では `TurboismInstaller-<version>-full.exe` または `TurboismInstaller-<version>-thin.exe` を使用します。macOS および Linux ではポータブル ZIP アーカイブを展開してください。従来の Java `.jar` インストーラーは 0.67.0-beta.3 以降廃止されました（0.67.0-beta.3 未満の旧リリースでは `.jar` インストーラーが使用され、Java 17 以降が必要でした）。
 - インストーラーは、ファイルを変更する前に、4 つの確認事項と完全なランタイム宣言のすべてが承諾されることを要求します。
 - インストーラーは署名されていないため、Windows や macOS で不明な発行元の警告が表示されることがあります。オペレーティングシステムの保護を無効にせず、代わりにチェックサムで確認してください。
 
@@ -15,7 +15,7 @@ description: 起動、インストーラー、プラグイン JAR、ライフサ
 
 - 意図した Turboism home と、正しい Cubism インストールに対応するマネージドランチャーを使用していることを確認します。
 - Turboism home の `logs/` ディレクトリにあるランタイムログを確認します。コンフィギュレーターが出力する `logs/installer/` の内容も含みます。
-- 使用中の Cubism インストールがサポート対象の範囲（Windows x64 上の Editor 5.2.03、5.3.02、5.3.03）と一致することを確認します。
+- 使用中の Cubism インストールが、Windows x64 上でその Turboism リリースが対応する範囲（Stable 0.44.0 では Editor 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.1 では 5.0.00–5.3.04。[互換性](/docs/use/compatibility)を参照）と一致することを確認します。
 - identity failure を回避するために Cubism JAR、DLL、BAT ファイル、ライセンスコンポーネントを置き換えないでください。
 
 ## プラグインが表示されない
@@ -29,7 +29,7 @@ description: 起動、インストーラー、プラグイン JAR、ライフサ
 - マニフェストが対応する `schemaVersion`（2、3、または 4）を宣言し、そのバージョンとして妥当である。
 - entrypoint class が存在し、public で、`TurboismPlugin` を実装し、public no-argument constructor を持つ。
 - Turboism API range と required dependencies が解決される。
-- plugin ID が disabled または重複していない。
+- plugin ID が **Turboism → プラグイン管理…**（`config.json` の `disabledPlugins`）で無効化されておらず、重複していない。
 - `environment.requiresCubism` が現在の environment と一致する。
 
 ## JAR が拒否される

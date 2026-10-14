@@ -18,7 +18,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 ## 受支持的宿主版本
 
 - Windows x64 是受支持的 Cubism 宿主平台。
-- Cubism Editor **5.2.03**、**5.3.02** 和 **5.3.03** 是已接纳的确切版本，具有按版本路由的 adapter 和 Provider。
+- 受支持的 Cubism Editor 版本取决于发行版：Stable **0.44.0** 接纳 **5.2.03**、**5.3.02** 和 **5.3.03**，Beta **0.67.0-beta.1** 与当前开发分支接纳 **5.0.00 至 5.3.04** 的全部 20 个已审核版本，并配有按版本路由的 adapter 和 Provider（请参阅[兼容性](/docs/use/compatibility)）。
 - 未列出的 Editor 版本不被声称为兼容，不支持或未经验证的能力会安全地失败关闭。
 - macOS 打包仅处于 preview，没有经验证的宿主支持；Linux 仅限于安装器和 payload 行为。
 
@@ -44,21 +44,24 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 
 ## 安装器与交付
 
-三条打包路径共享同一个分阶段 payload 和 Full/Thin/Lite 插件模型：
+自 0.67.0-beta.3 起，Turboism 提供两种产品变体的四种正式发行产物：
 
-- Windows 原生的 NSIS 安装器（`TurboismInstaller-<version>.exe`），提供 Full 和 Lite，以及可选的托管 GraalVM 组件；
-- Java 17 IzPack 安装器（`TurboismInstaller-<version>.jar`），提供 Full、Thin 和 Lite，可安装在 Windows、macOS 和 Linux 上；
-- 便携式 `turboism-<version>-full.zip` 和 `turboism-<version>-lite.zip` 归档。
+- Windows 原生的 NSIS 安装器（`TurboismInstaller-<version>-full.exe` 与 `TurboismInstaller-<version>-thin.exe`），提供可选的托管 GraalVM 组件与变体间的安全升级；
+- 便携式 `turboism-<version>-full.zip` 和 `turboism-<version>-thin.zip` 归档。
 
-两个安装器都会在通过四项必需确认和完整的本地化运行时声明之后才进行安装。两者都不会修改 Cubism 安装文件。`config.json` 有明确的更新归属：对于现有的有效文档，安装器只更改托管的插件选择；被识别的旧 schema 会在任何 payload 变更之前完成迁移和验证。Windows 配置器只列出确切受支持的 Cubism 安装，并将 Turboism 自有的快捷方式与可选的、带哈希保护的官方 BAT 集成分开。
+0.67.0-beta.3 之前的历史版本采用旧版构件（`TurboismInstaller-<version>.exe`、Java 17 IzPack 安装器 `TurboismInstaller-<version>.jar` 以及 `turboism-<version>-lite.zip`）。Java 安装器 JAR 已退役。
+
+安装器不再包含模式选择页或插件勾选页：完整版安装全部第一方插件，精简版不安装插件。在 Cubism Editor 中，顶部菜单更名为 **Turboism**（原为“插件”/Plugins 菜单），提供应用内**插件市场…**、**管理插件…**、**插件设置…**（专用双栏窗口）、**检查更新**，以及经签名验证的第一方插件后台自动更新。
+
+安装器在通过四项必需确认和完整的本地化运行时声明之后才进行安装。它绝不会修改 Cubism 安装文件。`config.json` 有明确的更新归属：在现有有效配置上安装时保留用户设置，且 Full 与 Thin 之间的升级安全受控（Thin 覆盖 Full 原样保留 `plugins/`，Full 覆盖 Thin 尊重现有 `disabledPlugins`）。Windows 配置器只列出确切受支持的 Cubism 安装，并将 Turboism 自有的快捷方式与可选的、带哈希保护的官方 BAT 集成分开。
 
 ## Cubism 和 Editor API 进展
 
 - 统一的对象图覆盖 Canvas、Parameters、Parameter Groups、Parts、Drawables、Deformers、Warp 和 Rotation Deformers、Glue、parameter bindings 以及 texture atlases。
 - Core 支持的读取使用不可变复制数据、版本规范化、绑定 generation 的过期引用拒绝和固定 digest 的 resolver 证据。
 - parameter 创作路径将 `Parameter.setValue` 连接到 Editor 操作、权限检查、Undo、脏状态处理、刷新和过期目标拒绝。
-- Part 显示名称写入在 5.2.03 和 5.3.02 上具有真实主机证据。Part opacity 创作写入在 5.3.02 上具有证据，并且在 5.2.03 上有意不可用，因为观察到的求值 setter 未参与原生 Part Undo。
-- Cubism 5.3.03 拥有其已接纳的 texture-atlas 创作 provider、selector 契约和 layout provider，以及针对 physics、performance metrics、project lifecycle、model statistics 和 startup suppression 的确切版本 profile。
+- Part 显示名称写入在 5.2.03 和 5.3.02 上具有真实主机证据。Part opacity 创作写入要求 5.3.00–5.3.04（已在 5.3.02 上完成实机验证），在 5.0.00–5.2.03 上不可用，因为部件形态不透明度访问器是在 Cubism 5.3.00 引入的。
+- 确切版本的静态验证记录、选择器契约和 profile 现已覆盖 5.0.00 至 5.3.04 的全部 20 个已审核构建；逐插件和逐能力的版本边界生成在[兼容性](/docs/use/compatibility)页面。
 - Parameter 生命周期 hooks 支持有序的同步 `before` 重写、仅变更时的 `on`、正常完成后的 `after`、递归拒绝、有界的观察工作和卸载清理。
 - History 现在会投影不可变的语义细节：`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`，并对目标、坐标和分组进行有界验证。这些值不授予任何主机写入权限。
 - 当前页面的 texture-atlas layout 契约被绑定为已审查的 SDK 兼容性基线（v10），并对保留的构造函数设有链接门禁。
@@ -68,7 +71,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - Turboism 会针对已部署的发布 API 检查稳定版更新。比较使用安装包内嵌的权威构建号。
 - 可用更新以绘图区上的原生 Cubism 提示呈现。点击提示会打开固定的官方下载页；不会自动下载或执行安装程序。
 - 更新检查不阻塞界面，最多每 24 小时运行一次，并始终提供手动检查。自动检查在「启动」设置页有独立的持久开关。
-- 插件可以通过 canvas-hint UI 能力（`turboism.ui.canvas.hint` 权限）在绘图区显示原生 Cubism 提示，按版本路由到已校验的 5.2.03、5.3.02 和 5.3.03 宿主路径。
+- 插件可以通过 canvas-hint UI 能力（`turboism.ui.canvas.hint` 权限）在绘图区显示原生 Cubism 提示，按版本路由到已验证的宿主路径（Stable 0.44.0 为 5.2.03、5.3.02 和 5.3.03；Beta 0.67.0-beta.1 为 5.0.00–5.3.04；请参阅[兼容性](/docs/use/compatibility)）。
 
 ## 第一方插件
 
@@ -107,9 +110,9 @@ host validation           explicit exact-version Cubism execution for the affect
 
 宿主验证通过受监督的本地队列运行：构建和准备工作可以并行运行，但单个宿主准入锁会串行化真实的 Cubism 会话；完成需要匹配的结构化生命周期和清理证据；归属未知时会将宿主隔离以便检查，而不是终止无关会话。
 
-## Official Directory 状态
+## 官方目录与插件市场状态
 
-内置的签名 Official Directory 客户端和 UI 已实现，但生产激活尚未就绪：生产密钥列表为空，实时签名 catalog 就绪性尚未建立。它不是实时 marketplace。
+Cubism 内置的“插件市场”客户端与 UI 已就绪，可直接浏览并安装来自 `turboism.dev/plugins` 签名目录的第一方与精选插件。第一方插件支持经过数字签名验证的后台自动更新与热更新（hot-reload）。
 
 ## 进行中或受版本限制
 
@@ -125,7 +128,7 @@ Turboism 当前不承诺：
 
 - 安装包的签名或公证公开发布渠道；
 - 经过验证的 macOS Cubism 宿主支持；
-- 框架或插件更新的自动下载与安装（更新检查已可用；自动安装器更新不可用）；
+- 框架安装包的自动下载与静默执行（更新检查与后台插件更新已可用；自动框架安装器更新尚不可用）；
 - 生产可用的 marketplace、发布者签名或撤销；
 - 完整的用户面向安装、修复、回滚、恢复和清除 UI；
 - 对 Cubism launcher 的全局修改；
