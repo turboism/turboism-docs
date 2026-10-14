@@ -3,7 +3,7 @@ title: SDK API 指南
 description: 当前 Turboism 插件 SDK 的入口点、服务、对象模型、生命周期与能力边界。
 ---
 
-Turboism SDK 是插件唯一的公开依赖项。Turboism 发布单一的公共 SDK 层级，源代码仓库中已审查的二进制 API 基线是兼容性门禁。其可用性取决于四项彼此独立的事实：
+Turboism SDK 是插件唯一的公开依赖项。Turboism 发布单一的公共 SDK 层级，源代码仓库中已审查的二进制 API 基线（当前为 **v17**）是兼容性门禁。其可用性取决于四项彼此独立的事实：
 
 1. API 存在于 SDK 中；
 2. 插件声明了所需权限；
@@ -265,10 +265,19 @@ UI API 使用 SDK DTO，而不是 Swing/AWT 或主机小部件。当前族包括
 
 ## 版本与就绪状态说明
 
-- 受支持的 Cubism Editor 版本取决于发行版：Stable 0.44.0 接纳 5.2.03、5.3.02 和 5.3.03，Beta 0.67.0-beta.1 接纳 5.0.00 至 5.3.04 的全部 20 个已审核版本。准入是按能力进行的，并不是对每个操作系列的全面保证；完整的能力与 SDK 表面矩阵请参阅[兼容性](/docs/use/compatibility)。
-- 参数创作写入具有已验证的 Cubism 5.3.02 路径，但调用方仍必须处理不可用性和过时目标。
-- 部件显示名称写入在 5.2.03 和 5.3.02 上具有真实主机证据。
-- 部件不透明度创作写入要求 5.3.00–5.3.04，不得声称支持 5.0.00–5.2.03。
+- **20 版本覆盖**：当前已审查的 Cubism Editor 版本矩阵覆盖 **5.0.00 至 5.3.04** 全部 20 个版本。
+- **向下兼容性保证**：同一 minor line 内严格遵守单调性原则，新补丁版本不会丢失旧版本已具备的任何能力。
+- **声明式版本注解**：所有公共类型与方法均标注 `@CubismEditor(from = "...", to = "...")`，声明其确切受支持的宿主版本；无参 `@CubismEditor` 表示在所有已审版本上均通用。
+- **0.67 新增的核心能力族**：
+  - **统一模型对象图**（`CubismModel`、`Drawables`、`Deformers`、`Parts`、`Parameters`）；
+  - **网格建模与会话**（`MeshEditService`、`MeshEditParticipation`、`MeshMirrorAxisService`）；
+  - **纹理集排版与统计**（`TextureAtlasLayoutService`、`TextureAtlasEditorSession`、`TextureAtlasStatistics`）；
+  - **PSD 与剪贴蒙版**（`PsdClipMaskDocumentSnapshot`、`PsdEditFile`）；
+  - **参数批量操作**（`ParameterBindingBatchOperations`、`ParameterBindingTransferPlan`）；
+  - **3D 模型导入挂钩**（`ModelObjectCreateRequest` 等）；
+  - **独立插件设置**（`SettingsRegistry`、`SettingsContribution`）；
+  - **绘图区原生提示**（`CanvasHintNotification`、`turboism.ui.canvas.hint`）。
+- 确切的版本边界与能力差异已在[兼容性文档](/docs/use/compatibility)中完整列出。
 - History DTO（`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`）是有界的不可变语义投影。它们绝不授予主机写入权限。
 - Fake 和静态测试仅证明其所命名的层。
 - 快照/查询/事务兼容接口当前与统一对象图并存。

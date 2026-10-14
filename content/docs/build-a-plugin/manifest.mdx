@@ -167,6 +167,26 @@ An `eventImports` entry may also carry `"required": true` to demand that its pro
 
 Plugin IDs use reverse-domain syntax with at least one dot (`dev.example.plugin.hello`); event IDs use a lowercase dot/dash token form.
 
+## lifecycle and hot-reload
+
+```json
+"lifecycle": {
+  "hotReload": true
+}
+```
+
+- `lifecycle.hotReload` (boolean, optional, defaults to `false`): Declares whether this plugin supports hot-reloading.
+- When `true`, enabling, disabling, or automatically updating this plugin from the In-Cubism Plugin Market takes effect immediately in memory **without restarting Cubism**.
+- **Prerequisites**: Only plugins relying purely on standard SDK services, cleanly disposing resources via `DisposableScope`, and **registering zero bytecode transformers or native hooks** may declare `hotReload: true`. Plugins performing host bytecode transformations must declare `false` so the Runtime can apply changes safely on next Cubism startup.
+
+## cubismVersions metadata
+
+```json
+"cubismVersions": ["5.0.00", "5.1.00", "5.2.00", "5.3.00"]
+```
+
+Plugins may optionally declare a list or range of supported Cubism Editor versions. When omitted, the Runtime and Plugin Directory automatically infer version compatibility from `@CubismEditor` annotations and referenced SDK capabilities.
+
 ## Build and validate
 
 For an in-repository plugin module:

@@ -63,6 +63,23 @@ Menu、toolbar、panel、context-menu contribution は SDK descriptor を使い�
 
 ## Event
 
+Turboism は宣言的およびプログラミング的の両方のイベント購読メカニズムを提供します:
+
+### 1. 宣言的 `@SubscribeEvent`（推奨）
+
+エントリポイントクラスのリスナーメソッドに `@SubscribeEvent` を付与します。コンパイル時に `turboism-event-processor` が購読者インデックスを自動生成するため、手動の登録や解除は不要です:
+
+```java
+@SubscribeEvent(priority = EventPriority.NORMAL)
+public void onParameterChanged(final ParameterValueEvent.After event) {
+    context.logger().info("Parameter changed: " + event.parameter().id());
+}
+```
+
+利用可能な優先度: `LOWEST`, `LOW`, `NORMAL`, `HIGH`, `HIGHEST`, `MONITOR`。
+
+### 2. プログラミング的動的購読
+
 ```java
 record HelloEvent(String message) implements EventBus.TurboismEvent {}
 
@@ -76,7 +93,7 @@ context.eventBus().publish(new HelloEvent("enabled"));
 
 subscribe と publish の permission は別々です。event に raw host state を含めてはいけません。
 
-## Cubism object API
+## Cubism オブジェクト API とバージョン適応
 
 ```java
 CubismModel model = context.cubism().model().active();
@@ -84,7 +101,30 @@ Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
 float current = parameter.getValue();
 ```
 
-write には matching permission と Provider が必要です。interface method があることは、すべての Cubism version でサポートされることを意味しません。
+SDK インターフェースには `@CubismEditor(from = "...")` が付与されており、メソッドや型の最小サポートバージョンを示しています。特定の機能（パラメータ書き込みやメッシュ編集など）を呼び出す前に可用性を確認することで、`CubismEditorApiUnavailableException` を回避できます:
+
+```java
+if (context.cubism().isAvailable("cubism.editor-model.write")) {
+    parameter.setValue(current + 1.0f);
+}
+```
+
+## 専用プラグイン設定（SettingsRegistry）
+
+プラグインは `context.settings()` を使用して、Cubism 内の専用 **Turboism → プラグイン設定…** 2 ペインウィンドウに設定画面を提供できます:
+
+```java
+var settings = context.settings().register(new SettingsContribution() {
+    @Override public String id() { return "myplugin.settings"; }
+    @Override public String title() { return "My Plugin"; }
+    @Override public List<SettingsControl> controls() {
+        return List.of(
+            SettingsControl.Toggle.of("enabled", "Enable feature", true, val -> {})
+        );
+    }
+});
+context.disposableScope().register(settings);
+```
 
 ## Hook
 

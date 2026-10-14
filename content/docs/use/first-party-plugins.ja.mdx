@@ -11,16 +11,23 @@ Full インストールには、レビュー済みのファーストパーティ
 
 | プラグイン | 機能 |
 | --- | --- |
+| 3D Model Import | GLB、glTF、OBJ、ZIP から 3D メッシュ、テクスチャ、ジオメトリを Cubism へ直接インポート。 |
+| Bounding Box Warp Mirror | バウンディングボックス操作中にワープデフォーマを整列および反転。 |
+| DalSoo Polygon Layout Algorithm | 複雑・不規則なポリゴンに最適化されたコンパクトなテクスチャアトラス配置アルゴリズム。 |
 | MaxRects-BSSF Layout Algorithm | 並列探索を備えた MaxRects-BSSF テクスチャアトラス配置アルゴリズムを登録。 |
 | Mesh Edit Mirror Axis Enhance | メッシュ編集に対称軸回転とホスト完全互換の対称ツールを追加。 |
 | Parameter Batch Transfer | ArtMesh または Deformer のパラメータバインドを他のパラメータへ一括転送（反転オプションあり）。 |
 | Physics Editor | 物理演算設定の一括選択と再オープン時の選択保持を追加。 |
+| Selection Brush | メッシュ編集およびモデリングビューでのブラシ型頂点・オブジェクト選択ツール。 |
+| Warp Deformer Alt Symmetry | Alt キーを押しながらドラッグした際にワープデフォーマの対称制御点連動を提供。 |
 
 ## ワークフロー
 
 | プラグイン | 機能 |
 | --- | --- |
+| Command Palette | Cubism と Turboism のアクションを即時検索・実行できる IDE スタイルのグローバルコマンドパレット（Ctrl+K）。 |
 | Cubism Tab Filter | パラメータ、デフォーマ、シーン、ログの各パレットタブにキーワード絞り込みボックスを追加。 |
+| External PSD Edit | 外部画像エディタ（Photoshop 等）と連携し、ネイティブ PSD のエクスポート、編集、再読み込みを実行。 |
 | PSD Clip Mask Import | 順序付き PSD クリッピング関係を ArtMesh クリップマスク割り当てとしてインポート（明示的な上書きポリシー付き）。 |
 | History Panel | アクティブドキュメントのネイティブ Undo 履歴を Photoshop スタイルのペインに投影し、スナップショット連携の Undo/Redo ナビゲーションを提供。 |
 | Recent Preview | 「最近使ったファイル」のホバーポップアップ内に、最近のプロジェクトファイルのプレビューサムネイルを生成。 |
@@ -47,6 +54,7 @@ Full インストールには、レビュー済みのファーストパーティ
 
 | プラグイン | 機能 |
 | --- | --- |
+| ACP Agent Client | Agent Client Protocol に接続し、AI 支援モデリングと自然言語コマンド実行のためのコンテキストとブリッジを提供。 |
 | Turboism MCP Server | 型付きの Cubism 検査、編集、履歴、Editor コマンドのワークフローを公開する loopback Model Context Protocol サーバー。bearer 認証が必要です。[MCP](../build-a-plugin/mcp) を参照してください。 |
 
 組み込みの Turboism メニュー、設定、ログ、バージョン情報、プラグイン管理、更新ヒントはプラグインではありません。これらは予約された `turboism.core` 識別子を持つランタイム所有のフレームワークシェル（`dev.turboism.shell`）によって提供されます。プラグイン管理には組み込みの削除不可能な行として表示され、無効化やアンインストールはできません。Cubism Editor 内では、トップメニュー名が **Turboism**（以前は「プラグイン」/「插件」）になり、**プラグインマーケット…**、**プラグイン管理…**、**プラグイン設定…**（専用の 2 ペインウィンドウ）、**更新を確認**、**Turboism 設定…**、**キーバインド…**、**ログ…**、プラグインアクション、**バージョン情報** が含まれます。

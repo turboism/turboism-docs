@@ -3,7 +3,7 @@ title: SDK API Guide
 description: The current Turboism plugin SDK entrypoints, services, object model, lifecycle, and capability boundaries.
 ---
 
-The Turboism SDK is the only public dependency for plugins. Turboism publishes one public SDK tier, and the reviewed binary API baseline in the source repository is the compatibility gate. Availability depends on four separate facts:
+The Turboism SDK is the only public dependency for plugins. Turboism publishes one public SDK tier, and the reviewed binary API baseline in the source repository (currently **v17**) is the compatibility gate. Availability depends on four separate facts:
 
 1. the API exists in the SDK;
 2. the plugin declares the required permission;
@@ -271,10 +271,19 @@ bytecode, and they are listed with their reason on the
 
 ## Version and readiness notes
 
-- Supported Cubism Editor versions are release-dependent: Stable 0.44.0 admits 5.2.03, 5.3.02, and 5.3.03, while Beta 0.67.0-beta.1 admits all 20 reviewed versions from 5.0.00 to 5.3.04. Admission is per capability, not a blanket guarantee for every operation family; see [Compatibility](/docs/use/compatibility) for the full capability and SDK surface matrix.
-- Parameter authoring writes have a verified Cubism 5.3.02 path, but callers must still handle unavailability and stale targets.
-- Part display-name writes have real-host evidence on 5.2.03 and 5.3.02.
-- Part opacity authoring writes require 5.3.00–5.3.04 and must not be claimed on 5.0.00–5.2.03.
+- **20-Version Coverage**: The reviewed Cubism Editor version matrix covers all 20 versions from **5.0.00 to 5.3.04**.
+- **Monotonic Capability Guarantee**: Within any minor release line, capability is strictly monotonic: newer patch versions never drop capabilities admitted by earlier patch versions.
+- **Declarative Version Annotations**: Public types and methods carry `@CubismEditor(from = "...", to = "...")` to declare exact host version ranges. An empty `@CubismEditor` signifies universal support across all reviewed versions.
+- **Core Capability Families in 0.67**:
+  - **Unified Model Object Graph** (`CubismModel`, `Drawables`, `Deformers`, `Parts`, `Parameters`);
+  - **Mesh Modeling & Tool Session** (`MeshEditService`, `MeshEditParticipation`, `MeshMirrorAxisService`);
+  - **Texture Atlas Layout & Stats** (`TextureAtlasLayoutService`, `TextureAtlasEditorSession`, `TextureAtlasStatistics`);
+  - **PSD & Clipmask Operations** (`PsdClipMaskDocumentSnapshot`, `PsdEditFile`);
+  - **Parameter Batch Transfer & Morph Operations** (`ParameterBindingBatchOperations`, `ParameterBindingTransferPlan`);
+  - **3D Model Import Hooks** (`ModelObjectCreateRequest`, etc.);
+  - **Dedicated Plugin Settings** (`SettingsRegistry`, `SettingsContribution`);
+  - **Canvas Hint Notifications** (`CanvasHintNotification`, `turboism.ui.canvas.hint`).
+- For exact capability and SDK surface details across all versions, see [Compatibility](/docs/use/compatibility).
 - History DTOs (`HistoryEntry`, `HistoryChange`, `HistoryEditContext`, `HistoryGroup`, `HistoryOrigin`, `HistoryTarget`) are bounded immutable semantic projections. They never grant host write authority.
 - Fake and static tests prove their named layer only.
 - Snapshot/query/transaction compatibility surfaces currently coexist with the unified object graph.

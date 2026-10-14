@@ -165,7 +165,27 @@ Schema 4 允许插件声明其拥有和消费的公共事件类型，使 Runtime
 
 `eventImports` 条目还可以携带 `"required": true`，以要求其提供程序契约被接纳。Runtime 会校验每个条目声明的 ABI 摘要，拒绝同一插件内重复的导出 ID 或事件类型，并拒绝无法解析到已接纳提供程序契约的导入。
 
-插件 ID 使用至少包含一个点的反向域名语法（`dev.example.plugin.hello`）；事件 ID 使用小写的点/短横线标记形式。
+Plugin IDs use reverse-domain syntax with at least one dot (`dev.example.plugin.hello`); event IDs use a lowercase dot/dash token form.
+
+## lifecycle 与热重载
+
+```json
+"lifecycle": {
+  "hotReload": true
+}
+```
+
+- `lifecycle.hotReload`（boolean，可选，默认 `false`）：声明插件是否支持热重载。
+- 设为 `true` 时，用户在 Cubism 内的插件管理中启用、停用或通过插件市场自动更新该插件时，Runtime 能够直接在内存中卸载旧实例并加载新实例，**无需重启 Cubism**。
+- **约束条件**：仅依赖 SDK 规范服务、通过 `DisposableScope` 完整清理资源且**未注册字节码转换器或原生 Hook** 的插件才可声明 `hotReload: true`。若插件包含底层宿主字节码改写，必须设为 `false`，由 Runtime 在下一次 Cubism 启动时安全应用。
+
+## cubismVersions 元数据
+
+```json
+"cubismVersions": ["5.0.00", "5.1.00", "5.2.00", "5.3.00"]
+```
+
+插件可在清单中显式声明支持的 Cubism Editor 版本列表或范围。若未显式指定，Runtime 与插件目录会从插件代码中的 `@CubismEditor` 注解及所引用的 SDK 能力自动推导其版本支持范围。
 
 ## 构建与验证
 

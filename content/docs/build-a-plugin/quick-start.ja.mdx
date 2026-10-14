@@ -1,103 +1,150 @@
 ---
 title: 開発者向けクイックスタート
-description: public SDK に対して最小の Java 17 Turboism plugin を build する。
+description: 公開 SDK を使用して最小限の Java 17 Turboism プラグインを構築します。
 ---
 
-現在の source-backed development path は、Turboism repository に plugin module を追加することです。standalone starter template と公開された Maven coordinates はまだ利用できません。
+Turboism は公式のスタンドアロンプロジェクトテンプレートとスキャフォールディングツールを提供しています。テンプレートから独立リポジトリを作成し、自動セットアップスクリプトを実行して対応する SDK とアノテーションプロセッサを取得できます。
 
-## 1. module を作成する
+## 1. 公式テンプレートの使用（推奨）
+
+GitHub の **Use this template** から [`turboism/turboism-plugin-template`](https://github.com/turboism/turboism-plugin-template) リポジトリをもとに作成するか、直接クローンします:
+
+```bash
+git clone https://github.com/turboism/turboism-plugin-template.git my-plugin
+cd my-plugin
+```
+
+セットアップスクリプトを実行します（公式リリースフィードから対応バージョンの SDK とイベントアノテーションプロセッサをダウンロードし、SHA-256 を検証します）:
+
+```bash
+# Linux / macOS
+./scripts/setup.sh --channel beta
+
+# Windows (PowerShell)
+.\scripts\setup.ps1 -Channel beta
+```
+
+ターミナルの対話式プロンプトに従ってプラグイン ID（例: `com.example.myplugin`）、表示名、パッケージ名、作者情報を入力します。スクリプトが Java パッケージとクラス名を再構成し、`libs/` に依存関係を設定します。
+
+## 2. プロジェクト構造とビルド構成
+
+スタンドアロンテンプレートのディレクトリ構造:
 
 ```text
-plugins/hello/
+my-plugin/
+├── gradlew
+├── gradlew.bat
 ├── build.gradle.kts
-├── src/main/java/dev/example/plugin/HelloPlugin.java
+├── libs/
+│   ├── turboism-sdk-*.jar
+│   └── turboism-event-processor-*.jar
+├── src/main/java/com/example/myplugin/MyPlugin.java
 ├── src/main/resources/META-INF/turboism/plugin.json
-└── src/test/java/dev/example/plugin/HelloPluginTest.java
+└── src/test/java/com/example/myplugin/MyPluginTest.java
 ```
 
-source repository の `settings.gradle.kts` に追加します。
-
-```kotlin
-include("plugins:hello")
-```
-
-## 2. SDK のみに依存する
+`build.gradle.kts` の構成:
 
 ```kotlin
 plugins {
     `java-library`
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+repositories {
+    flatDir {
+        dirs("libs")
+    }
+}
+
 dependencies {
-    compileOnly(project(":sdk"))
-    testImplementation(project(":sdk"))
+    compileOnly(":turboism-sdk")
+    testImplementation(":turboism-sdk")
+    // アノテーションプロセッサがコンパイル時に @SubscribeEvent を解析
+    annotationProcessor(":turboism-event-processor")
 }
 ```
 
-`compileOnly` は意図的な指定です。SDK は Runtime が提供します。plugin JAR に `dev/turboism/sdk/**` class をコピーしてはいけません。
+`compileOnly` は意図的なものです: Runtime が実行時に SDK を提供します。プラグイン JAR に `dev/turboism/sdk/**` クラスを含めないでください。
 
-Runtime、Bootstrap、`com.live2d.*`、別 plugin の private implementation package、reflection bridge、host widget、native handle、host ClassLoader に依存しないでください。
+Runtime、Bootstrap、`com.live2d.*` 内部クラス、他のプラグインのプライベート実装、リフレクションブリッジ、ネイティブハンドルには依存しないでください。
 
-## 3. entrypoint を実装する
+## 3. エントリポイントとイベント受信の実装
 
 ```java
-package dev.example.plugin;
+package com.example.myplugin;
 
+import dev.turboism.sdk.CubismEditor;
+import dev.turboism.sdk.event.SubscribeEvent;
+import dev.turboism.sdk.event.cubism.ParameterValueEvent;
 import dev.turboism.sdk.plugin.PluginContext;
 import dev.turboism.sdk.plugin.TurboismPlugin;
 
-public final class HelloPlugin implements TurboismPlugin {
+@CubismEditor(from = "5.0.00")
+public final class MyPlugin implements TurboismPlugin {
     private PluginContext context;
 
     @Override
     public void init(final PluginContext context) {
         this.context = java.util.Objects.requireNonNull(context, "context");
-        context.logger().info("HelloPlugin initialized");
+        context.logger().info("MyPlugin initialized");
     }
 
     @Override
     public void enable() {
-        context.logger().info("HelloPlugin enabled");
+        context.logger().info("MyPlugin enabled");
+    }
+
+    @SubscribeEvent
+    public void onParameterChanged(final ParameterValueEvent.After event) {
+        context.logger().info("Parameter changed: " + event.parameter().id());
     }
 
     @Override
     public void disable() {
-        context.logger().info("HelloPlugin disabled");
+        context.logger().info("MyPlugin disabled");
     }
 
     @Override
     public void shutdown() {
-        context.logger().info("HelloPlugin shutdown");
+        context.logger().info("MyPlugin shutdown");
         context = null;
     }
 }
 ```
 
-class は public で、`TurboismPlugin` または subinterface を実装し、public no-argument constructor を公開しなければなりません。
+- クラスは public であり、`TurboismPlugin` またはそのサブインターフェースを実装し、public 引数なしコンストラクタを提供する必要があります。
+- `@SubscribeEvent` アノテーションを使ってイベント購読メソッドを宣言でき、コンパイル時に `turboism-event-processor` がインデックスを生成します。
+- `@CubismEditor(from = "...")` で適用される最小 Cubism Editor バージョンを宣言できます。
 
-## 4. plugin descriptor を追加する
+## 4. プラグイン記述子の追加
 
-`src/main/resources/META-INF/turboism/plugin.json` を作成します。
+`src/main/resources/META-INF/turboism/plugin.json` を編集します:
 
 ```json
 {
   "format": "turboism.plugin.meta",
   "schemaVersion": 3,
-  "id": "dev.example.plugin.hello",
-  "name": "Hello Plugin",
+  "id": "com.example.myplugin",
+  "name": "My Plugin",
   "version": "0.1.0",
   "description": "Minimal Turboism plugin lifecycle example.",
   "category": "workflow",
   "tags": ["example"],
   "entrypoints": [
-    "dev.example.plugin.HelloPlugin"
+    "com.example.myplugin.MyPlugin"
   ],
   "turboismApi": "[0.1.0,0.2.0)",
   "authors": [
     { "name": "Example Author" }
   ],
   "license": "MIT",
-  "website": "https://example.org/hello-plugin",
+  "website": "https://example.org/my-plugin",
   "resources": [],
   "i18n": {
     "baseName": "META-INF/turboism/i18n/messages",
@@ -106,6 +153,9 @@ class は public で、`TurboismPlugin` または subinterface を実装し、pu
   "dependencies": [],
   "permissions": [],
   "capabilities": [],
+  "lifecycle": {
+    "hotReload": true
+  },
   "environment": {
     "requiresCubism": false,
     "ui": "none"
@@ -113,42 +163,43 @@ class は public で、`TurboismPlugin` または subinterface を実装し、pu
 }
 ```
 
-Schema 3 では必須の `category` フィールドが追加されます。permission、resource、localization、dependency、複数の entrypoint、または schema 4 の cross-plugin event contract を追加する前に、[プラグインマニフェストとパッケージング](./manifest) を読んでください。
+- `"lifecycle": { "hotReload": true }` はプラグインがホットリロードに対応していることを示し、Cubism を再起動せずに有効化、無効化、更新が即座に反映されます。
+- 権限、リソース、国際化の詳細については [プラグインマニフェストとパッケージング](./manifest) を参照してください。
 
-## 5. build と検証を行う
+## 5. ビルドと検証
 
 ```bash
-./gradlew :plugins:hello:test :plugins:hello:jar validatePluginMeta \
-  --no-daemon --console=plain
+./gradlew build
 ```
 
-ビルド結果は次の下に書き込まれます。
+成果物は以下に書き込まれます:
 
 ```text
-build/worktree/<worktreeId>/hello/libs/
+build/libs/com.example.myplugin-0.1.0.jar
 ```
 
-`libs/` の JAR がプラグインのリリース成果物です。配布時は変更しないでください。
+## 6. インストールとデバッグ
 
-この lifecycle-only example には constructor-only test で十分です。
+1. Cubism Editor を起動し、**Turboism** メニューを開きます。
+2. **プラグイン管理…** → **JAR からインストール…** を選択し、ビルドされた `.jar` を選択します。
+3. ホットリロード対応プラグインは即座に読み込まれて有効になります。その他は Cubism 再起動後に有効になります。
+4. ローカル開発時は `<turboism.home>/plugins/` ディレクトリに直接 JAR をコピーすることもできます。
 
-plugin が action、UI、event、configuration、task を登録するようになったら、recording/fake `PluginContext` を使って registration、failure handling、disable/shutdown behavior、scope cleanup を検証してください。
+## 上級者向け: ソースツリー内モジュール開発
 
-## 6. JAR を配布する
+Turboism コアコントリビューターはリポジトリ内で直接 `plugins/<name>` モジュールを追加できます:
 
-build 済み JAR を直接共有します。wrapper archive も package script も、別の packaging step もありません。
+```bash
+# settings.gradle.kts に追加
+include("plugins:my-plugin")
 
-## 7. install する
-
-Turboism plugin management で **JAR からインストール…**（Install from JAR…）を選択し、build 済み JAR を選びます。JAR をローカル/未検証ソースと示すダイアログを確認します。変更はステージングされ、Cubism の再起動後に適用されます。
-
-local development やフォールバック用途では、JAR を手動でインストールすることもできます：Cubism を完全に閉じ、build 済み JAR を `<turboism.home>/plugins/` の直下にコピーし、同じ plugin ID の古い JAR が残っていないことを確認して、同じ Turboism home で再起動します。
-
-手動インストールはマネージドの保護（UI 確認、preflight、ステージング、backup/restore）を迂回します。JAR は引き続き startup validation を受けます。完全な手動手順と更新/アンインストールのルールについては [プラグイン管理](../use/plugin-management) を参照してください。
+# ビルドと検証
+./gradlew :plugins:my-plugin:test :plugins:my-plugin:jar validatePluginMeta --console=plain
+```
 
 ## 次のステップ
 
-- [プラグインインターフェース](./plugin-interfaces)
-- [プラグインマニフェストとパッケージング](./manifest)
-- [SDK API ガイド](../reference/sdk-api)
-- [プラグイン管理](../use/plugin-management)
+- [プラグインインターフェース](./plugin-interfaces) — サービス、アクション、メニュー、イベント購読
+- [プラグインマニフェストとパッケージング](./manifest) — 記述子スキーマと各フィールドの詳細
+- [SDK API ガイド](../reference/sdk-api) — アーキテクチャ、統合オブジェクトモデル、バージョン承認
+- [プラグイン管理](../use/plugin-management) — アプリ内マーケット、更新、ライフサイクル

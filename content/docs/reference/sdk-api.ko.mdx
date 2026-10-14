@@ -3,7 +3,7 @@ title: SDK API 가이드
 description: 현재 Turboism 플러그인 SDK 진입점, 서비스, 오브젝트 모델, 수명 주기 및 기능 경계입니다.
 ---
 
-Turboism SDK는 플러그인의 유일한 공개 종속성입니다. Turboism은 하나의 공개 SDK 등급을 제공하며, 소스 저장소의 검토된 바이너리 API 기준선이 호환성 게이트입니다. 가용성은 네 가지 별개의 사실에 따라 달라집니다:
+Turboism SDK는 플러그인의 유일한 공개 종속성입니다. Turboism은 하나의 공개 SDK 등급을 제공하며, 소스 저장소의 검토된 바이너리 API 기준선(현재 **v17**)이 호환성 게이트입니다. 가용성은 네 가지 별개의 사실에 따라 달라집니다:
 
 1. API가 SDK에 존재합니다;
 2. 플러그인이 필요한 권한을 선언합니다;
@@ -265,10 +265,19 @@ UI API는 Swing/AWT나 호스트 위젯이 아니라 SDK DTO를 사용합니다.
 
 ## 버전 및 준비 상태 참고
 
-- 지원되는 Cubism Editor 버전은 릴리스에 따라 다릅니다. Stable 0.44.0은 5.2.03, 5.3.02, 5.3.03을 허용하며, Beta 0.67.0-beta.1은 5.0.00부터 5.3.04까지의 검토된 20개 버전 전체를 허용합니다. 허용은 기능별이며 모든 작업 계열에 대한 일괄 보장이 아닙니다. 전체 capability 및 SDK 표면 매트릭스는 [호환성](/docs/use/compatibility)을 참고하세요.
-- 파라미터 작성 쓰기는 검증된 Cubism 5.3.02 경로를 가지지만, 호출자는 여전히 사용 불가 상황과 오래된 대상을 처리해야 합니다.
-- Part 표시 이름 쓰기는 5.2.03과 5.3.02에서 실제 호스트 근거를 가집니다.
-- Part 불투명도 작성 쓰기는 5.3.00–5.3.04가 필요하며 5.0.00–5.2.03에서 주장해서는 안 됩니다.
+- **20개 버전 커버리지**: 검토된 Cubism Editor 버전 매트릭스는 **5.0.00부터 5.3.04까지** 전체 20개 버전을 포괄합니다.
+- **단조성 보장**: 동일한 마이너 릴리스 라인 내에서 기능은 엄격하게 단조적입니다. 새로운 패치 버전은 이전 패치 버전의 모든 기능을 포함하며 기능이 후퇴하지 않습니다.
+- **선언적 버전 어노테이션**: 공개 타입과 메서드에는 `@CubismEditor(from = "...", to = "...")`가 지정되어 정확한 지원 범위를 선언합니다. 매개변수가 없는 `@CubismEditor`는 검토된 모든 버전에서 지원됨을 나타냅니다.
+- **0.67 추가 주요 핵심 기능 계열**:
+  - **통합 모델 오브젝트 그래프**(`CubismModel`, `Drawables`, `Deformers`, `Parts`, `Parameters`);
+  - **메시 모델링 및 세션**(`MeshEditService`, `MeshEditParticipation`, `MeshMirrorAxisService`);
+  - **텍스처 아틀라스 배치 및 통계**(`TextureAtlasLayoutService`, `TextureAtlasEditorSession`, `TextureAtlasStatistics`);
+  - **PSD 및 클립 마스크 작업**(`PsdClipMaskDocumentSnapshot`, `PsdEditFile`);
+  - **파라미터 일괄 이전 및 모프 작업**(`ParameterBindingBatchOperations`, `ParameterBindingTransferPlan`);
+  - **3D 모델 가져오기 연동**(`ModelObjectCreateRequest` 등);
+  - **전용 플러그인 설정**(`SettingsRegistry`, `SettingsContribution`);
+  - **캔버스 네이티브 힌트 알림**(`CanvasHintNotification`, `turboism.ui.canvas.hint`).
+- 모든 버전의 구체적인 기능 경계와 차이점은 [호환성 문서](/docs/use/compatibility)를 참고하십시오.
 - 히스토리 DTO(`HistoryEntry`, `HistoryChange`, `HistoryEditContext`, `HistoryGroup`, `HistoryOrigin`, `HistoryTarget`)는 범위가 제한된 변경 불가능한 의미 투영입니다. 호스트 쓰기 권한을 부여하지 않습니다.
 - 가짜 및 정적 테스트는 그 이름이 붙은 계층만 증명합니다.
 - 스냅샷/쿼리/트랜잭션 호환 표면은 현재 통합 오브젝트 그래프와 함께 존재합니다.

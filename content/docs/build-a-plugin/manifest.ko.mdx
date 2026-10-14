@@ -167,6 +167,26 @@ META-INF/turboism/i18n/messages_zh_Hans.properties
 
 플러그인 ID는 점이 하나 이상 있는 역도메인 문법(`dev.example.plugin.hello`)을 사용하고, 이벤트 ID는 소문자 점/대시 토큰 형식을 사용합니다.
 
+## lifecycle 및 핫 리로드
+
+```json
+"lifecycle": {
+  "hotReload": true
+}
+```
+
+- `lifecycle.hotReload` (boolean, 선택 사항, 기본값 `false`): 플러그인이 핫 리로드를 지원하는지 선언합니다.
+- `true`로 설정하면 Cubism 내 플러그인 관리나 플러그인 마켓을 통한 활성화, 비활성화 및 자동 업데이트가 **Cubism 재시작 없이** 메모리에서 즉시 적용됩니다.
+- **제약 조건**: 표준 SDK 서비스에만 의존하고 `DisposableScope`를 통해 리소스를 깨끗이 정리하며 **바이트코드 변환기나 네이티브 훅을 등록하지 않는** 플러그인만 `hotReload: true`를 선언할 수 있습니다. 호스트 바이트코드를 수정하는 플러그인은 `false`로 지정해야 하며 다음 Cubism 실행 시 안전하게 적용됩니다.
+
+## cubismVersions 메타데이터
+
+```json
+"cubismVersions": ["5.0.00", "5.1.00", "5.2.00", "5.3.00"]
+```
+
+플러그인이 지원하는 Cubism Editor 버전 목록이나 범위를 명시적으로 선언할 수 있습니다. 생략하면 코드 내의 `@CubismEditor` 어노테이션 및 참조된 SDK 기능에서 호환 버전 범위를 자동으로 추론합니다.
+
 ## 빌드 및 검증
 
 저장소 내 플러그인 모듈의 경우:

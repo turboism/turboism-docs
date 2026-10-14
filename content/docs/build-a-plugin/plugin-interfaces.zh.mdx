@@ -63,6 +63,23 @@ context.disposableScope().register(action);
 
 ## 事件
 
+Turboism 提供声明式与编程式两种事件订阅机制：
+
+### 1. 声明式 `@SubscribeEvent`（推荐）
+
+在插件入口点类中直接使用 `@SubscribeEvent` 标记监听方法。编译期由 `turboism-event-processor` 自动生成订阅者注册表，无需手动挂载与注销：
+
+```java
+@SubscribeEvent(priority = EventPriority.NORMAL)
+public void onParameterChanged(final ParameterValueEvent.After event) {
+    context.logger().info("Parameter changed: " + event.parameter().id());
+}
+```
+
+优先级可选：`LOWEST`、`LOW`、`NORMAL`、`HIGH`、`HIGHEST`、`MONITOR`。
+
+### 2. 编程式动态订阅
+
 ```java
 record HelloEvent(String message) implements EventBus.TurboismEvent {}
 
@@ -76,7 +93,7 @@ context.eventBus().publish(new HelloEvent("enabled"));
 
 订阅和发布权限相互独立。事件不得包含原始主机状态。
 
-## Cubism 对象 API
+## Cubism 对象 API 与版本适配
 
 ```java
 CubismModel model = context.cubism().model().active();
@@ -84,7 +101,30 @@ Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
 float current = parameter.getValue();
 ```
 
-写入需要匹配的权限和 Provider。接口方法并不意味着每个 Cubism 版本都支持它。
+SDK 接口广泛标注了 `@CubismEditor(from = "...")` 以声明方法或类型的最低受支持版本。在调用需要特定能力（如参数写入、网格编辑）的方法前，可通过统一入口进行前置检查，避免抛出 `CubismEditorApiUnavailableException`：
+
+```java
+if (context.cubism().isAvailable("cubism.editor-model.write")) {
+    parameter.setValue(current + 1.0f);
+}
+```
+
+## 独立插件设置（SettingsRegistry）
+
+插件可通过 `context.settings()` 向 Cubism 内专用的 **Turboism → 插件设置…** 双栏窗口贡献设置页面：
+
+```java
+var settings = context.settings().register(new SettingsContribution() {
+    @Override public String id() { return "myplugin.settings"; }
+    @Override public String title() { return "My Plugin"; }
+    @Override public List<SettingsControl> controls() {
+        return List.of(
+            SettingsControl.Toggle.of("enabled", "Enable feature", true, val -> {})
+        );
+    }
+});
+context.disposableScope().register(settings);
+```
 
 ## Hooks
 

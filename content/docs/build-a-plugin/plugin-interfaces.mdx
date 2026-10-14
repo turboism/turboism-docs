@@ -63,6 +63,23 @@ Menu, toolbar, panel, and context-menu contributions use SDK descriptors. They d
 
 ## Events
 
+Turboism supports both declarative and programmatic event subscription:
+
+### 1. Declarative `@SubscribeEvent` (Recommended)
+
+Mark listener methods on your entrypoint class using `@SubscribeEvent`. The compile-time annotation processor `turboism-event-processor` automatically generates the subscriber index, requiring zero manual registration or disposal:
+
+```java
+@SubscribeEvent(priority = EventPriority.NORMAL)
+public void onParameterChanged(final ParameterValueEvent.After event) {
+    context.logger().info("Parameter changed: " + event.parameter().id());
+}
+```
+
+Available priorities: `LOWEST`, `LOW`, `NORMAL`, `HIGH`, `HIGHEST`, `MONITOR`.
+
+### 2. Programmatic dynamic subscription
+
 ```java
 record HelloEvent(String message) implements EventBus.TurboismEvent {}
 
@@ -76,7 +93,7 @@ context.eventBus().publish(new HelloEvent("enabled"));
 
 Subscribe and publish permissions are separate. Events must not contain raw host state.
 
-## Cubism object API
+## Cubism Object API and Version Adaptation
 
 ```java
 CubismModel model = context.cubism().model().active();
@@ -84,7 +101,30 @@ Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
 float current = parameter.getValue();
 ```
 
-Writes require a matching permission and Provider. An interface method does not imply support on every Cubism version.
+SDK interfaces annotate types and methods with `@CubismEditor(from = "...")` to declare minimum supported host versions. Before invoking methods requiring specific capability providers (such as parameter writes or mesh editing), check availability to avoid `CubismEditorApiUnavailableException`:
+
+```java
+if (context.cubism().isAvailable("cubism.editor-model.write")) {
+    parameter.setValue(current + 1.0f);
+}
+```
+
+## Dedicated Plugin Settings (`SettingsRegistry`)
+
+Plugins can contribute settings pages to the dedicated two-pane **Turboism → Plugin Settings…** window via `context.settings()`:
+
+```java
+var settings = context.settings().register(new SettingsContribution() {
+    @Override public String id() { return "myplugin.settings"; }
+    @Override public String title() { return "My Plugin"; }
+    @Override public List<SettingsControl> controls() {
+        return List.of(
+            SettingsControl.Toggle.of("enabled", "Enable feature", true, val -> {})
+        );
+    }
+});
+context.disposableScope().register(settings);
+```
 
 ## Hooks
 

@@ -6,7 +6,7 @@ const data = JSON.parse(readFileSync("lib/compatibility/data.json", "utf8"));
 
 test("compatibility data records pinned source commit and reviewed versions", () => {
   assert.equal(data.format, "turboism-docs.compatibility/v1");
-  assert.equal(data.sourceCommit, "6c129aa55");
+  assert.equal(data.sourceCommit, "4a21b8b2b");
   assert.equal(data.reviewedVersions.length, 20);
   assert.equal(data.reviewedRange, "5.0.00–5.3.04");
   assert.equal(data.plugins.length, 32);

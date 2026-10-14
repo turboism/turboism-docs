@@ -167,6 +167,26 @@ schema 4 では、plugin が所有および消費する public event type を宣
 
 Plugin ID は、少なくとも 1 つのドットを含む reverse-domain syntax を使用します（`dev.example.plugin.hello`）。event ID は小文字の dot/dash token 形式を使用します。
 
+## lifecycle とホットリロード
+
+```json
+"lifecycle": {
+  "hotReload": true
+}
+```
+
+- `lifecycle.hotReload` (boolean, 任意, デフォルト `false`): プラグインがホットリロードに対応しているかを宣言します。
+- `true` の場合、Cubism 内のプラグイン管理やプラグインマーケット経由での有効化・無効化・自動更新が、**Cubism を再起動することなく** メモリ上で即座に反映されます。
+- **制約条件**: 標準の SDK サービスのみを利用し、`DisposableScope` でリソースを安全に解放し、**バイトコード変換器やネイティブフックを登録しない** プラグインのみが `hotReload: true` を宣言できます。ホストのバイトコードを改変するプラグインは `false` を指定する必要があり、次回の Cubism 起動時に安全に適用されます。
+
+## cubismVersions メタデータ
+
+```json
+"cubismVersions": ["5.0.00", "5.1.00", "5.2.00", "5.3.00"]
+```
+
+プラグインが対応する Cubism Editor バージョンのリストや範囲を明示的に宣言できます。指定しない場合、コード内の `@CubismEditor` アノテーションや参照された SDK 機能から自動的に推論されます。
+
 ## build と検証
 
 repository 内の plugin module では、次を実行します。

@@ -1,103 +1,150 @@
 ---
 title: 개발자 빠른 시작
-description: 공개 SDK를 대상으로 최소한의 Java 17 Turboism 플러그인을 만듭니다.
+description: 공개 SDK를 사용하여 최소한의 Java 17 Turboism 플러그인을 빌드합니다.
 ---
 
-현재 소스에 근거한 개발 경로는 Turboism 저장소에 플러그인 모듈을 추가하는 것입니다. 독립 실행형 시작 템플릿과 공개된 Maven 좌표는 아직 없습니다.
+Turboism은 공식 독립 프로젝트 템플릿과 스캐폴딩 도구를 제공합니다. 템플릿에서 독립 저장소를 생성하고 자동 설정 스크립트를 실행하여 일치하는 SDK 및 어노테이션 프로세서를 내려받아 개발할 수 있습니다.
 
-## 1. 모듈 만들기
+## 1. 공식 독립 템플릿 사용 (권장)
+
+GitHub의 **Use this template**을 통해 [`turboism/turboism-plugin-template`](https://github.com/turboism/turboism-plugin-template) 저장소를 기반으로 생성하거나 직접 복제합니다:
+
+```bash
+git clone https://github.com/turboism/turboism-plugin-template.git my-plugin
+cd my-plugin
+```
+
+스캐폴딩 설정 스크립트를 실행합니다(공식 릴리스 피드에서 일치하는 버전의 SDK와 이벤트 어노테이션 프로세서를 다운로드하고 SHA-256을 검증합니다):
+
+```bash
+# Linux / macOS
+./scripts/setup.sh --channel beta
+
+# Windows (PowerShell)
+.\scripts\setup.ps1 -Channel beta
+```
+
+터미널의 대화형 프롬프트에 따라 플러그인 ID(예: `com.example.myplugin`), 표시 이름, 패키지 이름, 작성자 정보를 입력합니다. 스크립트가 Java 패키지와 클래스 이름을 재구성하고 `libs/`에 종속성을 구성합니다.
+
+## 2. 프로젝트 구조 및 빌드 구성
+
+독립 템플릿의 디렉터리 레이아웃:
 
 ```text
-plugins/hello/
+my-plugin/
+├── gradlew
+├── gradlew.bat
 ├── build.gradle.kts
-├── src/main/java/dev/example/plugin/HelloPlugin.java
+├── libs/
+│   ├── turboism-sdk-*.jar
+│   └── turboism-event-processor-*.jar
+├── src/main/java/com/example/myplugin/MyPlugin.java
 ├── src/main/resources/META-INF/turboism/plugin.json
-└── src/test/java/dev/example/plugin/HelloPluginTest.java
+└── src/test/java/com/example/myplugin/MyPluginTest.java
 ```
 
-소스 저장소의 `settings.gradle.kts`에 추가하세요:
-
-```kotlin
-include("plugins:hello")
-```
-
-## 2. SDK에만 의존하기
+`build.gradle.kts` 구성:
 
 ```kotlin
 plugins {
     `java-library`
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+repositories {
+    flatDir {
+        dirs("libs")
+    }
+}
+
 dependencies {
-    compileOnly(project(":sdk"))
-    testImplementation(project(":sdk"))
+    compileOnly(":turboism-sdk")
+    testImplementation(":turboism-sdk")
+    // 어노테이션 프로세서가 컴파일 시점에 @SubscribeEvent를 분석
+    annotationProcessor(":turboism-event-processor")
 }
 ```
 
-`compileOnly`는 의도적입니다. 런타임이 SDK를 제공합니다. 플러그인 JAR은 `dev/turboism/sdk/**` 클래스를 복사해서는 안 됩니다.
+`compileOnly`는 의도된 것입니다: Runtime이 실행 시점에 SDK를 제공합니다. 플러그인 JAR에 `dev/turboism/sdk/**` 클래스를 포함하지 마십시오.
 
-런타임, 부트스트랩, `com.live2d.*`, 다른 플러그인의 비공개 구현 패키지, 리플렉션 브리지, 호스트 위젯, 네이티브 핸들 또는 호스트 ClassLoader에 의존하지 마세요.
+Runtime, Bootstrap, `com.live2d.*` 내부 클래스, 다른 플러그인의 비공개 구현 패키지, 리플렉션 브리지, 네이티브 핸들에 의존하지 마십시오.
 
-## 3. 진입점 구현하기
+## 3. 진입점 및 이벤트 수신 구현
 
 ```java
-package dev.example.plugin;
+package com.example.myplugin;
 
+import dev.turboism.sdk.CubismEditor;
+import dev.turboism.sdk.event.SubscribeEvent;
+import dev.turboism.sdk.event.cubism.ParameterValueEvent;
 import dev.turboism.sdk.plugin.PluginContext;
 import dev.turboism.sdk.plugin.TurboismPlugin;
 
-public final class HelloPlugin implements TurboismPlugin {
+@CubismEditor(from = "5.0.00")
+public final class MyPlugin implements TurboismPlugin {
     private PluginContext context;
 
     @Override
     public void init(final PluginContext context) {
         this.context = java.util.Objects.requireNonNull(context, "context");
-        context.logger().info("HelloPlugin initialized");
+        context.logger().info("MyPlugin initialized");
     }
 
     @Override
     public void enable() {
-        context.logger().info("HelloPlugin enabled");
+        context.logger().info("MyPlugin enabled");
+    }
+
+    @SubscribeEvent
+    public void onParameterChanged(final ParameterValueEvent.After event) {
+        context.logger().info("Parameter changed: " + event.parameter().id());
     }
 
     @Override
     public void disable() {
-        context.logger().info("HelloPlugin disabled");
+        context.logger().info("MyPlugin disabled");
     }
 
     @Override
     public void shutdown() {
-        context.logger().info("HelloPlugin shutdown");
+        context.logger().info("MyPlugin shutdown");
         context = null;
     }
 }
 ```
 
-클래스는 public이어야 하고, `TurboismPlugin` 또는 그 하위 인터페이스를 구현하며, public 무인수 생성자를 노출해야 합니다.
+- 클래스는 public이어야 하며 `TurboismPlugin` 또는 그 하위 인터페이스를 구현하고 public 매개변수 없는 생성자를 제공해야 합니다.
+- `@SubscribeEvent` 어노테이션을 사용하여 이벤트 수신 메서드를 선언할 수 있으며, 컴파일 시점에 `turboism-event-processor`가 인덱스를 생성합니다.
+- `@CubismEditor(from = "...")`를 통해 지원하는 최소 Cubism Editor 버전을 선언할 수 있습니다.
 
-## 4. 플러그인 디스크립터 추가하기
+## 4. 플러그인 디스크립터 추가
 
-`src/main/resources/META-INF/turboism/plugin.json`을 만드세요:
+`src/main/resources/META-INF/turboism/plugin.json` 편집:
 
 ```json
 {
   "format": "turboism.plugin.meta",
   "schemaVersion": 3,
-  "id": "dev.example.plugin.hello",
-  "name": "Hello Plugin",
+  "id": "com.example.myplugin",
+  "name": "My Plugin",
   "version": "0.1.0",
   "description": "Minimal Turboism plugin lifecycle example.",
   "category": "workflow",
   "tags": ["example"],
   "entrypoints": [
-    "dev.example.plugin.HelloPlugin"
+    "com.example.myplugin.MyPlugin"
   ],
   "turboismApi": "[0.1.0,0.2.0)",
   "authors": [
     { "name": "Example Author" }
   ],
   "license": "MIT",
-  "website": "https://example.org/hello-plugin",
+  "website": "https://example.org/my-plugin",
   "resources": [],
   "i18n": {
     "baseName": "META-INF/turboism/i18n/messages",
@@ -106,6 +153,9 @@ public final class HelloPlugin implements TurboismPlugin {
   "dependencies": [],
   "permissions": [],
   "capabilities": [],
+  "lifecycle": {
+    "hotReload": true
+  },
   "environment": {
     "requiresCubism": false,
     "ui": "none"
@@ -113,42 +163,43 @@ public final class HelloPlugin implements TurboismPlugin {
 }
 ```
 
-스키마 3은 필수 `category` 필드를 추가합니다. 권한, 리소스, 현지화, 종속성, 다중 진입점 또는 스키마 4의 플러그인 간 이벤트 계약을 추가하기 전에 [플러그인 매니페스트 및 패키징](./manifest)을 읽어 주세요.
+- `"lifecycle": { "hotReload": true }`는 플러그인이 핫 리로드를 지원함을 선언하여, Cubism을 재시작하지 않고도 활성화, 비활성화 및 업데이트가 즉시 적용됩니다.
+- 권한, 리소스, 다국어 설정의 세부 사항은 [플러그인 Manifest 및 패키징](./manifest)을 참고하십시오.
 
 ## 5. 빌드 및 검증
 
 ```bash
-./gradlew :plugins:hello:test :plugins:hello:jar validatePluginMeta \
-  --no-daemon --console=plain
+./gradlew build
 ```
 
-빌드 결과는 다음 위치에 기록됩니다:
+빌드 산출물 위치:
 
 ```text
-build/worktree/<worktreeId>/hello/libs/
+build/libs/com.example.myplugin-0.1.0.jar
 ```
 
-`libs/`의 JAR이 플러그인 릴리스 파일이며, 배포할 때 변경하지 않고 그대로 유지하세요.
+## 6. 설치 및 디버깅
 
-이 수명 주기 전용 예제에서는 생성자 테스트만으로 충분합니다.
+1. Cubism Editor를 실행하고 **Turboism** 메뉴를 엽니다.
+2. **플러그인 관리…** → **JAR에서 설치…**를 선택하고 빌드된 `.jar` 파일을 선택합니다.
+3. 핫 리로드를 지원하는 플러그인은 즉시 로드되어 활성화됩니다. 그 외 플러그인은 Cubism 재시작 후 적용됩니다.
+4. 로컬 디버깅 시 `<turboism.home>/plugins/` 디렉터리에 직접 JAR을 복사할 수도 있습니다.
 
-플러그인이 액션, UI, 이벤트, 구성 또는 작업을 등록하면 기록/가짜 `PluginContext`를 사용해 등록, 실패 처리, 사용 안 함/종료 동작 및 스코프 정리를 검증하세요.
+## 고급: 소스 트리 내 모듈 개발
 
-## 6. JAR 배포하기
+Turboism 핵심 기여자는 저장소 내에서 직접 `plugins/<name>` 모듈을 추가할 수 있습니다:
 
-빌드한 JAR을 직접 공유하세요. 래퍼 아카이브, 패키지 스크립트 또는 별도의 패키징 단계가 없습니다.
+```bash
+# settings.gradle.kts에 추가
+include("plugins:my-plugin")
 
-## 7. 설치하기
-
-Turboism 플러그인 관리를 사용하고 **JAR에서 설치…**(Install from JAR…)를 선택해 빌드한 JAR을 지정하세요. JAR을 로컬/검증되지 않은 소스로 표시하는 대화 상자를 확인하세요. 변경 사항은 스테이징되며 Cubism 재시작 후에 적용됩니다.
-
-로컬 개발이나 대체 용도로 JAR을 수동 설치할 수도 있습니다. Cubism을 완전히 종료하고, 빌드한 JAR을 `<turboism.home>/plugins/`의 루트에 복사하고, 같은 플러그인 ID를 가진 이전 JAR이 남아 있지 않은지 확인한 뒤 같은 Turboism home으로 재시작하세요.
-
-수동 설치는 관리형 안전 장치(UI 확인, 사전 검사, 스테이징, 백업/복원)를 우회하지만, JAR은 여전히 시작 검증을 거칩니다. 전체 수동 절차와 업데이트/제거 규칙은 [플러그인 관리](../use/plugin-management)를 참고하세요.
+# 빌드 및 검증
+./gradlew :plugins:my-plugin:test :plugins:my-plugin:jar validatePluginMeta --console=plain
+```
 
 ## 다음 단계
 
-- [플러그인 인터페이스](./plugin-interfaces)
-- [플러그인 매니페스트 및 패키징](./manifest)
-- [SDK API 가이드](../reference/sdk-api)
-- [플러그인 관리](../use/plugin-management)
+- [플러그인 인터페이스](./plugin-interfaces) — 서비스, 액션, 메뉴 및 이벤트 구독
+- [플러그인 Manifest 및 패키징](./manifest) — 디스크립터 스키마 및 필드 상세
+- [SDK API 가이드](../reference/sdk-api) — 아키텍처, 통합 오브젝트 모델 및 버전 승인
+- [플러그인 관리](../use/plugin-management) — 인앱 마켓, 업데이트 및 라이프사이클 거버넌스

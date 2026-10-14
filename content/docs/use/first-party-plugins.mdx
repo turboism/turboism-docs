@@ -11,16 +11,23 @@ Availability of an individual feature still depends on the Cubism Editor version
 
 | Plugin | What it does |
 | --- | --- |
+| 3D Model Import | Imports 3D meshes, textures, and geometry from GLB, glTF, OBJ, or ZIP archives directly into Cubism. |
+| Bounding Box Warp Mirror | Aligns and mirrors Warp deformers during bounding box manipulation. |
+| DalSoo Polygon Layout Algorithm | Compact texture-atlas layout algorithm optimized for complex and irregular polygons. |
 | MaxRects-BSSF Layout Algorithm | Registers a MaxRects-BSSF texture-atlas packing algorithm with parallel search. |
 | Mesh Edit Mirror Axis Enhance | Adds mirror-axis rotation and exact-host mirror-tool parity to mesh editing. |
 | Parameter Batch Transfer | Batch-transfers the parameter bindings of one ArtMesh or Deformer to other parameters, with optional inversion. |
 | Physics Editor | Adds Physics Settings group select-all and reopen retention. |
+| Selection Brush | Brush-based vertex and object selection tool in mesh editing and modeling views. |
+| Warp Deformer Alt Symmetry | Provides symmetric control-point manipulation for Warp deformers when dragging with the Alt key held. |
 
 ## Workflow
 
 | Plugin | What it does |
 | --- | --- |
+| Command Palette | IDE-style global command palette (shortcut Ctrl+K) for instant search and execution of Cubism and Turboism actions. |
 | Cubism Tab Filter | Adds keyword filter boxes to the Parameter, Deformer, Scene, and Log palette tabs. |
+| External PSD Edit | Integrates with external image editors (Photoshop, etc.) for native PSD export, editing, and reload. |
 | PSD Clip Mask Import | Imports ordered PSD clipping relationships into ArtMesh clip-mask assignments with an explicit overwrite policy. |
 | History Panel | Projects the active document's native Undo history into a Photoshop-style pane with snapshot-bound Undo/Redo navigation. |
 | Recent Preview | Captures bounded preview thumbnails for recent project files in the Recent Files hover popup. |
@@ -47,6 +54,7 @@ Availability of an individual feature still depends on the Cubism Editor version
 
 | Plugin | What it does |
 | --- | --- |
+| ACP Agent Client | Connects to Agent Client Protocol to provide context and bridging for AI-assisted modeling and natural-language commands. |
 | Turboism MCP Server | Loopback Model Context Protocol server exposing typed Cubism inspection, editing, history, and Editor-command workflows. Requires bearer authentication; see [MCP](../build-a-plugin/mcp). |
 
 The built-in Turboism menu, settings, logs, About, plugin management, and update hints are not a plugin. They are provided by the runtime-owned framework shell (`dev.turboism.shell`) under the reserved `turboism.core` identity; plugin management lists it as a built-in, non-removable row that cannot be disabled or uninstalled. In Cubism Editor, the top menu is named **Turboism** (previously "插件"/Plugins) and includes items for: **Plugin Market…**, **Manage Plugins…**, **Plugin Settings…** (a dedicated two-pane window), **Check for Updates**, **Turboism Settings…**, **Keybindings…**, **Logs…**, plugin actions, and **About**.

@@ -1,7 +1,7 @@
 {
   "format": "turboism-docs.compatibility/v1",
-  "sourceCommit": "6c129aa55",
-  "sourceCommitFull": "6c129aa55e7a5d150c08cb65833e5f9e558b16de",
+  "sourceCommit": "4a21b8b2b",
+  "sourceCommitFull": "4a21b8b2b5e4fabb8a5c9ba9fce9e85d3339c6e7",
   "matrixFormat": "turboism.compatibility-matrix/v1",
   "boundariesFormat": "turboism.version-boundaries/v1",
   "reviewedVersions": [
@@ -475,7 +475,7 @@
     {
       "directory": "model-import-3d",
       "id": "dev.turboism.plugin.model-import-3d",
-      "name": "3D 模型导入",
+      "name": "3D Model Import",
       "requiresCubism": true,
       "supportedRange": "all",
       "supportedCount": 20,

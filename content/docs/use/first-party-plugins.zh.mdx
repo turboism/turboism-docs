@@ -11,16 +11,23 @@ Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与
 
 | 插件 | 功能 |
 | --- | --- |
+| 3D Model Import | 从 GLB、glTF、OBJ 或 ZIP 文件导入 3D 网格、材质和几何数据至 Cubism。 |
+| Bounding Box Warp Mirror | 包围盒操作期间对齐与镜像 Warp 变形器。 |
+| DalSoo Polygon Layout Algorithm | 针对复杂与不规则多边形的紧凑纹理集排版算法。 |
 | MaxRects-BSSF Layout Algorithm | 注册带并行搜索的 MaxRects-BSSF 纹理集排布算法。 |
 | Mesh Edit Mirror Axis Enhance | 为网格编辑添加对称轴旋转和与宿主完全一致的对称工具。 |
 | Parameter Batch Transfer | 批量将一个 ArtMesh 或 Deformer 的参数绑定转移至其他参数，支持可选的反转。 |
 | Physics Editor | 为物理设置添加全选组和重新打开时保留选中状态。 |
+| Selection Brush | 网格编辑与建模视图中的笔刷式顶点/对象选区工具。 |
+| Warp Deformer Alt Symmetry | 按住 Alt 键拖动时提供 Warp 变形器的对称控制点联动。 |
 
 ## 工作流
 
 | 插件 | 功能 |
 | --- | --- |
+| Command Palette | 类似 IDE 的全局命令面板（快捷键 Ctrl+K），支持即时搜索与触发 Cubism 及 Turboism 命令。 |
 | Cubism Tab Filter | 为 Parameter、Deformer、Scene 和 Log 面板选项卡添加关键字过滤框。 |
+| External PSD Edit | 联动外部图像编辑器（Photoshop 等）进行原生 PSD 导出、编辑与重新载入。 |
 | PSD Clip Mask Import | 将有序的 PSD 剪贴关系导入为 ArtMesh 剪贴蒙版分配，具备明确的覆盖策略。 |
 | History Panel | 将当前活动文档的内部 Undo 历史投射到 Photoshop 风格的面板中，支持基于快照的撤销/重做导航。 |
 | Recent Preview | 在“最近使用的文件”悬停弹出窗口中为近期项目文件生成有界预览缩略图。 |
@@ -47,6 +54,7 @@ Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与
 
 | 插件 | 功能 |
 | --- | --- |
+| ACP Agent Client | 接入 Agent Client Protocol，为 AI 辅助建模与自然语言指令执行提供上下文和桥接。 |
 | Turboism MCP Server | 提供类型化 Cubism 检查、编辑、历史和 Editor 命令工作流的 loopback Model Context Protocol server。需要 bearer 认证；请参阅 [MCP](../build-a-plugin/mcp)。 |
 
 内置的 Turboism 菜单、设置、日志、关于、插件管理和更新提示不是插件。它们由 Runtime 自有的框架 shell（`dev.turboism.shell`）以保留的 `turboism.core` 身份提供；插件管理将其列为内置、不可移除的行，无法禁用或卸载。在 Cubism Editor 中，顶部菜单更名为 **Turboism**（原为“插件”/Plugins 菜单），包含以下菜单项：**插件市场…**、**管理插件…**、**插件设置…**（专用双栏窗口）、**检查更新**、**Turboism 设置…**、**快捷键…**、**日志…**、各插件操作以及**关于**。

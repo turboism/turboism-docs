@@ -3,101 +3,148 @@ title: 开发者快速入门
 description: 基于公共 SDK 构建一个最小的 Java 17 Turboism 插件。
 ---
 
-当前由源代码支持的开发路径是在 Turboism 仓库中添加插件模块。独立入门模板和已发布的 Maven 坐标尚不可用。
+Turboism 提供官方独立项目模板与脚手架工具。你可以直接从模板创建独立仓库，通过自动设置脚本拉取匹配的 SDK 与注解处理器进行开发。
 
-## 1. 创建模块
+## 1. 使用官方独立模板（推荐）
+
+通过 GitHub 的 **Use this template** 基于 [`turboism/turboism-plugin-template`](https://github.com/turboism/turboism-plugin-template) 创建新项目，或直接克隆：
+
+```bash
+git clone https://github.com/turboism/turboism-plugin-template.git my-plugin
+cd my-plugin
+```
+
+运行脚手架配置脚本（自动从官方发布源下载对应版本的 SDK 与事件注解处理器，并校验 SHA-256）：
+
+```bash
+# Linux / macOS
+./scripts/setup.sh --channel beta
+
+# Windows (PowerShell)
+.\scripts\setup.ps1 -Channel beta
+```
+
+根据终端交互提示输入插件 ID（如 `com.example.myplugin`）、显示名称、包名和作者信息。脚本会自动重构 Java 包名与类名，并在 `libs/` 中配置好依赖。
+
+## 2. 项目结构与构建配置
+
+独立模板的目录结构如下：
 
 ```text
-plugins/hello/
+my-plugin/
+├── gradlew
+├── gradlew.bat
 ├── build.gradle.kts
-├── src/main/java/dev/example/plugin/HelloPlugin.java
+├── libs/
+│   ├── turboism-sdk-*.jar
+│   └── turboism-event-processor-*.jar
+├── src/main/java/com/example/myplugin/MyPlugin.java
 ├── src/main/resources/META-INF/turboism/plugin.json
-└── src/test/java/dev/example/plugin/HelloPluginTest.java
+└── src/test/java/com/example/myplugin/MyPluginTest.java
 ```
 
-将其添加到源仓库的 `settings.gradle.kts`：
-
-```kotlin
-include("plugins:hello")
-```
-
-## 2. 仅依赖 SDK
+其 `build.gradle.kts` 配置：
 
 ```kotlin
 plugins {
     `java-library`
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+repositories {
+    flatDir {
+        dirs("libs")
+    }
+}
+
 dependencies {
-    compileOnly(project(":sdk"))
-    testImplementation(project(":sdk"))
+    compileOnly(":turboism-sdk")
+    testImplementation(":turboism-sdk")
+    // 注解处理器在编译期解析 @SubscribeEvent 并生成订阅者索引
+    annotationProcessor(":turboism-event-processor")
 }
 ```
 
-`compileOnly` 是有意为之：Runtime 提供 SDK。插件 JAR 不得复制 `dev/turboism/sdk/**` class。
+`compileOnly` 是有意为之：Runtime 在运行时提供 SDK。插件 JAR 不得打包复制 `dev/turboism/sdk/**` 类。
 
-不要依赖 Runtime、Bootstrap、`com.live2d.*`、另一个插件的私有实现包、反射桥接、主机小部件、原生句柄或主机 ClassLoader。
+不要依赖 Runtime、Bootstrap、`com.live2d.*` 内部类、另一个插件的私有实现包、反射桥接或原生句柄。
 
-## 3. 实现入口点
+## 3. 实现入口点与事件监听
 
 ```java
-package dev.example.plugin;
+package com.example.myplugin;
 
+import dev.turboism.sdk.CubismEditor;
+import dev.turboism.sdk.event.SubscribeEvent;
+import dev.turboism.sdk.event.cubism.ParameterValueEvent;
 import dev.turboism.sdk.plugin.PluginContext;
 import dev.turboism.sdk.plugin.TurboismPlugin;
 
-public final class HelloPlugin implements TurboismPlugin {
+@CubismEditor(from = "5.0.00")
+public final class MyPlugin implements TurboismPlugin {
     private PluginContext context;
 
     @Override
     public void init(final PluginContext context) {
         this.context = java.util.Objects.requireNonNull(context, "context");
-        context.logger().info("HelloPlugin initialized");
+        context.logger().info("MyPlugin initialized");
     }
 
     @Override
     public void enable() {
-        context.logger().info("HelloPlugin enabled");
+        context.logger().info("MyPlugin enabled");
+    }
+
+    @SubscribeEvent
+    public void onParameterChanged(final ParameterValueEvent.After event) {
+        context.logger().info("Parameter changed: " + event.parameter().id());
     }
 
     @Override
     public void disable() {
-        context.logger().info("HelloPlugin disabled");
+        context.logger().info("MyPlugin disabled");
     }
 
     @Override
     public void shutdown() {
-        context.logger().info("HelloPlugin shutdown");
+        context.logger().info("MyPlugin shutdown");
         context = null;
     }
 }
 ```
 
-该 class 必须为 public，实现 `TurboismPlugin` 或其子接口，并提供一个 public 无参数构造函数。
+- 该类必须为 public，实现 `TurboismPlugin` 或其子接口，并提供 public 无参构造函数。
+- 可使用 `@SubscribeEvent` 注解声明事件监听方法，编译期由 `turboism-event-processor` 自动建立类型化索引。
+- 支持使用 `@CubismEditor(from = "...")` 标记所适用的最低 Cubism Editor 版本。
 
 ## 4. 添加插件描述符
 
-创建 `src/main/resources/META-INF/turboism/plugin.json`：
+编辑 `src/main/resources/META-INF/turboism/plugin.json`：
 
 ```json
 {
   "format": "turboism.plugin.meta",
   "schemaVersion": 3,
-  "id": "dev.example.plugin.hello",
-  "name": "Hello Plugin",
+  "id": "com.example.myplugin",
+  "name": "My Plugin",
   "version": "0.1.0",
   "description": "Minimal Turboism plugin lifecycle example.",
   "category": "workflow",
   "tags": ["example"],
   "entrypoints": [
-    "dev.example.plugin.HelloPlugin"
+    "com.example.myplugin.MyPlugin"
   ],
   "turboismApi": "[0.1.0,0.2.0)",
   "authors": [
     { "name": "Example Author" }
   ],
   "license": "MIT",
-  "website": "https://example.org/hello-plugin",
+  "website": "https://example.org/my-plugin",
   "resources": [],
   "i18n": {
     "baseName": "META-INF/turboism/i18n/messages",
@@ -106,6 +153,9 @@ public final class HelloPlugin implements TurboismPlugin {
   "dependencies": [],
   "permissions": [],
   "capabilities": [],
+  "lifecycle": {
+    "hotReload": true
+  },
   "environment": {
     "requiresCubism": false,
     "ui": "none"
@@ -113,42 +163,45 @@ public final class HelloPlugin implements TurboismPlugin {
 }
 ```
 
-Schema 3 新增必需的 `category` 字段。在添加权限、资源、本地化、依赖、多个入口点或 schema 4 跨插件事件契约之前，请阅读[插件 Manifest 与打包](./manifest)。
+- `"lifecycle": { "hotReload": true }` 声明该插件支持热重载，在插件管理中启用、停用或更新时可立即生效而无需重启 Cubism。
+- 详细的权限、资源、本地化与 schema 规范请阅读[插件 Manifest 与打包](./manifest)。
 
 ## 5. 构建与验证
 
 ```bash
-./gradlew :plugins:hello:test :plugins:hello:jar validatePluginMeta \
-  --no-daemon --console=plain
+./gradlew build
 ```
 
-构建产物会写入：
+构建产物写入：
 
 ```text
-build/worktree/<worktreeId>/hello/libs/
+build/libs/com.example.myplugin-0.1.0.jar
 ```
 
-`libs/` 中的 JAR 就是插件发布产物；分发时请保持其不变。
+`build/libs/` 中的 JAR 就是分发产物；分发时请保持其内容完整。
 
-对于此仅包含生命周期的示例，只有构造函数的测试已足够。
+## 6. 安装与调试
 
-一旦插件注册操作、UI、事件、配置或任务，请使用记录型/伪造的 `PluginContext` 来验证注册、失败处理、disable/shutdown 行为和 scope 清理。
+1. 启动 Cubism Editor 并打开 **Turboism** 菜单。
+2. 选择 **管理插件…** → **从 JAR 安装…**，选取构建好的 `.jar` 文件。
+3. 支持热重载的插件会立即加载并生效；其他插件在重启 Cubism 后生效。
+4. 本地调试也可直接将 JAR 复制到 `<turboism.home>/plugins/` 目录。
 
-## 6. 分发 JAR
+## 进阶：源码树内模块开发
 
-直接分享构建出的 JAR。没有 wrapper 归档、没有打包脚本，也没有单独的打包步骤。
+对于 Turboism 核心贡献者，也可以直接在 Turboism 源码仓库中添加 `plugins/<name>` 模块：
 
-## 7. 安装
+```bash
+# 添加到 settings.gradle.kts
+include("plugins:my-plugin")
 
-使用 Turboism 插件管理并选择 **从 JAR 安装…**（Install from JAR…）来选取构建出的 JAR。确认将 JAR 标记为本地/未验证来源的对话框。更改会暂存，并在 Cubism 重启后生效。
-
-对于本地开发或备用场景，您也可以手动安装 JAR：完全关闭 Cubism，将构建出的 JAR 复制到 `<turboism.home>/plugins/` 根下，确保没有同 plugin ID 的旧 JAR 残留，然后使用同一个 Turboism home 重启。
-
-手动安装会绕过托管保护（UI 确认、preflight、暂存、备份/恢复）；JAR 仍会经过启动验证。完整的手动流程以及更新/卸载规则请参见[插件管理](../use/plugin-management)。
+# 构建与验证
+./gradlew :plugins:my-plugin:test :plugins:my-plugin:jar validatePluginMeta --console=plain
+```
 
 ## 后续步骤
 
-- [插件接口](./plugin-interfaces)
-- [插件 Manifest 与打包](./manifest)
-- [SDK API 指南](../reference/sdk-api)
-- [插件管理](../use/plugin-management)
+- [插件接口](./plugin-interfaces) — 核心服务、操作、菜单与事件订阅
+- [插件 Manifest 与打包](./manifest) — 描述符完整规范与字段说明
+- [SDK API 指南](../reference/sdk-api) — SDK 架构、统一对象模型与版本准入
+- [插件管理](../use/plugin-management) — 插件市场、版本更新与生命周期治理

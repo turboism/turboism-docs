@@ -3,7 +3,7 @@ title: SDK API ガイド
 description: 現在の Turboism プラグイン SDK のエントリーポイント、サービス、オブジェクトモデル、ライフサイクル、機能境界。
 ---
 
-Turboism SDK は plugin にとって唯一の public dependency です。Turboism は単一の public SDK 階層を公開し、source repository のレビュー済みバイナリ API ベースラインが compatibility gate です。利用可能性は、次の 4 つの事実に分かれます。
+Turboism SDK は plugin にとって唯一の public dependency です。Turboism は単一の public SDK 階層を公開し、source repository のレビュー済みバイナリ API ベースライン（現在は **v17**）が compatibility gate です。利用可能性は、次の 4 つの事実に分かれます。
 
 1. SDK に API が存在する。
 2. plugin が必要な permission を宣言している。
@@ -265,10 +265,19 @@ schema 4 を使用する plugin descriptor は、自身が export および impo
 
 ## バージョンと準備状況に関する注意
 
-- 対応する Cubism Editor バージョンはリリースによって異なります。Stable 0.44.0 は 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.1 は 5.0.00 から 5.3.04 までのレビュー済み全 20 バージョンを認定しています。認定は capability 単位であり、すべての operation family に対する包括的な保証ではありません。完全な capability および SDK サーフェスマトリクスは[互換性](/docs/use/compatibility)を参照してください。
-- Parameter authoring write には検証済みの Cubism 5.3.02 path がありますが、caller は引き続き unavailable と stale target を処理しなければなりません。
-- Part display-name write には 5.2.03 と 5.3.02 で実ホストの証拠があります。
-- Part opacity authoring write には 5.3.00–5.3.04 が必要であり、5.0.00–5.2.03 で主張してはいけません。
+- **20 バージョンの網羅**: レビュー済みの Cubism Editor バージョンマトリクスは **5.0.00 から 5.3.04 まで** の全 20 バージョンをカバーしています。
+- **単調性の保証**: 同一のマイナーライン内では、パッチバージョン間で機能が後退することはありません。新しいパッチは以前のパッチの全機能を包含します。
+- **宣言的バージョンアノテーション**: 公開型およびメソッドには `@CubismEditor(from = "...", to = "...")` が付与され、サポート範囲が明示されます。引数なしの `@CubismEditor` は全レビュー済みバージョンで利用可能であることを示します。
+- **0.67 で追加された主要機能群**:
+  - **統合モデルオブジェクトグラフ**（`CubismModel`、`Drawables`、`Deformers`、`Parts`、`Parameters`）
+  - **メッシュモデリングおよびセッション**（`MeshEditService`、`MeshEditParticipation`、`MeshMirrorAxisService`）
+  - **テクスチャアトラス配置および統計**（`TextureAtlasLayoutService`、`TextureAtlasEditorSession`、`TextureAtlasStatistics`）
+  - **PSD およびクリップマスク操作**（`PsdClipMaskDocumentSnapshot`、`PsdEditFile`）
+  - **パラメータ一括転送・変形操作**（`ParameterBindingBatchOperations`、`ParameterBindingTransferPlan`）
+  - **3D モデルインポート連携**（`ModelObjectCreateRequest` 等）
+  - **専用プラグイン設定**（`SettingsRegistry`、`SettingsContribution`）
+  - **描画領域ネイティブヒント通知**（`CanvasHintNotification`、`turboism.ui.canvas.hint`）
+- 各バージョンの詳細な機能境界と差分は [互換性ドキュメント](/docs/use/compatibility) を参照してください。
 - History DTO（`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`）は、範囲が限定された immutable な semantic projection です。host への write 権限を与えることはありません。
 - Fake と static test が証明するのは、それぞれが名指しした layer だけです。
 - Snapshot/query/transaction compatibility surface は現在、unified object graph と併存しています。

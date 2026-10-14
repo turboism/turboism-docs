@@ -3,101 +3,148 @@ title: Developer Quick Start
 description: Build a minimal Java 17 Turboism plugin against the public SDK.
 ---
 
-The current source-backed development path is to add a plugin module to the Turboism repository. A standalone starter template and published Maven coordinates are not available yet.
+Turboism provides an official standalone project template and scaffolding tools. You can create a new standalone repository from the template and run an automated setup script to fetch the matching SDK and annotation processor.
 
-## 1. Create the module
+## 1. Use the standalone template (Recommended)
+
+Create a new repository on GitHub via **Use this template** from [`turboism/turboism-plugin-template`](https://github.com/turboism/turboism-plugin-template), or clone it directly:
+
+```bash
+git clone https://github.com/turboism/turboism-plugin-template.git my-plugin
+cd my-plugin
+```
+
+Run the scaffolding setup script (which downloads the matching SDK and event annotation processor from the official release feed, verifying SHA-256):
+
+```bash
+# Linux / macOS
+./scripts/setup.sh --channel beta
+
+# Windows (PowerShell)
+.\scripts\setup.ps1 -Channel beta
+```
+
+Follow the interactive prompts to enter your plugin ID (e.g. `com.example.myplugin`), display name, package name, and author. The script refactors Java packages and classes and sets up dependencies under `libs/`.
+
+## 2. Project structure and build configuration
+
+The standalone template directory layout:
 
 ```text
-plugins/hello/
+my-plugin/
+├── gradlew
+├── gradlew.bat
 ├── build.gradle.kts
-├── src/main/java/dev/example/plugin/HelloPlugin.java
+├── libs/
+│   ├── turboism-sdk-*.jar
+│   └── turboism-event-processor-*.jar
+├── src/main/java/com/example/myplugin/MyPlugin.java
 ├── src/main/resources/META-INF/turboism/plugin.json
-└── src/test/java/dev/example/plugin/HelloPluginTest.java
+└── src/test/java/com/example/myplugin/MyPluginTest.java
 ```
 
-Add it to the source repository's `settings.gradle.kts`:
-
-```kotlin
-include("plugins:hello")
-```
-
-## 2. Depend on the SDK only
+Its `build.gradle.kts` configuration:
 
 ```kotlin
 plugins {
     `java-library`
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+repositories {
+    flatDir {
+        dirs("libs")
+    }
+}
+
 dependencies {
-    compileOnly(project(":sdk"))
-    testImplementation(project(":sdk"))
+    compileOnly(":turboism-sdk")
+    testImplementation(":turboism-sdk")
+    // Annotation processor parses @SubscribeEvent at compile time
+    annotationProcessor(":turboism-event-processor")
 }
 ```
 
-`compileOnly` is intentional: Runtime provides the SDK. The plugin JAR must not copy `dev/turboism/sdk/**` classes.
+`compileOnly` is intentional: the Runtime provides the SDK at execution time. Plugin JARs must not bundle or shade `dev/turboism/sdk/**` classes.
 
-Do not depend on Runtime, Bootstrap, `com.live2d.*`, another plugin's private implementation package, reflection bridges, host widgets, native handles, or the host ClassLoader.
+Do not depend on Runtime, Bootstrap, `com.live2d.*` internal classes, another plugin's private implementation, reflection bridges, or native handles.
 
-## 3. Implement the entrypoint
+## 3. Implement entrypoint and event listening
 
 ```java
-package dev.example.plugin;
+package com.example.myplugin;
 
+import dev.turboism.sdk.CubismEditor;
+import dev.turboism.sdk.event.SubscribeEvent;
+import dev.turboism.sdk.event.cubism.ParameterValueEvent;
 import dev.turboism.sdk.plugin.PluginContext;
 import dev.turboism.sdk.plugin.TurboismPlugin;
 
-public final class HelloPlugin implements TurboismPlugin {
+@CubismEditor(from = "5.0.00")
+public final class MyPlugin implements TurboismPlugin {
     private PluginContext context;
 
     @Override
     public void init(final PluginContext context) {
         this.context = java.util.Objects.requireNonNull(context, "context");
-        context.logger().info("HelloPlugin initialized");
+        context.logger().info("MyPlugin initialized");
     }
 
     @Override
     public void enable() {
-        context.logger().info("HelloPlugin enabled");
+        context.logger().info("MyPlugin enabled");
+    }
+
+    @SubscribeEvent
+    public void onParameterChanged(final ParameterValueEvent.After event) {
+        context.logger().info("Parameter changed: " + event.parameter().id());
     }
 
     @Override
     public void disable() {
-        context.logger().info("HelloPlugin disabled");
+        context.logger().info("MyPlugin disabled");
     }
 
     @Override
     public void shutdown() {
-        context.logger().info("HelloPlugin shutdown");
+        context.logger().info("MyPlugin shutdown");
         context = null;
     }
 }
 ```
 
-The class must be public, implement `TurboismPlugin` or a subinterface, and expose a public no-argument constructor.
+- The class must be public, implement `TurboismPlugin` or a subinterface, and provide a public no-arg constructor.
+- Use `@SubscribeEvent` to declare event listener methods, indexed at compile time by `turboism-event-processor`.
+- Use `@CubismEditor(from = "...")` to declare the minimum supported Cubism Editor version.
 
-## 4. Add the plugin descriptor
+## 4. Add plugin descriptor
 
-Create `src/main/resources/META-INF/turboism/plugin.json`:
+Edit `src/main/resources/META-INF/turboism/plugin.json`:
 
 ```json
 {
   "format": "turboism.plugin.meta",
   "schemaVersion": 3,
-  "id": "dev.example.plugin.hello",
-  "name": "Hello Plugin",
+  "id": "com.example.myplugin",
+  "name": "My Plugin",
   "version": "0.1.0",
   "description": "Minimal Turboism plugin lifecycle example.",
   "category": "workflow",
   "tags": ["example"],
   "entrypoints": [
-    "dev.example.plugin.HelloPlugin"
+    "com.example.myplugin.MyPlugin"
   ],
   "turboismApi": "[0.1.0,0.2.0)",
   "authors": [
     { "name": "Example Author" }
   ],
   "license": "MIT",
-  "website": "https://example.org/hello-plugin",
+  "website": "https://example.org/my-plugin",
   "resources": [],
   "i18n": {
     "baseName": "META-INF/turboism/i18n/messages",
@@ -106,6 +153,9 @@ Create `src/main/resources/META-INF/turboism/plugin.json`:
   "dependencies": [],
   "permissions": [],
   "capabilities": [],
+  "lifecycle": {
+    "hotReload": true
+  },
   "environment": {
     "requiresCubism": false,
     "ui": "none"
@@ -113,42 +163,45 @@ Create `src/main/resources/META-INF/turboism/plugin.json`:
 }
 ```
 
-Schema 3 adds the required `category` field. Read [Plugin Manifest and Packaging](./manifest) before adding permissions, resources, localization, dependencies, multiple entrypoints, or schema 4 cross-plugin event contracts.
+- `"lifecycle": { "hotReload": true }` declares that the plugin supports hot reloading, allowing enable, disable, and update actions to take effect immediately without restarting Cubism.
+- For permissions, resources, i18n, and schema details, see [Plugin Manifest and Packaging](./manifest).
 
-## 5. Build and validate
+## 5. Build and verify
 
 ```bash
-./gradlew :plugins:hello:test :plugins:hello:jar validatePluginMeta \
-  --no-daemon --console=plain
+./gradlew build
 ```
 
-Build results are written under:
+The output artifact is written to:
 
 ```text
-build/worktree/<worktreeId>/hello/libs/
+build/libs/com.example.myplugin-0.1.0.jar
 ```
 
-The JAR in `libs/` is the plugin release file; keep it unchanged when distributing.
+The JAR in `build/libs/` is your distribution artifact.
 
-A constructor-only test is sufficient for this lifecycle-only example.
+## 6. Install and debug
 
-Once the plugin registers actions, UI, events, configuration, or tasks, use a recording/fake `PluginContext` to verify registrations, failure handling, disable/shutdown behavior, and scope cleanup.
+1. Start Cubism Editor and open the **Turboism** menu.
+2. Select **Manage Plugins…** → **Install from JAR…**, and select your built `.jar` file.
+3. Plugins declaring hot-reload support load immediately; others take effect upon restarting Cubism.
+4. For local debugging, you can also copy the JAR directly into `<turboism.home>/plugins/`.
 
-## 6. Distribute the JAR
+## Advanced: In-tree module development
 
-Share the built JAR directly. There is no wrapper archive, no package script, and no separate packaging step.
+Core contributors working inside the Turboism repository can add a `plugins/<name>` module directly:
 
-## 7. Install it
+```bash
+# Add to settings.gradle.kts
+include("plugins:my-plugin")
 
-Use Turboism plugin management and choose **Install from JAR…** to select the built JAR. Confirm the dialog that marks the JAR as a local/unverified source. The change is staged and applies after Cubism restarts.
-
-For local development or fallback use, you can also install the JAR manually: fully close Cubism, copy the built JAR into the root of `<turboism.home>/plugins/`, make sure no older JAR with the same plugin ID remains, and restart with the same Turboism home.
-
-Manual installation bypasses the managed safeguards (UI confirmation, preflight, staging, backup/restore); the JAR still goes through startup validation. See [Plugin Management](../use/plugin-management) for the full manual procedure and the update/uninstall rules.
+# Build and verify
+./gradlew :plugins:my-plugin:test :plugins:my-plugin:jar validatePluginMeta --console=plain
+```
 
 ## Next steps
 
-- [Plugin Interfaces](./plugin-interfaces)
-- [Plugin Manifest and Packaging](./manifest)
-- [SDK API Guide](../reference/sdk-api)
-- [Plugin Management](../use/plugin-management)
+- [Plugin Interfaces](./plugin-interfaces) — Services, actions, menus, and events
+- [Plugin Manifest and Packaging](./manifest) — Descriptor schema and fields
+- [SDK API Guide](../reference/sdk-api) — Architecture, unified object model, and version admission
+- [Plugin Management](../use/plugin-management) — In-App Market, updates, and lifecycle governance
