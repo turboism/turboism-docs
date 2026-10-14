@@ -15,7 +15,7 @@ Without an explicit boundary, every plugin would have to solve that problem itse
 
 - Plugins target published SDK types and never load `com.live2d.*` classes.
 - Runtime selects an exact-version adapter and Provider for the detected host build.
-- Admitted exact Cubism Editor versions are release-dependent (5.2.03, 5.3.02, and 5.3.03 on Stable 0.44.0; all 20 reviewed versions from 5.0.00 to 5.3.04 on Beta 0.67.0-beta.1; see [Compatibility](/docs/use/compatibility)); an unlisted version is not silently treated as compatible.
+- Admitted exact Cubism Editor versions are release-dependent (5.2.03, 5.3.02, and 5.3.03 on Stable 0.44.0; all 20 reviewed versions from 5.0.00 to 5.3.04 on Beta 0.67.0-beta.2; see [Compatibility](/docs/use/compatibility)); an unlisted version is not silently treated as compatible.
 - Host member selection is recorded and pinned as reviewed evidence, so a build that does not match the pinned identity fails instead of guessing.
 - Public Cubism values are copied into immutable Turboism-owned types before they reach plugin code.
 - Model objects and references are generation-bound and become invalid after project close, document switch, model reload, object deletion, plugin disable, provider replacement, or an unsupported version transition.

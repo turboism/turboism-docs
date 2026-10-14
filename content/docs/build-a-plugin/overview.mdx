@@ -21,4 +21,6 @@ Read [MCP](./mcp) when a trusted external client needs authenticated loopback St
 
 ## Coding-agent context
 
-[LLM Coding Context](./llm-coding-context) is a vendor-neutral project brief for coding agents. It is not another development approach. ACP is internal to Turboism with fx and is not a fourth interface.
+[LLM Coding Context](./llm-coding-context) is a vendor-neutral project brief for coding agents. It is not another development approach.
+
+ACP is provided by the first-party ACP Agent plugin. It launches a user-installed ACP-compatible agent and connects it to Turboism MCP through a local stdio bridge. It is separate from Java plugin APIs and no longer depends on the retired fx runtime.

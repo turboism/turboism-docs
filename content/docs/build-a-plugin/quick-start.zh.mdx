@@ -5,6 +5,9 @@ description: 基于公共 SDK 构建一个最小的 Java 17 Turboism 插件。
 
 Turboism 提供官方独立项目模板与脚手架工具。你可以直接从模板创建独立仓库，通过自动设置脚本拉取匹配的 SDK 与注解处理器进行开发。
 
+
+本示例对应当前开发中的 SDK。设置脚本下载最新**已发布**的 Beta SDK，可能早于本站参考版本。请核对 `gradle.properties` 和下载文件名，按实际 SDK 版本编译；生成参考页不代表该版本已经发布。
+
 ## 1. 使用官方独立模板（推荐）
 
 通过 GitHub 的 **Use this template** 基于 [`turboism/turboism-plugin-template`](https://github.com/turboism/turboism-plugin-template) 创建新项目，或直接克隆：
@@ -56,17 +59,14 @@ java {
     }
 }
 
-repositories {
-    flatDir {
-        dirs("libs")
-    }
-}
+val sdkJars = fileTree("libs") { include("turboism-sdk-*.jar") }
+val processorJars = fileTree("libs") { include("turboism-event-processor-*.jar") }
 
 dependencies {
-    compileOnly(":turboism-sdk")
-    testImplementation(":turboism-sdk")
-    // 注解处理器在编译期解析 @SubscribeEvent 并生成订阅者索引
-    annotationProcessor(":turboism-event-processor")
+    compileOnly(sdkJars)
+    testImplementation(sdkJars)
+    annotationProcessor(processorJars)
+    annotationProcessor(sdkJars)
 }
 ```
 
@@ -79,13 +79,11 @@ dependencies {
 ```java
 package com.example.myplugin;
 
-import dev.turboism.sdk.CubismEditor;
 import dev.turboism.sdk.event.SubscribeEvent;
-import dev.turboism.sdk.event.cubism.ParameterValueEvent;
+import dev.turboism.sdk.cubism.event.ParameterValueEvent;
 import dev.turboism.sdk.plugin.PluginContext;
 import dev.turboism.sdk.plugin.TurboismPlugin;
 
-@CubismEditor(from = "5.0.00")
 public final class MyPlugin implements TurboismPlugin {
     private PluginContext context;
 
@@ -101,7 +99,7 @@ public final class MyPlugin implements TurboismPlugin {
     }
 
     @SubscribeEvent
-    public void onParameterChanged(final ParameterValueEvent.After event) {
+    public void onParameterChanged(final ParameterValueEvent.On event) {
         context.logger().info("Parameter changed: " + event.parameter().id());
     }
 
@@ -120,7 +118,8 @@ public final class MyPlugin implements TurboismPlugin {
 
 - 该类必须为 public，实现 `TurboismPlugin` 或其子接口，并提供 public 无参构造函数。
 - 可使用 `@SubscribeEvent` 注解声明事件监听方法，编译期由 `turboism-event-processor` 自动建立类型化索引。
-- 支持使用 `@CubismEditor(from = "...")` 标记所适用的最低 Cubism Editor 版本。
+
+`@CubismEditor` 描述 API 的版本约束，不授予权限，也不证明能力可用。插件支持版本需写入独立的 `META-INF/turboism/cubism-versions.json` 文件，详见[插件清单](./manifest)。
 
 ## 4. 添加插件描述符
 
@@ -151,13 +150,16 @@ public final class MyPlugin implements TurboismPlugin {
     "locales": []
   },
   "dependencies": [],
-  "permissions": [],
+  "permissions": [
+    { "id": "turboism.event.subscribe", "scope": "application", "reason": "Subscribe to parameter observations." },
+    { "id": "turboism.cubism.model.observe", "scope": "application", "reason": "Observe parameter value changes." }
+  ],
   "capabilities": [],
   "lifecycle": {
     "hotReload": true
   },
   "environment": {
-    "requiresCubism": false,
+    "requiresCubism": true,
     "ui": "none"
   }
 }

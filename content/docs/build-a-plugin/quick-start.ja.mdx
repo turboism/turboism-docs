@@ -5,6 +5,9 @@ description: 公開 SDK を使用して最小限の Java 17 Turboism プラグ�
 
 Turboism は公式のスタンドアロンプロジェクトテンプレートとスキャフォールディングツールを提供しています。テンプレートから独立リポジトリを作成し、自動セットアップスクリプトを実行して対応する SDK とアノテーションプロセッサを取得できます。
 
+
+この例は現在開発中の SDK を対象としています。セットアップは最新の**公開済み** Beta SDK を取得するため、ホスト中のリファレンスより古い場合があります。`gradle.properties` とダウンロードしたファイル名で実際の SDK バージョンを確認してください。生成リファレンスはリリース告知ではありません。
+
 ## 1. 公式テンプレートの使用（推奨）
 
 GitHub の **Use this template** から [`turboism/turboism-plugin-template`](https://github.com/turboism/turboism-plugin-template) リポジトリをもとに作成するか、直接クローンします:
@@ -56,17 +59,14 @@ java {
     }
 }
 
-repositories {
-    flatDir {
-        dirs("libs")
-    }
-}
+val sdkJars = fileTree("libs") { include("turboism-sdk-*.jar") }
+val processorJars = fileTree("libs") { include("turboism-event-processor-*.jar") }
 
 dependencies {
-    compileOnly(":turboism-sdk")
-    testImplementation(":turboism-sdk")
-    // アノテーションプロセッサがコンパイル時に @SubscribeEvent を解析
-    annotationProcessor(":turboism-event-processor")
+    compileOnly(sdkJars)
+    testImplementation(sdkJars)
+    annotationProcessor(processorJars)
+    annotationProcessor(sdkJars)
 }
 ```
 
@@ -79,13 +79,11 @@ Runtime、Bootstrap、`com.live2d.*` 内部クラス、他のプラグインの�
 ```java
 package com.example.myplugin;
 
-import dev.turboism.sdk.CubismEditor;
 import dev.turboism.sdk.event.SubscribeEvent;
-import dev.turboism.sdk.event.cubism.ParameterValueEvent;
+import dev.turboism.sdk.cubism.event.ParameterValueEvent;
 import dev.turboism.sdk.plugin.PluginContext;
 import dev.turboism.sdk.plugin.TurboismPlugin;
 
-@CubismEditor(from = "5.0.00")
 public final class MyPlugin implements TurboismPlugin {
     private PluginContext context;
 
@@ -101,7 +99,7 @@ public final class MyPlugin implements TurboismPlugin {
     }
 
     @SubscribeEvent
-    public void onParameterChanged(final ParameterValueEvent.After event) {
+    public void onParameterChanged(final ParameterValueEvent.On event) {
         context.logger().info("Parameter changed: " + event.parameter().id());
     }
 
@@ -120,7 +118,8 @@ public final class MyPlugin implements TurboismPlugin {
 
 - クラスは public であり、`TurboismPlugin` またはそのサブインターフェースを実装し、public 引数なしコンストラクタを提供する必要があります。
 - `@SubscribeEvent` アノテーションを使ってイベント購読メソッドを宣言でき、コンパイル時に `turboism-event-processor` がインデックスを生成します。
-- `@CubismEditor(from = "...")` で適用される最小 Cubism Editor バージョンを宣言できます。
+
+`@CubismEditor` は API のバージョン制約を表します。権限や機能の可用性は保証しません。プラグインの対応バージョンは別ファイル `META-INF/turboism/cubism-versions.json` に記載します（[マニフェスト](./manifest)参照）。
 
 ## 4. プラグイン記述子の追加
 
@@ -151,13 +150,16 @@ public final class MyPlugin implements TurboismPlugin {
     "locales": []
   },
   "dependencies": [],
-  "permissions": [],
+  "permissions": [
+    { "id": "turboism.event.subscribe", "scope": "application", "reason": "Subscribe to parameter observations." },
+    { "id": "turboism.cubism.model.observe", "scope": "application", "reason": "Observe parameter value changes." }
+  ],
   "capabilities": [],
   "lifecycle": {
     "hotReload": true
   },
   "environment": {
-    "requiresCubism": false,
+    "requiresCubism": true,
     "ui": "none"
   }
 }

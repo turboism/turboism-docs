@@ -21,4 +21,6 @@ description: 参与 Turboism 开发，或使用 Java、GraalJS 和 MCP。
 
 ## 编程代理上下文
 
-[LLM 编程上下文](./llm-coding-context)是面向编程代理、供应商中立的项目说明，不是另一种开发方式。ACP 仅供 Turboism with fx 内部使用，不是第四种接口。
+[LLM 编程上下文](./llm-coding-context)是面向编程代理、供应商中立的项目说明，不是另一种开发方式。
+
+ACP 由第一方 ACP Agent 插件提供。它启动用户安装的 ACP 兼容代理，并通过本地 stdio 桥接连接 Turboism MCP。它独立于 Java 插件 API，已不再依赖退役的 fx 运行时。

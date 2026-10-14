@@ -33,11 +33,11 @@ public interface TurboismPlugin {
 | 存储 | `storage()` | 读取并原子写入插件自有数据 |
 | 用户文件 | `userFiles()` | 使用用户授予的外部文件句柄 |
 | Cubism | `cubism()` | 读取快照并使用统一对象图 |
-| 查询 | `parameterQuery()`、`selectionQuery()`、`modelHierarchyQuery()` | 范围受限的类型化查询 |
+| 查询 | `cubism().model().active().parameters()`、`selectionQuery()`、`modelHierarchyQuery()` | 范围受限的类型化查询 |
 | 事件 | `eventBus()` | 发布和订阅不可变类型化事件 |
 | 操作 | `actions()` | 注册可复用的插件操作 |
-| 菜单和 UI | `menus()`、工具栏/上下文菜单注册表、`uiHost()` | 提供与工具包无关的 UI 描述符 |
-| Canvas 提示 | `uiHost()` | 在绘图区显示原生 Cubism 提示（需要 `turboism.ui.canvas.hint` 权限） |
+| 菜单和 UI | `menus()`、工具栏/上下文菜单注册表、`services().require(UiHostCapabilityService.class)` | 提供与工具包无关的 UI 描述符 |
+| Canvas 提示 | `services().require(UiHostCapabilityService.class)` | 在绘图区显示原生 Cubism 提示（需要 `turboism.ui.canvas.hint` 权限） |
 | 配置 | `config()` | 注册类型化 schema、读取值并使用 compare-and-set 写入 |
 | 诊断 | `diagnostics()` | 检查结构化 Runtime 诊断信息 |
 | 清理 | `disposableScope()` | 注册可关闭的生命周期资源 |
@@ -71,7 +71,7 @@ Turboism 提供声明式与编程式两种事件订阅机制：
 
 ```java
 @SubscribeEvent(priority = EventPriority.NORMAL)
-public void onParameterChanged(final ParameterValueEvent.After event) {
+public void onParameterChanged(final ParameterValueEvent.On event) {
     context.logger().info("Parameter changed: " + event.parameter().id());
 }
 ```
@@ -81,7 +81,7 @@ public void onParameterChanged(final ParameterValueEvent.After event) {
 ### 2. 编程式动态订阅
 
 ```java
-record HelloEvent(String message) implements EventBus.TurboismEvent {}
+record HelloEvent(String message) implements dev.turboism.sdk.event.TurboismEvent {}
 
 var subscription = context.eventBus().subscribe(
     HelloEvent.class,
@@ -101,30 +101,35 @@ Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
 float current = parameter.getValue();
 ```
 
-SDK 接口广泛标注了 `@CubismEditor(from = "...")` 以声明方法或类型的最低受支持版本。在调用需要特定能力（如参数写入、网格编辑）的方法前，可通过统一入口进行前置检查，避免抛出 `CubismEditorApiUnavailableException`：
+SDK 注解限制宿主版本，权限和提供程序仍需分别检查。应处理结构化的版本不可用异常；`CubismFacade` 没有接收能力 ID 字符串的 `isAvailable(capabilityId)` 方法。写入还需要对应权限和有效的对象代际。
 
 ```java
-if (context.cubism().isAvailable("cubism.editor-model.write")) {
+try {
     parameter.setValue(current + 1.0f);
+} catch (CubismEditorApiUnavailableException unavailable) {
+    context.logger().info("Unavailable API: " + unavailable.apiId());
 }
 ```
 
 ## 独立插件设置（SettingsRegistry）
 
-插件可通过 `context.settings()` 向 Cubism 内专用的 **Turboism → 插件设置…** 双栏窗口贡献设置页面：
+插件可通过 `context.services().require(UiHostCapabilityService.class)` 向 Cubism 内专用的 **Turboism → 插件设置…** 双栏窗口贡献设置页面：
 
 ```java
-var settings = context.settings().register(new SettingsContribution() {
-    @Override public String id() { return "myplugin.settings"; }
-    @Override public String title() { return "My Plugin"; }
-    @Override public List<SettingsControl> controls() {
-        return List.of(
-            SettingsControl.Toggle.of("enabled", "Enable feature", true, val -> {})
-        );
-    }
-});
+var enabled = new java.util.concurrent.atomic.AtomicBoolean(true);
+var registry = context.services().require(UiHostCapabilityService.class);
+var settings = registry.contributeSettings(new SettingsContribution(
+    "myplugin.enabled",
+    new SettingsTab("myplugin", "My Plugin"),
+    new SettingsControl.Toggle(
+        "enabled", "Enable feature",
+        SettingsBinding.of(enabled::get, enabled::set)
+    )
+));
 context.disposableScope().register(settings);
 ```
+
+可选服务通过 `context.services().find(Service.class)` 或 `require(Service.class)` 获取。服务存在不代表已获权限，也不保证所有版本路由操作可用。本例需要 `turboism.ui.settings.contribute`；绑定仅保存在内存中，持久化设置应使用配置服务。
 
 ## Hooks
 

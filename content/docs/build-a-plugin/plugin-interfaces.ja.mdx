@@ -33,11 +33,11 @@ public interface TurboismPlugin {
 | Storage | `storage()` | plugin-owned data を読み、atomic に書き込む |
 | User files | `userFiles()` | user-granted external-file handle を使う |
 | Cubism | `cubism()` | snapshot を読み、unified object graph を使う |
-| Queries | `parameterQuery()`, `selectionQuery()`, `modelHierarchyQuery()` | 狭い型付き query |
+| Queries | `cubism().model().active().parameters()`, `selectionQuery()`, `modelHierarchyQuery()` | 狭い型付き query |
 | Events | `eventBus()` | immutable な型付き event を publish/subscribe する |
 | Actions | `actions()` | 再利用可能な plugin action を登録する |
-| Menus and UI | `menus()`, toolbar/context-menu registries, `uiHost()` | toolkit-neutral UI descriptor を提供する |
-| Canvas hints | `uiHost()` | 描画領域上にネイティブ Cubism hint を表示する（`turboism.ui.canvas.hint` 権限） |
+| Menus and UI | `menus()`, toolbar/context-menu registries, `services().require(UiHostCapabilityService.class)` | toolkit-neutral UI descriptor を提供する |
+| Canvas hints | `services().require(UiHostCapabilityService.class)` | 描画領域上にネイティブ Cubism hint を表示する（`turboism.ui.canvas.hint` 権限） |
 | Configuration | `config()` | 型付き schema を登録し、value を読み、compare-and-set write を行う |
 | Diagnostics | `diagnostics()` | 構造化された Runtime diagnostic を調べる |
 | Cleanup | `disposableScope()` | closeable な lifecycle resource を登録する |
@@ -71,7 +71,7 @@ Turboism は宣言的およびプログラミング的の両方のイベント�
 
 ```java
 @SubscribeEvent(priority = EventPriority.NORMAL)
-public void onParameterChanged(final ParameterValueEvent.After event) {
+public void onParameterChanged(final ParameterValueEvent.On event) {
     context.logger().info("Parameter changed: " + event.parameter().id());
 }
 ```
@@ -81,7 +81,7 @@ public void onParameterChanged(final ParameterValueEvent.After event) {
 ### 2. プログラミング的動的購読
 
 ```java
-record HelloEvent(String message) implements EventBus.TurboismEvent {}
+record HelloEvent(String message) implements dev.turboism.sdk.event.TurboismEvent {}
 
 var subscription = context.eventBus().subscribe(
     HelloEvent.class,
@@ -101,30 +101,35 @@ Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
 float current = parameter.getValue();
 ```
 
-SDK インターフェースには `@CubismEditor(from = "...")` が付与されており、メソッドや型の最小サポートバージョンを示しています。特定の機能（パラメータ書き込みやメッシュ編集など）を呼び出す前に可用性を確認することで、`CubismEditorApiUnavailableException` を回避できます:
+SDK の注釈はホストバージョンを制約します。権限とプロバイダーは別途確認が必要です。構造化されたバージョン非対応例外を処理してください。`CubismFacade` に文字列の `isAvailable(capabilityId)` メソッドはありません。書き込みには権限と有効なオブジェクト世代も必要です。
 
 ```java
-if (context.cubism().isAvailable("cubism.editor-model.write")) {
+try {
     parameter.setValue(current + 1.0f);
+} catch (CubismEditorApiUnavailableException unavailable) {
+    context.logger().info("Unavailable API: " + unavailable.apiId());
 }
 ```
 
 ## 専用プラグイン設定（SettingsRegistry）
 
-プラグインは `context.settings()` を使用して、Cubism 内の専用 **Turboism → プラグイン設定…** 2 ペインウィンドウに設定画面を提供できます:
+プラグインは `context.services().require(UiHostCapabilityService.class)` を使用して、Cubism 内の専用 **Turboism → プラグイン設定…** 2 ペインウィンドウに設定画面を提供できます:
 
 ```java
-var settings = context.settings().register(new SettingsContribution() {
-    @Override public String id() { return "myplugin.settings"; }
-    @Override public String title() { return "My Plugin"; }
-    @Override public List<SettingsControl> controls() {
-        return List.of(
-            SettingsControl.Toggle.of("enabled", "Enable feature", true, val -> {})
-        );
-    }
-});
+var enabled = new java.util.concurrent.atomic.AtomicBoolean(true);
+var registry = context.services().require(UiHostCapabilityService.class);
+var settings = registry.contributeSettings(new SettingsContribution(
+    "myplugin.enabled",
+    new SettingsTab("myplugin", "My Plugin"),
+    new SettingsControl.Toggle(
+        "enabled", "Enable feature",
+        SettingsBinding.of(enabled::get, enabled::set)
+    )
+));
 context.disposableScope().register(settings);
 ```
+
+任意サービスは `context.services().find(Service.class)` または `require(Service.class)` で取得します。サービスの存在は権限や全バージョンの操作可用性を保証しません。この例には `turboism.ui.settings.contribute` が必要です。値はメモリ内だけに保持するため、永続化には設定サービスを使用してください。
 
 ## Hook
 

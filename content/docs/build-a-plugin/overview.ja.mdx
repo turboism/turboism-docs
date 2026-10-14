@@ -21,4 +21,6 @@ Turboism 自体を改善する場合は[コントリビューション](./contri
 
 ## コーディングエージェント向けコンテキスト
 
-[LLM コーディングコンテキスト](./llm-coding-context)は、コーディングエージェント向けの vendor-neutral なプロジェクト概要です。別の開発方法ではありません。ACP は Turboism with fx の内部でのみ使用され、第 4 の interface ではありません。
+[LLM コーディングコンテキスト](./llm-coding-context)は、コーディングエージェント向けの vendor-neutral なプロジェクト概要です。別の開発方法ではありません。
+
+ACP はファーストパーティーの ACP Agent プラグインが提供します。ユーザーがインストールした ACP 対応エージェントを起動し、ローカル stdio ブリッジで Turboism MCP に接続します。Java プラグイン API とは別で、廃止された fx ランタイムには依存しません。

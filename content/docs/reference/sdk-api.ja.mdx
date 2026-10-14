@@ -45,19 +45,31 @@ public interface TurboismPlugin {
 | `storage()` | plugin-owned DATA、STATE、CACHE storage |
 | `userFiles()` | user-granted file handle |
 | `cubism()` | snapshot、unified object access、transaction compatibility entrypoint |
-| `parameterQuery()` | narrow parameter query |
 | `selectionQuery()` | selection read と change subscription |
 | `modelHierarchyQuery()` | model-tree query |
 | `cubismRead()` | aggregated read capability family |
 | `eventBus()` | typed event の publish と subscribe |
 | `actions()` と `menus()` | action registration と menu contribution |
-| `mainToolbar()`、`paletteToolbar()`、`contextMenu()` | typed UI contribution registry |
-| `uiHost()` と `uiScheduler()` | toolkit-neutral UI capability と UI-thread scheduling |
+| `services().require(MainToolbarRegistry.class)`、`services().require(PaletteToolbarRegistry.class)`、`services().require(ContextMenuRegistry.class)` | typed UI contribution registry |
+| `services().require(UiHostCapabilityService.class)` と `uiScheduler()` | toolkit-neutral UI capability と UI-thread scheduling |
 | `config()` | typed plugin configuration |
 | `diagnostics()` | 現在の structured diagnostic |
 | `disposableScope()` | reverse-order lifecycle cleanup |
 
 一部の default service は `UnsupportedOperationException` を throw し、他は explicit unavailable implementation を返します。plugin は unavailable capability family を処理し、迂回してはいけません。
+
+
+## 任意サービスの検出
+
+型付きディレクトリで任意サービスを取得します。`find` はサービスがない場合の機能縮小に使い、`require` は `PluginServiceUnavailableException` を投げます。サービスが存在しても、権限、ホストバージョン、機能、オブジェクト世代の検査は操作ごとに行われます。
+
+```java
+context.services().find(UiHostCapabilityService.class).ifPresent(ui -> {
+    // Use the installed UI service with the required permissions.
+});
+```
+
+ツールバー、コンテキストメニュー、UI ホスト、設定の追加にはこのディレクトリを使います。削除された `PluginContext` の簡易アクセサーは使用しません。
 
 ## 登録とクリーンアップ
 
@@ -81,6 +93,8 @@ Cubism lifecycle hook は callback registration bus ではなく、entrypoint in
 汎用 event bus は型付きです。
 
 ```java
+record MyEvent(String value) implements dev.turboism.sdk.event.TurboismEvent {}
+
 Registration subscription = context.eventBus().subscribe(
     MyEvent.class,
     event -> context.logger().info(event.value())
@@ -88,7 +102,6 @@ Registration subscription = context.eventBus().subscribe(
 context.disposableScope().register(subscription);
 context.eventBus().publish(new MyEvent("changed"));
 
-record MyEvent(String value) implements EventBus.TurboismEvent {}
 ```
 
 Event は immutable な plugin- または SDK-owned value にしてください。raw host object、Swing widget、native handle、host ClassLoader を event に入れないでください。
@@ -107,7 +120,7 @@ boolean hostPresent = context.cubism().isHostPresent();
 
 狭い query service には次が含まれます。
 
-- parameter lookup と enumeration 用の `ParameterQueryService`。
+- パラメータ検索には `context.cubism().model().active().parameters()`、任意サービスの取得には `context.services()` を使用します。
 - current selection と selection-change subscription 用の `SelectionQueryService`。
 - model-tree traversal 用の `ModelHierarchyQueryService`。
 - project、document、model、selection、parameter、model-object、mesh、deformer、PSD、clip-mask、texture-atlas、render-status、workspace、theme-status の read family 用の `CubismReadCapabilityService`。
@@ -266,8 +279,7 @@ schema 4 を使用する plugin descriptor は、自身が export および impo
 ## バージョンと準備状況に関する注意
 
 - **20 バージョンの網羅**: レビュー済みの Cubism Editor バージョンマトリクスは **5.0.00 から 5.3.04 まで** の全 20 バージョンをカバーしています。
-- **単調性の保証**: 同一のマイナーライン内では、パッチバージョン間で機能が後退することはありません。新しいパッチは以前のパッチの全機能を包含します。
-- **宣言的バージョンアノテーション**: 公開型およびメソッドには `@CubismEditor(from = "...", to = "...")` が付与され、サポート範囲が明示されます。引数なしの `@CubismEditor` は全レビュー済みバージョンで利用可能であることを示します。
+- **バージョン制約**: `@CubismEditor` は厳密な `value` 一覧、または両端を含む `from`/`to` 範囲と `exclude` をサポートします。空の宣言は下限を追加しません。権限、プロバイダー、機能、世代の検査は引き続き必要です。各バージョンの行を確認してください。全操作の可用性を保証するものではありません。
 - **0.67 で追加された主要機能群**:
   - **統合モデルオブジェクトグラフ**（`CubismModel`、`Drawables`、`Deformers`、`Parts`、`Parameters`）
   - **メッシュモデリングおよびセッション**（`MeshEditService`、`MeshEditParticipation`、`MeshMirrorAxisService`）
@@ -277,7 +289,7 @@ schema 4 を使用する plugin descriptor は、自身が export および impo
   - **3D モデルインポート連携**（`ModelObjectCreateRequest` 等）
   - **専用プラグイン設定**（`SettingsRegistry`、`SettingsContribution`）
   - **描画領域ネイティブヒント通知**（`CanvasHintNotification`、`turboism.ui.canvas.hint`）
-- 各バージョンの詳細な機能境界と差分は [互換性ドキュメント](/docs/use/compatibility) を参照してください。
+- 各バージョンの詳細な機能境界と差分は [互換性ドキュメント](../use/compatibility) を参照してください。
 - History DTO（`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`）は、範囲が限定された immutable な semantic projection です。host への write 権限を与えることはありません。
 - Fake と static test が証明するのは、それぞれが名指しした layer だけです。
 - Snapshot/query/transaction compatibility surface は現在、unified object graph と併存しています。

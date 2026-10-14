@@ -34,7 +34,7 @@ script を検出可能にしても実行されません。Java plugin は `Plugi
 
 script は制限付き JavaScript environment で実行され、Java caller が提供する value と operation だけを受け取ります。完全な Java SDK ではなく、制限された Cubism bridge を受け取ります。bridge operation、execution limit、利用可能な permission は build 固有として扱ってください。これらは script が read、change、request できるものを制限する場合があります。ambient な host access を仮定せず、unavailable operation と execution failure を処理できるように script を設計してください。
 
-SDK lifecycle と service を持つプロセス常駐 plugin には Java のパスを使用してください。外部 client に authenticated loopback Streamable HTTP が必要な場合は[MCP](./mcp)を使用します。ACP は fx とともに内部でのみ使用され、scripting または拡張パスではありません。
+SDK lifecycle と service を持つプロセス常駐 plugin には Java のパスを使用してください。外部 client に authenticated loopback Streamable HTTP が必要な場合は[MCP](./mcp)を使用します。ACP Agent プラグインはローカル stdio ブリッジでユーザーのエージェントを Turboism MCP に接続します。GraalJS スクリプトとは別です。
 
 ## 現在の状態
 

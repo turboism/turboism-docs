@@ -23,4 +23,4 @@ endpoint、secret、可用操作和客户端兼容性都与 capability 相关，
 
 当外部客户端需要受控的本地连接时，请使用 MCP。进程内的 SDK 生命周期和服务请使用 Java 插件。仅当 Java 调用方通过 `PluginContext.scripts()` 和 `ScriptService.run` 显式运行受限脚本时，才使用[GraalJS 脚本](./graaljs-scripts)。
 
-ACP 仅与 fx 在内部使用。它不是 MCP endpoint，也不是另一种扩展 Turboism 的方式。
+ACP 由第一方 ACP Agent 插件提供。它启动用户安装的 ACP 兼容代理，并通过本地 stdio 桥接连接 Turboism MCP。它独立于 Java 插件 API，已不再依赖退役的 fx 运行时。

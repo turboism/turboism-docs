@@ -34,7 +34,7 @@ GraalJS 脚本不是 Java 插件。它们仅在 Java 插件显式调用时运行
 
 脚本在受限的 JavaScript 环境中运行，只能获得 Java 调用方提供的值和操作。它们获得的是有限的 Cubism bridge，而不是完整 Java SDK。请将 bridge 操作、执行限制和可用权限视为与构建相关；它们可能限制脚本可以读取、修改或请求的内容。请让脚本能处理不可用操作和执行失败，不要假定能够访问环境中的宿主资源。
 
-如需具有 SDK 生命周期和服务的常驻进程插件，请使用 Java 路径。外部客户端需要经过认证的 loopback Streamable HTTP 时，请使用[MCP](./mcp)。ACP 仅与 fx 在内部使用，不是脚本或扩展路径。
+如需具有 SDK 生命周期和服务的常驻进程插件，请使用 Java 路径。外部客户端需要经过认证的 loopback Streamable HTTP 时，请使用[MCP](./mcp)。ACP Agent 插件通过本地 stdio 桥接将用户安装的代理连接到 Turboism MCP，与 GraalJS 脚本相互独立。
 
 ## 当前状态
 

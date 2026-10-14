@@ -17,7 +17,7 @@ Turboism 支持三条扩展路径，以及第一方插件在这些路径之上�
 
 随包提供的 Turboism MCP Server 插件为可信的本地外部客户端公开经过认证的 loopback Streamable HTTP endpoint。它是供你自行运行的工具使用的集成路径，而不是进程内 API。请参阅 [MCP](../build-a-plugin/mcp)。
 
-ACP 仅供 Turboism 与 fx 内部使用，不是第四条扩展路径。
+ACP 由第一方 ACP Agent 插件提供。它启动用户安装的 ACP 兼容代理，并通过本地 stdio 桥接连接 Turboism MCP。它独立于 Java 插件 API，已不再依赖退役的 fx 运行时。
 
 ## 基于这些路径构建的自动化
 

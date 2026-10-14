@@ -34,7 +34,7 @@ Making a script discoverable does not run it. A Java plugin must explicitly obta
 
 Scripts run in a restricted JavaScript environment with only the values and operations their Java caller supplies. They receive a limited Cubism bridge rather than the complete Java SDK. Treat bridge operations, resource limits, and available permissions as build-specific; they may constrain what a script can read, change, or request. Design scripts to handle unavailable operations and execution failure without assuming ambient host access.
 
-Use the Java path for a process-resident plugin with SDK lifecycle and services. Use [MCP](./mcp) when an external client needs authenticated loopback Streamable HTTP. ACP, used only with fx internally, is not a scripting or extension path.
+Use the Java path for a process-resident plugin with SDK lifecycle and services. Use [MCP](./mcp) when an external client needs authenticated loopback Streamable HTTP. The ACP Agent plugin connects user-installed agents to Turboism MCP through a local stdio bridge; it is separate from GraalJS scripting.
 
 ## Current status
 

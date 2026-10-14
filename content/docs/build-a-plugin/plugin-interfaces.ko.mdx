@@ -33,11 +33,11 @@ public interface TurboismPlugin {
 | 저장소 | `storage()` | 플러그인이 소유한 데이터 읽기 및 원자적 쓰기 |
 | 사용자 파일 | `userFiles()` | 사용자가 허용한 외부 파일 핸들 사용 |
 | Cubism | `cubism()` | 스냅샷 읽기 및 통합 오브젝트 그래프 사용 |
-| 쿼리 | `parameterQuery()`, `selectionQuery()`, `modelHierarchyQuery()` | 범위가 좁은 타입 지정 쿼리 |
+| 쿼리 | `cubism().model().active().parameters()`, `selectionQuery()`, `modelHierarchyQuery()` | 범위가 좁은 타입 지정 쿼리 |
 | 이벤트 | `eventBus()` | 변경 불가능한 타입 지정 이벤트 게시 및 구독 |
 | 액션 | `actions()` | 재사용 가능한 플러그인 액션 등록 |
-| 메뉴 및 UI | `menus()`, 도구 모음/컨텍스트 메뉴 레지스트리, `uiHost()` | 툴킷 중립적 UI 디스크립터 기여 |
-| 캔버스 힌트 | `uiHost()` | 그리기 영역 위에 네이티브 Cubism 힌트 표시(`turboism.ui.canvas.hint` 권한) |
+| 메뉴 및 UI | `menus()`, 도구 모음/컨텍스트 메뉴 레지스트리, `services().require(UiHostCapabilityService.class)` | 툴킷 중립적 UI 디스크립터 기여 |
+| 캔버스 힌트 | `services().require(UiHostCapabilityService.class)` | 그리기 영역 위에 네이티브 Cubism 힌트 표시(`turboism.ui.canvas.hint` 권한) |
 | 구성 | `config()` | 타입 지정 스키마 등록, 값 읽기 및 compare-and-set 쓰기 |
 | 진단 | `diagnostics()` | 구조화된 런타임 진단 조회 |
 | 정리 | `disposableScope()` | 닫을 수 있는 수명 주기 리소스 등록 |
@@ -71,7 +71,7 @@ Turboism은 선언적 및 프로그래밍 방식의 이벤트 구독 메커니�
 
 ```java
 @SubscribeEvent(priority = EventPriority.NORMAL)
-public void onParameterChanged(final ParameterValueEvent.After event) {
+public void onParameterChanged(final ParameterValueEvent.On event) {
     context.logger().info("Parameter changed: " + event.parameter().id());
 }
 ```
@@ -81,7 +81,7 @@ public void onParameterChanged(final ParameterValueEvent.After event) {
 ### 2. 프로그래밍 방식의 동적 구독
 
 ```java
-record HelloEvent(String message) implements EventBus.TurboismEvent {}
+record HelloEvent(String message) implements dev.turboism.sdk.event.TurboismEvent {}
 
 var subscription = context.eventBus().subscribe(
     HelloEvent.class,
@@ -101,30 +101,35 @@ Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
 float current = parameter.getValue();
 ```
 
-SDK 인터페이스는 메서드와 타입에 `@CubismEditor(from = "...")`를 지정하여 최소 지원 호스트 버전을 선언합니다. 특정 프로바이더가 필요한 메서드(파라미터 쓰기, 메시 편집 등)를 호출하기 전에 가용성을 확인하여 `CubismEditorApiUnavailableException`을 방지할 수 있습니다:
+SDK 어노테이션은 호스트 버전을 제한합니다. 권한과 제공자는 별도로 확인해야 합니다. 구조화된 버전 불가 예외를 처리하세요. `CubismFacade`에는 문자열을 받는 `isAvailable(capabilityId)` 메서드가 없습니다. 쓰기에는 권한과 유효한 객체 세대도 필요합니다.
 
 ```java
-if (context.cubism().isAvailable("cubism.editor-model.write")) {
+try {
     parameter.setValue(current + 1.0f);
+} catch (CubismEditorApiUnavailableException unavailable) {
+    context.logger().info("Unavailable API: " + unavailable.apiId());
 }
 ```
 
 ## 전용 플러그인 설정 (SettingsRegistry)
 
-플러그인은 `context.settings()`를 사용하여 Cubism 내 전용 **Turboism → 플러그인 설정…** 2열 창에 설정 페이지를 제공할 수 있습니다:
+플러그인은 `context.services().require(UiHostCapabilityService.class)`를 사용하여 Cubism 내 전용 **Turboism → 플러그인 설정…** 2열 창에 설정 페이지를 제공할 수 있습니다:
 
 ```java
-var settings = context.settings().register(new SettingsContribution() {
-    @Override public String id() { return "myplugin.settings"; }
-    @Override public String title() { return "My Plugin"; }
-    @Override public List<SettingsControl> controls() {
-        return List.of(
-            SettingsControl.Toggle.of("enabled", "Enable feature", true, val -> {})
-        );
-    }
-});
+var enabled = new java.util.concurrent.atomic.AtomicBoolean(true);
+var registry = context.services().require(UiHostCapabilityService.class);
+var settings = registry.contributeSettings(new SettingsContribution(
+    "myplugin.enabled",
+    new SettingsTab("myplugin", "My Plugin"),
+    new SettingsControl.Toggle(
+        "enabled", "Enable feature",
+        SettingsBinding.of(enabled::get, enabled::set)
+    )
+));
 context.disposableScope().register(settings);
 ```
+
+선택 서비스는 `context.services().find(Service.class)` 또는 `require(Service.class)`로 가져옵니다. 서비스 존재가 권한이나 모든 버전의 작업 가용성을 보장하지는 않습니다. 이 예제는 `turboism.ui.settings.contribute`가 필요하며 값은 메모리에만 저장합니다. 영구 설정에는 구성 서비스를 사용하세요.
 
 ## 훅
 

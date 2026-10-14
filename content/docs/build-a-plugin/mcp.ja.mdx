@@ -23,4 +23,4 @@ endpoint、secret、利用可能な operation、client compatibility は capabil
 
 外部 client が制御された local connection を必要とする場合に MCP を使用します。プロセス内の SDK lifecycle と service には Java plugin を使用します。[GraalJS スクリプト](./graaljs-scripts)は、Java caller が `PluginContext.scripts()` と `ScriptService.run` を通じて制限付き script を明示的に実行する場合にのみ使用します。
 
-ACP は fx とともに内部でのみ使用されます。MCP endpoint でも、Turboism を拡張する別の方法でもありません。
+ACP はファーストパーティーの ACP Agent プラグインが提供します。ユーザーがインストールした ACP 対応エージェントを起動し、ローカル stdio ブリッジで Turboism MCP に接続します。Java プラグイン API とは別で、廃止された fx ランタイムには依存しません。

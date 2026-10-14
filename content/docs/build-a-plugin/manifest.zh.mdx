@@ -182,10 +182,15 @@ Plugin IDs use reverse-domain syntax with at least one dot (`dev.example.plugin.
 ## cubismVersions 元数据
 
 ```json
-"cubismVersions": ["5.0.00", "5.1.00", "5.2.00", "5.3.00"]
+{
+  "format": "turboism.plugin-cubism-versions/v1",
+  "plugin": "com.example.myplugin",
+  "supportedVersions": ["5.3.04"],
+  "fullFeatureVersions": ["5.3.04"]
+}
 ```
 
-插件可在清单中显式声明支持的 Cubism Editor 版本列表或范围。若未显式指定，Runtime 与插件目录会从插件代码中的 `@CubismEditor` 注解及所引用的 SDK 能力自动推导其版本支持范围。
+版本支持元数据位于独立的 **`META-INF/turboism/cubism-versions.json`** 文件，不是 `plugin.json` 中的 `cubismVersions` 属性。设置脚本会生成该文件；请将列表收紧到插件实际支持的版本。`fullFeatureVersions` 必须是 `supportedVersions` 的子集。SDK 注解本身不能证明插件兼容性。
 
 ## 构建与验证
 

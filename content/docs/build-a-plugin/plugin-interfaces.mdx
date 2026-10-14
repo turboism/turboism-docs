@@ -33,11 +33,11 @@ Use `init` for context and configuration setup, `enable` for active registration
 | Storage | `storage()` | Read and atomically write plugin-owned data |
 | User files | `userFiles()` | Use user-granted external-file handles |
 | Cubism | `cubism()` | Read snapshots and use the unified object graph |
-| Queries | `parameterQuery()`, `selectionQuery()`, `modelHierarchyQuery()` | Narrow typed queries |
+| Queries | `cubism().model().active().parameters()`, `selectionQuery()`, `modelHierarchyQuery()` | Narrow typed queries |
 | Events | `eventBus()` | Publish and subscribe to immutable typed events |
 | Actions | `actions()` | Register reusable plugin actions |
-| Menus and UI | `menus()`, toolbar/context-menu registries, `uiHost()` | Contribute toolkit-neutral UI descriptors |
-| Canvas hints | `uiHost()` | Show native Cubism hints over the drawing area (`turboism.ui.canvas.hint` permission) |
+| Menus and UI | `menus()`, toolbar/context-menu registries, `services().require(UiHostCapabilityService.class)` | Contribute toolkit-neutral UI descriptors |
+| Canvas hints | `services().require(UiHostCapabilityService.class)` | Show native Cubism hints over the drawing area (`turboism.ui.canvas.hint` permission) |
 | Configuration | `config()` | Register typed schemas, read values, and compare-and-set writes |
 | Diagnostics | `diagnostics()` | Inspect structured Runtime diagnostics |
 | Cleanup | `disposableScope()` | Register closeable lifecycle resources |
@@ -71,7 +71,7 @@ Mark listener methods on your entrypoint class using `@SubscribeEvent`. The comp
 
 ```java
 @SubscribeEvent(priority = EventPriority.NORMAL)
-public void onParameterChanged(final ParameterValueEvent.After event) {
+public void onParameterChanged(final ParameterValueEvent.On event) {
     context.logger().info("Parameter changed: " + event.parameter().id());
 }
 ```
@@ -81,7 +81,7 @@ Available priorities: `LOWEST`, `LOW`, `NORMAL`, `HIGH`, `HIGHEST`, `MONITOR`.
 ### 2. Programmatic dynamic subscription
 
 ```java
-record HelloEvent(String message) implements EventBus.TurboismEvent {}
+record HelloEvent(String message) implements dev.turboism.sdk.event.TurboismEvent {}
 
 var subscription = context.eventBus().subscribe(
     HelloEvent.class,
@@ -101,30 +101,35 @@ Parameter parameter = model.parameters().find(new ParameterId("ParamAngleX"));
 float current = parameter.getValue();
 ```
 
-SDK interfaces annotate types and methods with `@CubismEditor(from = "...")` to declare minimum supported host versions. Before invoking methods requiring specific capability providers (such as parameter writes or mesh editing), check availability to avoid `CubismEditorApiUnavailableException`:
+SDK annotations constrain host versions, while permissions and providers remain separate checks. Handle the structured version-unavailable exception; `CubismFacade` has no string-based `isAvailable(capabilityId)` method. A write also needs its declared permission and valid object generation.
 
 ```java
-if (context.cubism().isAvailable("cubism.editor-model.write")) {
+try {
     parameter.setValue(current + 1.0f);
+} catch (CubismEditorApiUnavailableException unavailable) {
+    context.logger().info("Unavailable API: " + unavailable.apiId());
 }
 ```
 
 ## Dedicated Plugin Settings (`SettingsRegistry`)
 
-Plugins can contribute settings pages to the dedicated two-pane **Turboism → Plugin Settings…** window via `context.settings()`:
+Plugins can contribute settings pages to the dedicated two-pane **Turboism → Plugin Settings…** window via `context.services().require(UiHostCapabilityService.class)`:
 
 ```java
-var settings = context.settings().register(new SettingsContribution() {
-    @Override public String id() { return "myplugin.settings"; }
-    @Override public String title() { return "My Plugin"; }
-    @Override public List<SettingsControl> controls() {
-        return List.of(
-            SettingsControl.Toggle.of("enabled", "Enable feature", true, val -> {})
-        );
-    }
-});
+var enabled = new java.util.concurrent.atomic.AtomicBoolean(true);
+var registry = context.services().require(UiHostCapabilityService.class);
+var settings = registry.contributeSettings(new SettingsContribution(
+    "myplugin.enabled",
+    new SettingsTab("myplugin", "My Plugin"),
+    new SettingsControl.Toggle(
+        "enabled", "Enable feature",
+        SettingsBinding.of(enabled::get, enabled::set)
+    )
+));
 context.disposableScope().register(settings);
 ```
+
+Resolve optional services through `context.services().find(Service.class)` or `require(Service.class)`. Presence in the directory does not grant permissions or guarantee every version-routed operation. This example needs `turboism.ui.settings.contribute`; its binding is in-memory only. Use the configuration service for persistent settings.
 
 ## Hooks
 

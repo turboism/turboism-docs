@@ -17,7 +17,7 @@ Restricted JavaScript that a Java plugin discovers through `PluginContext.script
 
 The bundled Turboism MCP Server plugin exposes an authenticated loopback Streamable HTTP endpoint for trusted local external clients. It is an integration path for tools you run yourself, not an in-process API. See [MCP](../build-a-plugin/mcp).
 
-ACP is internal to Turboism with fx and is not a fourth extension path.
+ACP is provided by the first-party ACP Agent plugin. It launches a user-installed ACP-compatible agent and connects it to Turboism MCP through a local stdio bridge. It is separate from Java plugin APIs and no longer depends on the retired fx runtime.
 
 ## Automation built on these paths
 

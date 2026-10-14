@@ -5,6 +5,9 @@ description: Build a minimal Java 17 Turboism plugin against the public SDK.
 
 Turboism provides an official standalone project template and scaffolding tools. You can create a new standalone repository from the template and run an automated setup script to fetch the matching SDK and annotation processor.
 
+
+This example targets the current development SDK. The setup script downloads the latest **published** Beta SDK, which may be older than the hosted reference. Check `gradle.properties` and the downloaded filenames; use the matching SDK version when compiling. The generated reference is not a release announcement.
+
 ## 1. Use the standalone template (Recommended)
 
 Create a new repository on GitHub via **Use this template** from [`turboism/turboism-plugin-template`](https://github.com/turboism/turboism-plugin-template), or clone it directly:
@@ -56,17 +59,14 @@ java {
     }
 }
 
-repositories {
-    flatDir {
-        dirs("libs")
-    }
-}
+val sdkJars = fileTree("libs") { include("turboism-sdk-*.jar") }
+val processorJars = fileTree("libs") { include("turboism-event-processor-*.jar") }
 
 dependencies {
-    compileOnly(":turboism-sdk")
-    testImplementation(":turboism-sdk")
-    // Annotation processor parses @SubscribeEvent at compile time
-    annotationProcessor(":turboism-event-processor")
+    compileOnly(sdkJars)
+    testImplementation(sdkJars)
+    annotationProcessor(processorJars)
+    annotationProcessor(sdkJars)
 }
 ```
 
@@ -79,13 +79,11 @@ Do not depend on Runtime, Bootstrap, `com.live2d.*` internal classes, another pl
 ```java
 package com.example.myplugin;
 
-import dev.turboism.sdk.CubismEditor;
 import dev.turboism.sdk.event.SubscribeEvent;
-import dev.turboism.sdk.event.cubism.ParameterValueEvent;
+import dev.turboism.sdk.cubism.event.ParameterValueEvent;
 import dev.turboism.sdk.plugin.PluginContext;
 import dev.turboism.sdk.plugin.TurboismPlugin;
 
-@CubismEditor(from = "5.0.00")
 public final class MyPlugin implements TurboismPlugin {
     private PluginContext context;
 
@@ -101,7 +99,7 @@ public final class MyPlugin implements TurboismPlugin {
     }
 
     @SubscribeEvent
-    public void onParameterChanged(final ParameterValueEvent.After event) {
+    public void onParameterChanged(final ParameterValueEvent.On event) {
         context.logger().info("Parameter changed: " + event.parameter().id());
     }
 
@@ -120,7 +118,8 @@ public final class MyPlugin implements TurboismPlugin {
 
 - The class must be public, implement `TurboismPlugin` or a subinterface, and provide a public no-arg constructor.
 - Use `@SubscribeEvent` to declare event listener methods, indexed at compile time by `turboism-event-processor`.
-- Use `@CubismEditor(from = "...")` to declare the minimum supported Cubism Editor version.
+
+`@CubismEditor` describes API version constraints; it does not grant permissions or prove that a capability is available. Declare the plugin’s supported versions in the separate `META-INF/turboism/cubism-versions.json` file (see [Manifest](./manifest)).
 
 ## 4. Add plugin descriptor
 
@@ -151,13 +150,16 @@ Edit `src/main/resources/META-INF/turboism/plugin.json`:
     "locales": []
   },
   "dependencies": [],
-  "permissions": [],
+  "permissions": [
+    { "id": "turboism.event.subscribe", "scope": "application", "reason": "Subscribe to parameter observations." },
+    { "id": "turboism.cubism.model.observe", "scope": "application", "reason": "Observe parameter value changes." }
+  ],
   "capabilities": [],
   "lifecycle": {
     "hotReload": true
   },
   "environment": {
-    "requiresCubism": false,
+    "requiresCubism": true,
     "ui": "none"
   }
 }

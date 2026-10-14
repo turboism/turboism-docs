@@ -182,10 +182,15 @@ Plugin IDs use reverse-domain syntax with at least one dot (`dev.example.plugin.
 ## cubismVersions metadata
 
 ```json
-"cubismVersions": ["5.0.00", "5.1.00", "5.2.00", "5.3.00"]
+{
+  "format": "turboism.plugin-cubism-versions/v1",
+  "plugin": "com.example.myplugin",
+  "supportedVersions": ["5.3.04"],
+  "fullFeatureVersions": ["5.3.04"]
+}
 ```
 
-Plugins may optionally declare a list or range of supported Cubism Editor versions. When omitted, the Runtime and Plugin Directory automatically infer version compatibility from `@CubismEditor` annotations and referenced SDK capabilities.
+Version support metadata lives in **`META-INF/turboism/cubism-versions.json`**, not a `cubismVersions` property in `plugin.json`. The setup script creates this file; narrow its lists to the versions your plugin actually supports. `fullFeatureVersions` must be a subset of `supportedVersions`. SDK annotations alone do not prove plugin compatibility.
 
 ## Build and validate
 

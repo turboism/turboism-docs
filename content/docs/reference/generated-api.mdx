@@ -9,11 +9,14 @@ The SDK Javadoc is generated from the matching Turboism source tree and hosted u
 
 | Item | Value |
 | --- | --- |
-| Generated from | Turboism `v0.67.0` release source |
+| Generated from | Turboism development source `4a21b8b2b` (0.67.0 documentation version) |
 | Identifies itself as | `sdk 0.67.0 API` |
 | Public packages | 63 |
 | Searchable public types | 933 |
 | Hosted at | [turboism.dev/sdk/index.html](https://turboism.dev/sdk/index.html) |
+
+
+This example targets the current development SDK. The setup script downloads the latest **published** Beta SDK, which may be older than the hosted reference. Check `gradle.properties` and the downloaded filenames; use the matching SDK version when compiling. The generated reference is not a release announcement.
 
 ## Documentation update workflow
 
@@ -31,13 +34,13 @@ Successful generation alone does not approve publication.
 
 ## Reviewed publication exceptions
 
-The published reference reproduces the compiled public surface of `v0.67.0`, so it documents two conditions that review classified as exceptions rather than as hidden problems. Both are re-checked on every synchronisation, and any blocker outside this list still fails the run.
+The published reference reproduces the compiled public surface of `4a21b8b2b`, so it documents two conditions that review classified as exceptions rather than as hidden problems. Both are re-checked on every synchronisation, and any blocker outside this list still fails the run.
 
 ### `ActiveReadProjections` is public but not a contract
 
 `dev.turboism.sdk.cubism.ActiveReadProjections` is compiled as a public class because `CubismFacade` and `CubismReadCapabilityService` default methods share its helpers. The class Javadoc states that it is not part of the stable plugin API surface.
 
-- Its page is hosted because the type already exists in released bytecode.
+- Its page is hosted because the type already exists in the generated source bytecode.
 - It is **not** a supported extension point. Do not call it, and do not treat its signatures as a compatibility promise.
 - It must remain listed as non-contractual here and in the [SDK API Guide](./sdk-api) for as long as the type stays public.
 

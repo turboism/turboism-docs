@@ -45,19 +45,31 @@ One JAR may contain multiple ordered entrypoints. Construction, initialization, 
 | `storage()` | Plugin-owned DATA, STATE, and CACHE storage |
 | `userFiles()` | User-granted file handles |
 | `cubism()` | Snapshots, unified object access, and transaction compatibility entrypoints |
-| `parameterQuery()` | Narrow parameter queries |
 | `selectionQuery()` | Selection reads and change subscription |
 | `modelHierarchyQuery()` | Model-tree queries |
 | `cubismRead()` | Aggregated read capability families |
 | `eventBus()` | Typed event publish and subscribe |
 | `actions()` and `menus()` | Action registration and menu contribution |
-| `mainToolbar()`, `paletteToolbar()`, `contextMenu()` | Typed UI contribution registries |
-| `uiHost()` and `uiScheduler()` | Toolkit-neutral UI capabilities and UI-thread scheduling |
+| `services().require(MainToolbarRegistry.class)`, `services().require(PaletteToolbarRegistry.class)`, `services().require(ContextMenuRegistry.class)` | Typed UI contribution registries |
+| `services().require(UiHostCapabilityService.class)` and `uiScheduler()` | Toolkit-neutral UI capabilities and UI-thread scheduling |
 | `config()` | Typed plugin configuration |
 | `diagnostics()` | Current structured diagnostics |
 | `disposableScope()` | Reverse-order lifecycle cleanup |
 
 Some default services throw `UnsupportedOperationException`; others return an explicit unavailable implementation. Plugins must handle unavailable capability families rather than bypassing them.
+
+
+## Optional service discovery
+
+Resolve optional services through the typed directory. `find` lets a plugin degrade when a service is absent; `require` throws `PluginServiceUnavailableException`. An installed service still checks permission, host version, capability and object generation for each operation.
+
+```java
+context.services().find(UiHostCapabilityService.class).ifPresent(ui -> {
+    // Use the installed UI service with the required permissions.
+});
+```
+
+Toolbar, context-menu, UI host and settings contributions use this directory rather than removed `PluginContext` convenience accessors.
 
 ## Registration and cleanup
 
@@ -81,6 +93,8 @@ A `MenuRegistry.MenuContribution` binds a slash-delimited menu path to a registe
 The generic event bus is typed:
 
 ```java
+record MyEvent(String value) implements dev.turboism.sdk.event.TurboismEvent {}
+
 Registration subscription = context.eventBus().subscribe(
     MyEvent.class,
     event -> context.logger().info(event.value())
@@ -88,7 +102,6 @@ Registration subscription = context.eventBus().subscribe(
 context.disposableScope().register(subscription);
 context.eventBus().publish(new MyEvent("changed"));
 
-record MyEvent(String value) implements EventBus.TurboismEvent {}
 ```
 
 Events should be immutable plugin- or SDK-owned values. Do not put raw host objects, Swing widgets, native handles, or host ClassLoaders in events.
@@ -107,7 +120,7 @@ boolean hostPresent = context.cubism().isHostPresent();
 
 Narrow query services include:
 
-- `ParameterQueryService` for parameter lookup and enumeration;
+- Parameter lookups use `context.cubism().model().active().parameters()`; optional services resolve through `context.services()`.
 - `SelectionQueryService` for current selection and selection-change subscription;
 - `ModelHierarchyQueryService` for model-tree traversal;
 - `CubismReadCapabilityService` for project, document, model, selection, parameter, model-object, mesh, deformer, PSD, clip-mask, texture-atlas, render-status, workspace, and theme-status read families.
@@ -272,8 +285,7 @@ bytecode, and they are listed with their reason on the
 ## Version and readiness notes
 
 - **20-Version Coverage**: The reviewed Cubism Editor version matrix covers all 20 versions from **5.0.00 to 5.3.04**.
-- **Monotonic Capability Guarantee**: Within any minor release line, capability is strictly monotonic: newer patch versions never drop capabilities admitted by earlier patch versions.
-- **Declarative Version Annotations**: Public types and methods carry `@CubismEditor(from = "...", to = "...")` to declare exact host version ranges. An empty `@CubismEditor` signifies universal support across all reviewed versions.
+- **Version constraints**: `@CubismEditor` supports exact `value` lists or inclusive `from`/`to` ranges, plus `exclude`. Empty declarations add no version floor; permission, provider, capability and generation checks still apply. Consult the matrix for each version; coverage is not a promise that every operation works on every host.
 - **Core Capability Families in 0.67**:
   - **Unified Model Object Graph** (`CubismModel`, `Drawables`, `Deformers`, `Parts`, `Parameters`);
   - **Mesh Modeling & Tool Session** (`MeshEditService`, `MeshEditParticipation`, `MeshMirrorAxisService`);
@@ -283,7 +295,7 @@ bytecode, and they are listed with their reason on the
   - **3D Model Import Hooks** (`ModelObjectCreateRequest`, etc.);
   - **Dedicated Plugin Settings** (`SettingsRegistry`, `SettingsContribution`);
   - **Canvas Hint Notifications** (`CanvasHintNotification`, `turboism.ui.canvas.hint`).
-- For exact capability and SDK surface details across all versions, see [Compatibility](/docs/use/compatibility).
+- For exact capability and SDK surface details across all versions, see [Compatibility](../use/compatibility).
 - History DTOs (`HistoryEntry`, `HistoryChange`, `HistoryEditContext`, `HistoryGroup`, `HistoryOrigin`, `HistoryTarget`) are bounded immutable semantic projections. They never grant host write authority.
 - Fake and static tests prove their named layer only.
 - Snapshot/query/transaction compatibility surfaces currently coexist with the unified object graph.

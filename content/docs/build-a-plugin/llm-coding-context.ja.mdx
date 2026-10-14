@@ -15,7 +15,7 @@ Turboism の開発を LLM に依頼する場合も、コードの品質、検証
 
 ### 実環境でテストする
 
-- 自分で作成または採用したコードを実環境でテストしてください。プラグイン、ランタイム、ホスト連携に関わる変更は、使用許可があり、対象リリースの対応バージョン（Windows x64 上の Cubism Editor。Stable 0.44.0 では 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.1 では 5.0.00–5.3.04。[互換性](/docs/use/compatibility)を参照）と一致する実際の環境で検証する必要があります。シミュレーション、コンパイル成功、LLM の判断だけでは不十分です。
+- 自分で作成または採用したコードを実環境でテストしてください。プラグイン、ランタイム、ホスト連携に関わる変更は、使用許可があり、対象リリースの対応バージョン（Windows x64 上の Cubism Editor。Stable 0.44.0 では 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.2 では 5.0.00–5.3.04。[互換性](/docs/use/compatibility)を参照）と一致する実際の環境で検証する必要があります。シミュレーション、コンパイル成功、LLM の判断だけでは不十分です。
 - 専用のテストデータを使用し、読み込み、主要な動作、失敗時の処理、クリーンアップの結果を確認してください。許可なくユーザーデータをテストに使用してはいけません。
 - テスト環境、関連バージョン、手順、実際の結果を記録してください。実環境でのテストが完了していない場合は、その事実を明記し、利用可能であると主張してはいけません。
 
@@ -36,7 +36,7 @@ Turboism には異なる 3 つの extension path があります。
 2. **GraalJS script** は制限付き script です。Java plugin が `PluginContext.scripts()` で検出し、`ScriptService.run` で明示的に実行します。検出だけで script が実行されることはありません。
 3. **MCP** はバンドルされた first-party plugin であり、信頼できる local external client に認証済み loopback Streamable HTTP を提供します。
 
-ACP は fx とともに内部でのみ使用され、第 4 の extension path ではありません。codebase は Java 17 を対象にしています。Java、GraalJS、MCP、ACP の境界を維持してください。近くにある capability が便利に見えるという理由だけで、ある path を別の path の代わりに使わないでください。
+ACP Agent プラグインはローカル stdio ブリッジでユーザーのエージェントを Turboism MCP に接続します。codebase は Java 17 を対象にしています。Java、GraalJS、MCP、ACP の境界を維持してください。近くにある capability が便利に見えるという理由だけで、ある path を別の path の代わりに使わないでください。
 
 ## 開発原則
 

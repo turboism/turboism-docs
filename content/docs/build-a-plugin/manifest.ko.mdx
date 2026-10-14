@@ -182,10 +182,15 @@ META-INF/turboism/i18n/messages_zh_Hans.properties
 ## cubismVersions 메타데이터
 
 ```json
-"cubismVersions": ["5.0.00", "5.1.00", "5.2.00", "5.3.00"]
+{
+  "format": "turboism.plugin-cubism-versions/v1",
+  "plugin": "com.example.myplugin",
+  "supportedVersions": ["5.3.04"],
+  "fullFeatureVersions": ["5.3.04"]
+}
 ```
 
-플러그인이 지원하는 Cubism Editor 버전 목록이나 범위를 명시적으로 선언할 수 있습니다. 생략하면 코드 내의 `@CubismEditor` 어노테이션 및 참조된 SDK 기능에서 호환 버전 범위를 자동으로 추론합니다.
+지원 버전 메타데이터는 **`META-INF/turboism/cubism-versions.json`**에 있습니다. `plugin.json`의 `cubismVersions` 속성이 아닙니다. 설정 스크립트가 생성하는 목록을 플러그인이 실제 지원하는 버전으로 제한하세요. `fullFeatureVersions`는 `supportedVersions`의 부분집합이어야 합니다. SDK 어노테이션만으로 플러그인 호환성이 입증되지는 않습니다.
 
 ## 빌드 및 검증
 

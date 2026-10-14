@@ -17,7 +17,7 @@ Java plugin が `PluginContext.scripts()` で検出し、`ScriptService.run` で
 
 バンドルされた Turboism MCP Server plugin が、信頼できるローカルの外部クライアント向けに、認証済みの loopback Streamable HTTP endpoint を公開します。これは自分で実行するツールのための integration 経路であり、プロセス内 API ではありません。[MCP](../build-a-plugin/mcp)を参照してください。
 
-ACP は fx とともに Turboism 内部で使用されるものであり、4 つ目の extension 経路ではありません。
+ACP はファーストパーティーの ACP Agent プラグインが提供します。ユーザーがインストールした ACP 対応エージェントを起動し、ローカル stdio ブリッジで Turboism MCP に接続します。Java プラグイン API とは別で、廃止された fx ランタイムには依存しません。
 
 ## これらの経路の上に構築される automation
 

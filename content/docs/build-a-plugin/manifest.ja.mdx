@@ -182,10 +182,15 @@ Plugin ID は、少なくとも 1 つのドットを含む reverse-domain syntax
 ## cubismVersions メタデータ
 
 ```json
-"cubismVersions": ["5.0.00", "5.1.00", "5.2.00", "5.3.00"]
+{
+  "format": "turboism.plugin-cubism-versions/v1",
+  "plugin": "com.example.myplugin",
+  "supportedVersions": ["5.3.04"],
+  "fullFeatureVersions": ["5.3.04"]
+}
 ```
 
-プラグインが対応する Cubism Editor バージョンのリストや範囲を明示的に宣言できます。指定しない場合、コード内の `@CubismEditor` アノテーションや参照された SDK 機能から自動的に推論されます。
+対応バージョンのメタデータは **`META-INF/turboism/cubism-versions.json`** に記載します。`plugin.json` の `cubismVersions` プロパティではありません。セットアップが生成する一覧を実際に対応するバージョンに限定してください。`fullFeatureVersions` は `supportedVersions` の部分集合です。SDK の注釈だけでプラグインの互換性は証明できません。
 
 ## build と検証
 

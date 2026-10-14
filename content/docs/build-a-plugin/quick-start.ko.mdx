@@ -5,6 +5,9 @@ description: 공개 SDK를 사용하여 최소한의 Java 17 Turboism 플러그�
 
 Turboism은 공식 독립 프로젝트 템플릿과 스캐폴딩 도구를 제공합니다. 템플릿에서 독립 저장소를 생성하고 자동 설정 스크립트를 실행하여 일치하는 SDK 및 어노테이션 프로세서를 내려받아 개발할 수 있습니다.
 
+
+이 예제는 현재 개발 SDK를 기준으로 합니다. 설정 스크립트는 최신 **게시된** Beta SDK를 다운로드하므로 웹 레퍼런스보다 오래될 수 있습니다. `gradle.properties`와 다운로드 파일명에서 실제 SDK 버전을 확인하세요. 생성된 레퍼런스는 릴리스 발표가 아닙니다.
+
 ## 1. 공식 독립 템플릿 사용 (권장)
 
 GitHub의 **Use this template**을 통해 [`turboism/turboism-plugin-template`](https://github.com/turboism/turboism-plugin-template) 저장소를 기반으로 생성하거나 직접 복제합니다:
@@ -56,17 +59,14 @@ java {
     }
 }
 
-repositories {
-    flatDir {
-        dirs("libs")
-    }
-}
+val sdkJars = fileTree("libs") { include("turboism-sdk-*.jar") }
+val processorJars = fileTree("libs") { include("turboism-event-processor-*.jar") }
 
 dependencies {
-    compileOnly(":turboism-sdk")
-    testImplementation(":turboism-sdk")
-    // 어노테이션 프로세서가 컴파일 시점에 @SubscribeEvent를 분석
-    annotationProcessor(":turboism-event-processor")
+    compileOnly(sdkJars)
+    testImplementation(sdkJars)
+    annotationProcessor(processorJars)
+    annotationProcessor(sdkJars)
 }
 ```
 
@@ -79,13 +79,11 @@ Runtime, Bootstrap, `com.live2d.*` 내부 클래스, 다른 플러그인의 비�
 ```java
 package com.example.myplugin;
 
-import dev.turboism.sdk.CubismEditor;
 import dev.turboism.sdk.event.SubscribeEvent;
-import dev.turboism.sdk.event.cubism.ParameterValueEvent;
+import dev.turboism.sdk.cubism.event.ParameterValueEvent;
 import dev.turboism.sdk.plugin.PluginContext;
 import dev.turboism.sdk.plugin.TurboismPlugin;
 
-@CubismEditor(from = "5.0.00")
 public final class MyPlugin implements TurboismPlugin {
     private PluginContext context;
 
@@ -101,7 +99,7 @@ public final class MyPlugin implements TurboismPlugin {
     }
 
     @SubscribeEvent
-    public void onParameterChanged(final ParameterValueEvent.After event) {
+    public void onParameterChanged(final ParameterValueEvent.On event) {
         context.logger().info("Parameter changed: " + event.parameter().id());
     }
 
@@ -120,7 +118,8 @@ public final class MyPlugin implements TurboismPlugin {
 
 - 클래스는 public이어야 하며 `TurboismPlugin` 또는 그 하위 인터페이스를 구현하고 public 매개변수 없는 생성자를 제공해야 합니다.
 - `@SubscribeEvent` 어노테이션을 사용하여 이벤트 수신 메서드를 선언할 수 있으며, 컴파일 시점에 `turboism-event-processor`가 인덱스를 생성합니다.
-- `@CubismEditor(from = "...")`를 통해 지원하는 최소 Cubism Editor 버전을 선언할 수 있습니다.
+
+`@CubismEditor`는 API 버전 제약을 나타내며 권한이나 기능 가용성을 보장하지 않습니다. 플러그인 지원 버전은 별도의 `META-INF/turboism/cubism-versions.json` 파일에 선언하세요([매니페스트](./manifest) 참고).
 
 ## 4. 플러그인 디스크립터 추가
 
@@ -151,13 +150,16 @@ public final class MyPlugin implements TurboismPlugin {
     "locales": []
   },
   "dependencies": [],
-  "permissions": [],
+  "permissions": [
+    { "id": "turboism.event.subscribe", "scope": "application", "reason": "Subscribe to parameter observations." },
+    { "id": "turboism.cubism.model.observe", "scope": "application", "reason": "Observe parameter value changes." }
+  ],
   "capabilities": [],
   "lifecycle": {
     "hotReload": true
   },
   "environment": {
-    "requiresCubism": false,
+    "requiresCubism": true,
     "ui": "none"
   }
 }

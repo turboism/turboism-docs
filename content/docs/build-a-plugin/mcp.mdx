@@ -23,4 +23,4 @@ The endpoint, secret, available operations, and client compatibility are capabil
 
 Use MCP when an external client needs a controlled local connection. Use a Java plugin for process-internal SDK lifecycle and services. Use [GraalJS Scripts](./graaljs-scripts) only when a Java caller explicitly runs a limited script through `PluginContext.scripts()` and `ScriptService.run`.
 
-ACP is internal and used only with fx. It is not an MCP endpoint or another way to extend Turboism.
+ACP is provided by the first-party ACP Agent plugin. It launches a user-installed ACP-compatible agent and connects it to Turboism MCP through a local stdio bridge. It is separate from Java plugin APIs and no longer depends on the retired fx runtime.
