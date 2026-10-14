@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "release:check": "node --test tests/language-preference.test.mjs && npm run test:brand && npm run lint && npm run typecheck",
+    "release:check": "node --test tests/language-preference.test.mjs tests/local-request-forwarding.test.mjs && npm run test:brand && npm run lint && npm run typecheck",
     "release:build": "npm run release:check && vercel build",
     "verify:deployment": "vercel inspect --wait --timeout=5m",
     "verify:production": "npm run verify:deployment -- https://docs.turboism.dev",

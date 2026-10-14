@@ -1,5 +1,6 @@
 /** Real browser controls on a production build, including legacy preference conflicts. */
 import assert from 'node:assert/strict';
+import { forwardLocalRequest } from './forward-local-request.mjs';
 import { createRequire } from 'node:module';
 import { mkdir, writeFile } from 'node:fs/promises';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
@@ -24,10 +25,8 @@ const browser = await chromium.launch({ headless: true });
 try {
   for (const width of [1440, 390]) for (const path of paths) {
     const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
-    if (!process.env.LANGUAGE_LIVE_ONLY) await context.route(origin + '/**', async route => {
-      try { const response = await route.fetch({ url: local + route.request().url().slice(origin.length), maxRedirects: 0 }); await route.fulfill({ response }); }
-      catch { await route.abort(); }
-    });
+    if (!process.env.LANGUAGE_LIVE_ONLY) await context.route(origin + '/**',
+      route => forwardLocalRequest(route, local, origin));
     const page = await context.newPage(), errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await context.addCookies([
