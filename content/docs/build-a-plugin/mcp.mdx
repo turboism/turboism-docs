@@ -11,7 +11,7 @@ The plugin listens only on `127.0.0.1` and uses authenticated Streamable HTTP. A
 
 ## Connect a local client
 
-1. Start a Full installation (or install **Turboism MCP Server** from the Plugin Market on Thin) and make sure the plugin is enabled.
+1. Start Turboism and make sure the bundled **Turboism MCP Server** plugin is enabled. Both Stable 0.67.4 downloads (the Windows installer and the portable ZIP) include every bundled first-party plugin.
 2. In a trusted local MCP client, create a Streamable HTTP connection to the loopback endpoint reported by the plugin.
 3. Configure the client to send the bearer secret for that connection.
 4. Have the client send `initialize` and retain the `MCP-Session-Id` returned for the session.

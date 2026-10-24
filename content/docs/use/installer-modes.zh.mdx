@@ -1,63 +1,67 @@
 ---
-title: Full 与 Thin 变体
-description: 比较 Full 与 Thin 下载变体，了解安全升级路径及历史安装包变迁。
+title: 安装器与便携 ZIP
+description: 在 Windows 安装器与便携 ZIP 之间做出选择，了解安装器选项及历史安装包变迁。
 ---
 
-自 **0.67.0-beta.3** 起，Turboism 提供两种产品变体的四种正式发行产物，不再采用向导中的安装模式选择：
+自 **0.67.0** 稳定版起，每个 Turboism 版本都只提供两种产品下载，并各自附带对应的 `.sha256` 校验文件：
 
-- **完整版（Full）**（`TurboismInstaller-<version>-full.exe`、`turboism-<version>-full.zip`）：包含核心运行时框架以及所有随包提供的第一方插件。
-- **精简版（Thin）**（`TurboismInstaller-<version>-thin.exe`、`turboism-<version>-thin.zip`）：仅包含运行时框架，不带任何第一方插件。
+- **Windows 安装器**：`TurboismInstaller-<version>.exe`，Windows 上的推荐方式。
+- **便携 ZIP**：`turboism-<version>.zip`，用于 Windows 手动安装以及 macOS 和 Linux。
 
-对于 Thin 变体，插件后续可通过 Cubism 内的插件市场（**Turboism** 菜单 → **插件市场…**）或 [turboism.dev/plugins](https://turboism.dev/plugins) 获取。
+两种安装包内容相同：运行时框架、配置向导（`configure_turboism.ps1`）、所有随包提供的[第一方插件](./first-party-plugins)，以及完整的离线 GraalJS 引擎。GraalVM 运行时的安装仍是单独的可选步骤。不存在不含插件的安装包，也没有逐项插件选择：插件可在 Cubism 中通过 **Turboism → 管理插件…** 启用或停用。
 
-两种变体均不会修改 Cubism 的安装文件或授权许可。
+两种安装包均不会修改 Cubism 的 JAR、DLL 或授权状态。只有下文所述的可选官方 BAT 集成会修改 Cubism 启动 BAT 文件，并使用经哈希校验的备份。
 
-## Full 与 Thin 的功能边界
+## 安装器与便携 ZIP 对比
 
-| 功能项 | Full 变体 | Thin 变体 |
+| | Windows 安装器（`.exe`） | 便携 ZIP（`.zip`） |
 | --- | --- | --- |
-| 运行时框架与 Java Agent | 包含 | 包含 |
-| 配置向导（`configure_turboism.ps1`） | 包含 | 包含 |
-| 随包第一方插件 | 全部预装在 `plugins/` | 不包含任何插件 |
-| 插件获取方式 | 预装 | 通过应用内插件市场或网页目录获取 |
-| 插件管理与开关 | **Turboism → 管理插件…** | **Turboism → 管理插件…** |
-| 后台自动更新 | 签名验证的第一方插件更新 | 签名验证的第一方插件更新 |
+| 平台 | Windows x64 | Windows（手动安装）、macOS 与 Linux（预览 / 仅运行时） |
+| 随包第一方插件与离线 GraalJS | 包含 | 包含 |
+| 安装位置 | 默认 `%LOCALAPPDATA%\Turboism`，可自选 | 解压到的任意独立文件夹 |
+| Cubism 检测 | 内置于安装向导 | 需自行运行 `configure_turboism.ps1` |
+| 启动入口 | 开始菜单与桌面快捷方式（可选） | 配置向导生成的快捷方式，或 `launch-cubism-turboism.bat` |
+| Cubism 官方 BAT 集成 | 默认勾选，可取消 | 不启用 |
+| 移除方式 | `uninstall.exe` | 关闭 Cubism 后删除文件夹 |
 
-### 移除安装向导中的模式与插件选择页
+## 安装器选项
 
-安装器不再包含模式选择页或逐项插件勾选页：
+Windows 安装器按当前用户安装，依次包含以下页面：
 
-- `TurboismInstaller-<version>-full.exe` 会安装所有第一方插件，无需逐项选择。
-- `TurboismInstaller-<version>-thin.exe` 仅安装框架文件，不放置任何插件。
-- 用户可在 Cubism 启动后通过 **Turboism → 管理插件…** 自由启用或停用插件；更改在重启 Cubism 后生效。
-- 经签名验证的第一方插件会在后台自动更新。标记为热更新（hot-reload）的插件立即生效；其他插件在重启 Cubism 后生效。用户可在设置中关闭官方插件自动更新。
+1. **语言**：在欢迎页之前选择英语、简体中文、日语或韩语。该选择只影响安装器界面，绝不会写入 `config.json`。
+2. **许可与确认**：接受 AGPL-3.0-only 许可，阅读《最终用户运行时声明与免责声明》，并勾选全部四项必需确认。
+3. **目录**：Turboism 主目录，默认 `%LOCALAPPDATA%\Turboism`。
+4. **GraalVM**：为可选的 Turboism 托管 GraalVM 运行时（约 326 MiB）选择 **稍后安装** 或 **立即下载并安装**（推荐）。下载内容会校验大小、SHA-256 与发布元数据，且只在选择后才会下载；也可以稍后通过 Turboism 配置向导安装。
+5. **Cubism 安装**：安装器会扫描已安装的 Cubism Editor，也可通过 **导入版本** 添加文件夹。即使未找到受支持的安装，Turboism 仍可安装，之后再用 `configure_turboism.ps1` 配置。
+6. **启动选项**：选择 Cubism 如何随 Turboism 启动：
+   - **创建 Turboism 开始菜单快捷方式**（推荐，默认勾选）；
+   - **创建 Turboism 桌面快捷方式**（默认勾选）；
+   - **修改所选 Cubism 官方启动 BAT，使现有 Cubism 快捷方式加载 Turboism**（推荐，默认勾选）。
 
-## 变体间的安全升级
+   如果三项全部取消，安装器会警告 Turboism 将无法通过任何常规启动路径激活。
+7. **完成**：可选择立即启动 Turboism。
 
-不同变体之间的覆盖安装安全且受控：
+### Cubism 官方 BAT 集成
 
-- **Thin 覆盖 Full**：使用 Thin 安装器升级既有 Full 安装时，会更新框架文件，并原样保留现有的 `plugins/` 目录与用户配置。
-- **Full 覆盖 Thin**：使用 Full 安装器升级 Thin 安装时，会安装或更新全部随包第一方插件，同时保留 `config.json` 中既有的 `disabledPlugins` 停用设置。
+自 0.67.0 起，安装器默认勾选 Cubism 官方 BAT 集成。它会备份并修改所选的 `CubismEditor5.bat` 启动器，使现有的 Cubism 快捷方式、文件关联及其他入口无需经过托管启动器即可加载 Turboism。
 
-无论何种升级方式，`config.json` 中的用户偏好以及 `cubism-installations.json` 中的 Cubism 安装关联均会妥善保留。
+- 可在启动选项页取消勾选；开始菜单快捷方式与其相互独立。
+- 该操作经过哈希校验且幂等：安装后被手动编辑过的 BAT 文件会被报告为冲突，绝不会被覆盖。
+- 卸载时会依据已校验的备份恢复原文件。
+- 静默安装同样会应用该集成。
+- 只有集成这一步会通过 UAC 提权；其余安装过程无需管理员权限。
 
-## 可选脚本引擎与 GraalVM 组件
+## 升级
 
-Windows 安装器提供获取 JavaScript 引擎与 GraalVM 依赖的可选组件：
+针对同一 Turboism 主目录运行新版安装器即可。它会升级现有安装，安装当前随包的第一方插件，退役已废弃的官方插件 JAR（依据其内嵌的插件 ID 判定，绝不只凭文件名），并保留既有的 `disabledPlugins` 条目，因此您停用过的插件会继续保持停用。`config.json` 中的其他有效设置以及 `cubism-installations.json` 中的 Cubism 安装关联也会保留。
 
-- 不勾选该项仍可保证基础框架与 Java 插件完整可用。
-- 稍后可通过 `install-script-engine.ps1` 脚本或设置页面进行下载和配置。
-- 仅用于开发的 `Turboism with fx` 插件及其托管 runtime 字节绝不包含在任何正式发行安装包中。
+对于便携 ZIP，请按[安装](./installation)中的说明解压新版归档，然后重新运行配置向导。
 
-## 历史版本安装包（0.67.0-beta.3 之前）
+仅用于开发的 `Turboism with fx` 插件及托管 fx runtime 字节绝不会包含在正式发行安装包中。
 
-在 **0.67.0-beta.3** 之前，Turboism 使用传统的安装包分发方案：
+## 历史安装包
 
-- 单一的 Windows 安装器 `TurboismInstaller-<version>.exe`，其中包含 Full 和 Lite 安装模式选择页以及组件复选框页。
-- 跨平台的 IzPack Java 安装器 `TurboismInstaller-<version>.jar`（需要 Java 17 或更新版本），提供 Full、Thin 和 Lite 模式。
-- 便携归档包以 `turboism-<version>-full.zip` 和 `turboism-<version>-lite.zip` 形式分发。
+- **0.67.0-beta.3 至 0.67.0-beta.7** 曾短暂提供两种变体的四种下载：Full（`TurboismInstaller-<version>-full.exe`、`turboism-<version>-full.zip`）包含全部第一方插件，Thin（`TurboismInstaller-<version>-thin.exe`、`turboism-<version>-thin.zip`）仅包含运行时。该布局已退役；在 Thin 安装上运行当前安装器会安装随包插件，同时保留既有的 `disabledPlugins` 停用设置。
+- **0.44.0 及更早版本**使用传统方案：带 Full/Lite 模式选择页和逐项插件复选框的单一 Windows 安装器 `TurboismInstaller-<version>.exe`、跨平台 IzPack Java 安装器 `TurboismInstaller-<version>.jar`（需要 Java 17 或更新版本），以及便携归档 `turboism-<version>-full.zip` 和 `turboism-<version>-lite.zip`。
 
-自 0.67.0-beta.3 起：
-- Java 安装器 JAR 已退役。macOS 和 Linux 用户请使用便携 ZIP 归档。
-- 历史上的 “Lite” 模式被独立的 Thin 变体（`-thin.exe` 与 `-thin.zip`）取代。
-- 原安装器中的插件逐项勾选已被应用内的“插件市场”和“管理插件”窗口全面取代。
+Java 安装器已不再发布。macOS 和 Linux 请使用便携 ZIP。

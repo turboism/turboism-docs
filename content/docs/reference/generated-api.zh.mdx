@@ -9,14 +9,25 @@ SDK Javadoc 必须从对应的 Turboism 源码生成，并在完成审查后才�
 
 | 项目 | 值 |
 | --- | --- |
-| 生成来源 | Turboism 开发源码 `4a21b8b2b`（文档版本 0.67.0） |
-| 自述版本 | `sdk 0.67.0 API` |
+| 生成来源 | Turboism Stable 源码 `5e0f8b02c`（标签 `v0.67.4`） |
+| 自述版本 | `sdk 0.67.4 API` |
 | 公共包数量 | 63 |
-| 可搜索的公共类型数量 | 933 |
+| 可搜索的公共类型数量 | 948 |
 | 托管地址 | [turboism.dev/sdk/index.html](https://turboism.dev/sdk/index.html) |
 
 
-[Beta `0.67.0-beta.3`](https://github.com/turboism/Turboism/releases/tag/v0.67.0-beta.3)（`e4bbe7f64`）中的 SDK 源码与生成本站参考页的源码完全一致。示例可使用该发行版的 SDK 和事件处理器 JAR 编译。设置脚本下载最新**已发布**的 Beta；请核对 `gradle.properties` 和文件名，确认实际编译版本。
+本参考页由 [Stable `0.67.4`](https://github.com/turboism/Turboism/releases/tag/v0.67.4) 发布标签生成。示例请使用该发行版的 `turboism-sdk-0.67.4.jar` 和 `turboism-event-processor-0.67.4.jar` 编译。模板设置脚本默认使用 stable 渠道；请核对 `gradle.properties` 和文件名，确认实际编译版本。
+
+## 相对 0.67.0 参考页的变更
+
+与此前的 0.67.0 参考页相比，当前托管参考新增 15 个公共类型：
+
+- `dev.turboism.sdk.cubism.model`: `AtlasPageAppendPlan`、`Drawables.SourceGeometryRequest`、`ModelImagePlacement`、`WarpMorphSnapshot`（含 `WarpMorphSnapshot.Form` 和 `WarpMorphSnapshot.Key`）；
+- `dev.turboism.sdk.cubism.textureatlas`: `TextureAtlasPackingException`（含 `TextureAtlasPackingException.Reason`）、`TextureAtlasPageSize`，以及 `TextureAtlasPolygonLayoutPlanner`（标注为 `@Incubating`）；
+- `dev.turboism.sdk.plugin`: `AbstractTurboismPlugin`；
+- `dev.turboism.sdk.ui.appearance`: `PaletteRowAction`（含 `PaletteRowAction.State`）；
+- `dev.turboism.sdk.ui.settings`: `SettingsControl.FilePath`；
+- `dev.turboism.sdk.ui.window`: `TurboismProgressDialog`。
 
 ## 文档更新流程
 
@@ -34,7 +45,7 @@ SDK Javadoc 必须从对应的 Turboism 源码生成，并在完成审查后才�
 
 ## 已审查的发布例外
 
-当前托管内容反映 `4a21b8b2b` 已编译的公共面，因此其中包含两项被审查认定为例外、而非隐藏问题的内容。每次同步都会重新检查这两项；不在此列表中的任何阻塞项仍会导致同步失败。
+当前托管内容反映 `5e0f8b02c` 已编译的公共面，因此其中包含两项被审查认定为例外、而非隐藏问题的内容。每次同步都会重新检查这两项；不在此列表中的任何阻塞项仍会导致同步失败。
 
 ### `ActiveReadProjections` 是 public，但不是契约
 

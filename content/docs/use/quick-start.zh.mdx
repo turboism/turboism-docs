@@ -7,8 +7,8 @@ description: 安装已发布的 Turboism 安装包，进行配置，并验证首
 
 ## 1. 安全准备
 
-- Windows x64 是受支持的 Cubism 宿主平台。受支持的 Editor 版本取决于 Turboism 发行版：Stable 0.44.0 支持 5.2.03、5.3.02 和 5.3.03，Beta 0.67.0-beta.3 支持 5.0.00–5.3.04；请参阅[兼容性](/docs/use/compatibility)。
-- 自 0.67.0-beta.3 起，原 Java 安装器 JAR 已退役；macOS 和 Linux 请使用便携 ZIP 归档。
+- Windows x64 是受支持的 Cubism 宿主平台。当前稳定版 0.67.4 支持 5.0.00 至 5.3.04 的全部 20 个已审核 Cubism Editor 版本；请参阅[兼容性](/docs/use/compatibility)。
+- 旧版 Java 安装器已不再发布；macOS 和 Linux 请使用便携 ZIP 安装包。
 - 备份要打开的项目，或使用一次性副本。
 - 将 Turboism home 与 Cubism 安装分开。
 - 不要编辑 Cubism JAR、DLL、BAT 文件或许可状态。
@@ -17,12 +17,14 @@ description: 安装已发布的 Turboism 安装包，进行配置，并验证首
 
 1. 打开 [turboism.dev/download](https://turboism.dev/download) 并选择渠道：**Stable**、**Beta** 或 **Nightly**。
 2. 下载一个安装包及其配对的 `.sha256` 文件：
-   - `TurboismInstaller-<version>-full.exe` 或 `turboism-<version>-full.zip`：包含运行时框架及全部随包第一方插件。
-   - `TurboismInstaller-<version>-thin.exe` 或 `turboism-<version>-thin.zip`：仅包含运行时框架。
+   - `TurboismInstaller-<version>.exe`：Windows 安装器（Windows 上推荐）。
+   - `turboism-<version>.zip`：便携归档，用于在 Windows、macOS 或 Linux 上手动配置。
+
+   两种安装包都包含运行时框架、全部随包第一方插件以及完整的离线 GraalJS 引擎。
 3. 验证文件哈希，例如在 PowerShell 中：
 
    ```powershell
-   Get-FileHash ".\TurboismInstaller-<version>-full.exe" -Algorithm SHA256
+   Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
    ```
 
 安装器未签名，因此校验和是你可以自行完成的完整性检查。
@@ -31,21 +33,22 @@ description: 安装已发布的 Turboism 安装包，进行配置，并验证首
 
 ### Windows `.exe` 安装器
 
-1. 运行 `TurboismInstaller-<version>-full.exe`（完整版）或 `TurboismInstaller-<version>-thin.exe`（精简版）。
+1. 运行 `TurboismInstaller-<version>.exe`。
 2. 选择安装器语言（英语、简体中文、日语或韩语）。
 3. 阅读许可协议，并确认全部四项必需确认。
-4. 选择安装目录（默认为 `%LOCALAPPDATA%\Turboism`）。安装器不再包含模式选择页或插件勾选页：完整版安装全部第一方插件，精简版不安装插件。
-5. 决定是否下载可选的托管 GraalVM / JavaScript 引擎组件。
-6. 当安装器打开 `configure_turboism.ps1` 时，选择要使用的 Cubism 安装并保存。取消配置器会留下一个有效的仅框架安装。
-7. 通过所选 Cubism 根目录的托管启动器启动 Cubism（`launch-cubism-turboism.bat`）。
+4. 选择安装目录（默认为 `%LOCALAPPDATA%\Turboism`）。安装器没有模式选择页或插件勾选页：会安装全部随包第一方插件。
+5. 选择立即下载可选的 Turboism 托管 GraalVM 运行时，或稍后通过配置向导安装。
+6. 检查安装器找到的 Cubism 安装，或通过 **导入版本** 添加。即使一个都没找到，Turboism 仍会完成安装，之后可用 `configure_turboism.ps1` 配置 Cubism。
+7. 在启动选项页保留或更改开始菜单快捷方式、桌面快捷方式和 Cubism 官方 BAT 集成的选择。BAT 集成默认勾选，使现有 Cubism 快捷方式加载 Turboism；取消勾选则不会改动官方 BAT 文件。
+8. 通过 Turboism 快捷方式、现有 Cubism 快捷方式（启用 BAT 集成时）或 `launch-cubism-turboism.bat` 启动 Cubism。
 
 ### 便携式 ZIP
 
-1. 将整个归档（`turboism-<version>-full.zip` 或 `turboism-<version>-thin.zip`）解压到独立文件夹中。
+1. 将整个归档（`turboism-<version>.zip`）解压到独立文件夹中，不要解压到 Cubism 安装目录。
 2. 从该文件夹运行 `configure_turboism.ps1`，并选择 Cubism 安装。
 3. 通过生成的快捷方式或 `launch-cubism-turboism.bat` 启动 Cubism。
 
-**0.67.0-beta.3** 之前的历史版本使用旧版构件（`TurboismInstaller-<version>.exe`、IzPack `.jar` 安装器以及 `turboism-<version>-lite.zip`）。Java 安装器 JAR 已退役。
+安装器选项与历史安装包（包括 0.67.0 Beta 期间已退役的 Full/Thin 下载，以及 0.44.0 及更早版本的旧版构件）请参阅[安装器与便携 ZIP](./installer-modes)。
 
 安装器语言只影响安装器。Turboism 在运行时使用的语言来自运行时 `locale` 设置，插件界面语言跟随 Cubism Editor 的 **File → Environment Settings → General → Language**。
 
@@ -64,7 +67,7 @@ description: 安装已发布的 Turboism 安装包，进行配置，并验证首
 
 ## 5. 添加与管理插件
 
-完整版（Full）已预装所有第一方插件。使用精简版（Thin）或需要获取新插件时：
+每个安装包都已预装全部随包第一方插件。如需添加更多插件或进行管理：
 
 - 打开 Cubism，点击 **Turboism → 插件市场…**（或访问 [turboism.dev/plugins](https://turboism.dev/plugins)）浏览并安装插件。
 - 第一方插件在通过签名验证后会在后台自动更新。标记为热更新（hot-reload）的插件立即生效；其他插件在重启 Cubism 后生效。用户可在设置中关闭官方插件自动更新。

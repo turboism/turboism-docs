@@ -26,10 +26,12 @@ Do not edit installed JARs, patch `config.json` by hand, or restore files into a
 
 A failed staged plugin replacement may restore the immediately previous plugin files internally. That is not a user-facing historical-version feature and does not establish a general plugin downgrade workflow.
 
+Plugins declare the minimum Turboism API they need. Several official plugins require API `0.67.2` or `0.67.4` (see [First-Party Plugins](./first-party-plugins)), so they do not load on an older framework.
+
 ## Plan before updating
 
 - Read [Update Policy](./update-policy) before changing a build or channel.
-- See [Full and Thin Variants](./installer-modes) for the Full and Thin packages.
+- See [Installer and Portable ZIP](./installer-modes) for the two package formats and how upgrades treat plugins.
 - Keep an independent backup of projects and of `config.json` plus plugin `config/` and `data/` content.
 
 Automatic recovery and a complete rollback interface remain unavailable.

@@ -1,6 +1,6 @@
 ---
 title: Plugin Manifest and Packaging
-description: Define a plugin descriptor for schema versions 2, 3, and 4, and distribute the built JAR.
+description: Define a plugin descriptor for schema versions 2 through 5, and distribute the built JAR.
 ---
 
 Every Turboism plugin JAR contains exactly one descriptor at:
@@ -9,13 +9,14 @@ Every Turboism plugin JAR contains exactly one descriptor at:
 META-INF/turboism/plugin.json
 ```
 
-The descriptor declares `"format": "turboism.plugin.meta"` and a `schemaVersion`. Runtime accepts schema versions **2**, **3**, and **4**, validates strictly against the matching contract, and does not upgrade a descriptor automatically.
+The descriptor declares `"format": "turboism.plugin.meta"` and a `schemaVersion`. Runtime accepts schema versions **2**, **3**, **4**, and **5**, validates strictly against the matching contract, and does not upgrade a descriptor automatically.
 
 | Version | Contract |
 | --- | --- |
 | 2 | Base lifecycle, entrypoints, API range, dependencies, permissions, resources, and localization. |
 | 3 | Adds the required `category` field and optional `tags` (v3 is what the first-party plugins use). |
 | 4 | Adds declared cross-plugin event contracts: `eventExports` and `eventImports`. |
+| 5 | Adds `eventContracts`: embedded, class-only public event contract JARs under `META-INF/turboism/contracts/`, each pinned by `id`, `version`, `artifact`, and `sha256`. |
 
 Schema version 1 is not loaded. Unknown fields are rejected rather than ignored.
 
@@ -34,7 +35,7 @@ Schema version 1 is not loaded. Unknown fields are rejected rather than ignored.
   "entrypoints": [
     "dev.example.plugin.HelloPlugin"
   ],
-  "turboismApi": "[0.1.0,0.2.0)",
+  "turboismApi": "[0.67.0,1.0.0)",
   "authors": [
     { "name": "Example Author" }
   ],
@@ -56,6 +57,8 @@ Schema version 1 is not loaded. Unknown fields are rejected rather than ignored.
 ```
 
 Required fields are `id`, `name`, `version`, `entrypoints`, `turboismApi`, `authors`, `website`, `resources`, and `i18n`; schema 3 additionally requires `category`.
+
+`turboismApi` uses `[min,max)`: the minimum is inclusive and the maximum exclusive. The current plugin SDK API range is `[0.67.0,1.0.0)`; its lower bound is the minimum framework base version, with beta, nightly, and SNAPSHOT suffixes ignored. Choose the minimum that supplies every SDK member you use. Legacy `[0.1.0,0.2.0)` plugins fail discovery with `TURBOISM_API_INCOMPATIBLE`.
 
 ## Entrypoint rules
 

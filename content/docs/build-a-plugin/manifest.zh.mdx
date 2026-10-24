@@ -1,6 +1,6 @@
 ---
 title: 插件 Manifest 与打包
-description: 为 schema 版本 2、3 和 4 定义插件描述符，并分发构建产物 JAR。
+description: 为 schema 版本 2 至 5 定义插件描述符，并分发构建产物 JAR。
 ---
 
 每个 Turboism 插件 JAR 都恰好包含一个位于以下位置的描述符：
@@ -9,13 +9,14 @@ description: 为 schema 版本 2、3 和 4 定义插件描述符，并分发构�
 META-INF/turboism/plugin.json
 ```
 
-描述符声明 `"format": "turboism.plugin.meta"` 和 `schemaVersion`。Runtime 接受 schema 版本 **2**、**3** 和 **4**，并严格按对应契约进行校验，不会自动升级描述符。
+描述符声明 `"format": "turboism.plugin.meta"` 和 `schemaVersion`。Runtime 接受 schema 版本 **2**、**3**、**4** 和 **5**，并严格按对应契约进行校验，不会自动升级描述符。
 
 | 版本 | 契约 |
 | --- | --- |
 | 2 | 基础生命周期、入口点、API 范围、依赖、权限、资源和本地化。 |
 | 3 | 新增必需的 `category` 字段和可选的 `tags`（第一方插件使用 v3）。 |
 | 4 | 新增声明的跨插件事件契约：`eventExports` 和 `eventImports`。 |
+| 5 | 新增 `eventContracts`：嵌入在 `META-INF/turboism/contracts/` 下、仅含类文件的公共事件契约 JAR，每项由 `id`、`version`、`artifact` 和 `sha256` 固定。 |
 
 不会加载 schema 版本 1。未知字段会被拒绝，而不是被忽略。
 
@@ -34,7 +35,7 @@ META-INF/turboism/plugin.json
   "entrypoints": [
     "dev.example.plugin.HelloPlugin"
   ],
-  "turboismApi": "[0.1.0,0.2.0)",
+  "turboismApi": "[0.67.0,1.0.0)",
   "authors": [
     { "name": "Example Author" }
   ],
@@ -56,6 +57,8 @@ META-INF/turboism/plugin.json
 ```
 
 必需字段为 `id`、`name`、`version`、`entrypoints`、`turboismApi`、`authors`、`website`、`resources` 和 `i18n`；schema 3 还额外要求 `category`。
+
+`turboismApi` 使用 `[min,max)`：最小值包含在内，最大值不包含。当前插件 SDK API 范围是 `[0.67.0,1.0.0)`；其下限是最低框架基础版本，忽略 beta、nightly 和 SNAPSHOT 后缀。请选择能提供你所用全部 SDK 成员的最低版本。旧式 `[0.1.0,0.2.0)` 插件会在发现阶段以 `TURBOISM_API_INCOMPATIBLE` 失败。
 
 ## 入口点规则
 

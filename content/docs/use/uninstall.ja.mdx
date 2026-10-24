@@ -7,9 +7,9 @@ description: Turboism を専用のアンインストーラーで削除し、個�
 
 ## インストール方法別のアンインストール
 
-- **Windows `.exe` インストール**（`TurboismInstaller-<version>-full.exe` または `TurboismInstaller-<version>-thin.exe`）— Turboism home ディレクトリの `uninstall.exe` を実行します。
+- **Windows `.exe` インストール**（`TurboismInstaller-<version>.exe`）— Turboism home ディレクトリの `uninstall.exe` を実行します。
 - **ポータブル ZIP インストール**（Windows 手動セットアップ、macOS、Linux）— ポータブルアーカイブにはアンインストーラーがなく、公式 BAT 統合も行われません。Cubism を完全に終了し、Turboism フォルダを削除してください。
-- **0.67.0-beta.3 未満の旧インストール** — 廃止された Java IzPack インストーラーで作成されたインストールでは、Windows/Linux 上で `java -jar <home>\Uninstaller\uninstaller.jar`、macOS 上で `uninstall.command` を実行しました。
+- **従来のインストール（0.44.0 以前）** — 廃止された Java IzPack インストーラーで作成されたインストールでは、Windows/Linux 上で `java -jar <home>\Uninstaller\uninstaller.jar`、macOS 上で `uninstall.command` を実行しました。
 
 `.exe` インストールの場合の手順:
 
@@ -23,15 +23,15 @@ description: Turboism を専用のアンインストーラーで削除し、個�
 
 - アンインストーラーは、Turboism が記録した管理ショートカット、状態、およびインストールファイル、ランタイムの `logs`、`state`、`cache` データを削除します。
 - `config.json` は既定で保持され、チェックを外した場合にのみ削除されます。
-- Full アンインストーラーはインストーラーが配置した第一方プラグイン JAR のみを削除し、不明なファイルやサードパーティプラグイン JAR は保持します。Thin インストーラーはプラグインを配置しないため、プラグインを削除しません。
+- アンインストーラーはインストーラーが配置したファーストパーティプラグイン JAR のみを削除し、不明なファイルやサードパーティプラグイン JAR は保持します。
 - `data/<pluginId>/` 配下のプラグインデータや `config/<pluginId>/` 配下の設定は、アンインストーラーによって自動削除されることはありません。
 
 アンインストール後に残ったフォルダを確認し、必要なデータをバックアップしてください。
 
 ## ランチャー連携
 
-公式 Cubism 起動 BAT との連携を有効にしていた場合、アンインストール時にハッシュ保護付きバックアップから元の BAT ファイルが自動復元されます。インストール後にファイルが手動編集されていた場合、クリーンアップは競合を報告し、変更を上書きせずに状態とバックアップを保持します。
+Cubism 公式起動 BAT 統合は Windows インストーラーで既定で選択されています。統合が適用されていた場合、アンインストーラーはハッシュ保護付きバックアップから元の BAT ファイルを自動復元します。インストール後にファイルが手動編集されていた場合、クリーンアップは競合を報告し、変更を上書きせずに状態とバックアップを保持します。
 
 ## アンインストール前後
 
-インストールを置き換える前に[更新ポリシー](./update-policy)を確認してください。更新やバリアント変更に失敗した場合は、まず[ダウングレードと復旧](./downgrade-recovery)を参照してください。
+インストールを置き換える前に[更新ポリシー](./update-policy)を確認してください。更新やインストール変更に失敗した場合は、まず[ダウングレードと復旧](./downgrade-recovery)を参照してください。

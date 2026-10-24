@@ -496,24 +496,17 @@ export function buildCompatibilityData(sourceRoot) {
 
   const releases = [
     {
+      version: "0.67.4",
+      channel: "stable",
+      cubismVersions: reviewed,
+      cubismRange: reviewedRange,
+      platforms: ["windows-x64"],
+    },
+    {
       version: "0.44.0",
       channel: "stable",
       cubismVersions: ["5.2.03", "5.3.02", "5.3.03"],
       cubismRange: "5.2.03, 5.3.02, 5.3.03",
-      platforms: ["windows-x64"],
-    },
-    {
-      version: "0.44.1-0.nightly.11",
-      channel: "nightly",
-      cubismVersions: ["5.2.03", "5.3.02", "5.3.03"],
-      cubismRange: "5.2.03, 5.3.02, 5.3.03",
-      platforms: ["windows-x64"],
-    },
-    {
-      version: "0.67.0-beta.1",
-      channel: "beta",
-      cubismVersions: reviewed,
-      cubismRange: reviewedRange,
       platforms: ["windows-x64"],
     },
   ];

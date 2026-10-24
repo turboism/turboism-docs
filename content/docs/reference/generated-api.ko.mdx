@@ -9,14 +9,25 @@ SDK Javadoc은 대응하는 Turboism 소스 트리에서 생성하며, 검토를
 
 | 항목 | 값 |
 | --- | --- |
-| 생성 출처 | Turboism 개발 소스 `4a21b8b2b` (문서 버전 0.67.0) |
-| 자체 표기 버전 | `sdk 0.67.0 API` |
+| 생성 출처 | Turboism Stable 소스 `5e0f8b02c` (태그 `v0.67.4`) |
+| 자체 표기 버전 | `sdk 0.67.4 API` |
 | 공개 패키지 수 | 63 |
-| 검색 가능한 공개 타입 수 | 933 |
+| 검색 가능한 공개 타입 수 | 948 |
 | 호스팅 위치 | [turboism.dev/sdk/index.html](https://turboism.dev/sdk/index.html) |
 
 
-[Beta `0.67.0-beta.3`](https://github.com/turboism/Turboism/releases/tag/v0.67.0-beta.3)(`e4bbe7f64`)의 SDK 소스는 이 레퍼런스를 생성한 소스와 동일합니다. 예제를 컴파일할 때 해당 릴리스의 SDK와 이벤트 프로세서 JAR를 사용할 수 있습니다. 설정 스크립트는 최신 **게시된** Beta를 다운로드하므로 `gradle.properties`와 파일명에서 실제 버전을 확인하세요.
+이 레퍼런스는 [Stable `0.67.4`](https://github.com/turboism/Turboism/releases/tag/v0.67.4) 릴리스 태그에서 생성되었습니다. 예제를 컴파일할 때는 해당 릴리스의 `turboism-sdk-0.67.4.jar`와 `turboism-event-processor-0.67.4.jar`를 사용하세요. 템플릿 설정 스크립트는 기본적으로 stable 채널을 사용합니다. `gradle.properties`와 파일명에서 실제로 컴파일하는 버전을 확인하세요.
+
+## 0.67.0 레퍼런스 이후 변경 사항
+
+이전 0.67.0 레퍼런스와 비교해 공개 타입 15개가 추가되었습니다.
+
+- `dev.turboism.sdk.cubism.model`: `AtlasPageAppendPlan`, `Drawables.SourceGeometryRequest`, `ModelImagePlacement`, `WarpMorphSnapshot` (`WarpMorphSnapshot.Form`, `WarpMorphSnapshot.Key` 포함);
+- `dev.turboism.sdk.cubism.textureatlas`: `TextureAtlasPackingException` (`TextureAtlasPackingException.Reason` 포함), `TextureAtlasPageSize`, `TextureAtlasPolygonLayoutPlanner` (`@Incubating`);
+- `dev.turboism.sdk.plugin`: `AbstractTurboismPlugin`;
+- `dev.turboism.sdk.ui.appearance`: `PaletteRowAction` (`PaletteRowAction.State` 포함);
+- `dev.turboism.sdk.ui.settings`: `SettingsControl.FilePath`;
+- `dev.turboism.sdk.ui.window`: `TurboismProgressDialog`.
 
 ## 문서 갱신 절차
 
@@ -34,7 +45,7 @@ SDK Javadoc은 대응하는 Turboism 소스 트리에서 생성하며, 검토를
 
 ## 검토된 게시 예외
 
-게시된 레퍼런스는 `4a21b8b2b`의 컴파일된 공개 표면을 그대로 반영하므로, 검토가 숨은 문제가 아니라 예외로 판정한 두 가지를 포함합니다. 두 항목 모두 동기화할 때마다 다시 검사하며, 이 목록에 없는 차단 요소는 계속 실행을 실패시킵니다.
+게시된 레퍼런스는 `5e0f8b02c`의 컴파일된 공개 표면을 그대로 반영하므로, 검토가 숨은 문제가 아니라 예외로 판정한 두 가지를 포함합니다. 두 항목 모두 동기화할 때마다 다시 검사하며, 이 목록에 없는 차단 요소는 계속 실행을 실패시킵니다.
 
 ### `ActiveReadProjections`는 public이지만 계약이 아닙니다
 

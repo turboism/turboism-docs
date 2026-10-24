@@ -22,7 +22,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 
 ## Cubism Editor에서의 Turboism
 
-실행 시 Turboism은 Live2D Cubism Editor 최상위 **Turboism** 메뉴(0.67.0-beta.3 이전 릴리스에서는 "플러그인"/Plugins)에 직접 통합됩니다:
+실행 시 Turboism은 Live2D Cubism Editor 최상위 **Turboism** 메뉴(0.67.0 이전 릴리스에서는 "플러그인"/Plugins)에 직접 통합됩니다:
 
 - **플러그인 마켓…** — 인앱 마켓 또는 [turboism.dev/plugins](https://turboism.dev/plugins)에서 퍼스트 파티 및 추천 플러그인을 탐색하고 설치합니다.
 - **플러그인 관리…** — 플러그인 사용 여부를 설정하고, 제거하거나, 로컬 JAR을 추가합니다.
@@ -30,7 +30,7 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - **업데이트 확인** — 최신 프레임워크 릴리스를 확인합니다.
 - **Turboism 설정…**, **키 바인딩…**, **로그…**, 활성 플러그인 액션, **정보**.
 
-0.67.0-beta.3부터 퍼스트 파티 플러그인은 서명 검증을 거쳐 백그라운드에서 자동 업데이트됩니다. 핫 리로드(hot-reload)로 표시된 플러그인은 즉시 적용되며 기타 업데이트는 Cubism 재시작 후 적용됩니다.
+0.67.0부터 퍼스트 파티 플러그인은 서명 검증을 거쳐 백그라운드에서 자동 업데이트됩니다. 핫 리로드(hot-reload)로 표시된 플러그인은 즉시 적용되며 기타 업데이트는 Cubism 재시작 후 적용됩니다. 백그라운드 업데이트는 설정에서 끌 수 있습니다.
 
 ## 문서 범위
 
@@ -41,9 +41,9 @@ Turboism은 하나의 공개 SDK 등급을 제공합니다. 소스 저장소의 
 - SDK에 API가 존재한다고 해서 지원되는 모든 Cubism Editor 버전에서 실행할 수 있는 것은 아닙니다;
 - Editor 버전이 지원된다고 해서 모든 플러그인 기능을 그 버전에서 사용할 수 있는 것은 아닙니다.
 
-지원되는 호스트 플랫폼은 Windows x64입니다. 지원되는 Cubism Editor 버전은 Turboism 릴리스에 따라 다르며, Stable 0.44.0은 5.2.03, 5.3.02, 5.3.03을 허용하고 Beta 0.67.0-beta.3은 5.0.00부터 5.3.04까지의 검토된 20개 버전 전체를 허용합니다([호환성](/docs/use/compatibility) 참고). 지원되지 않는 조합은 검증되지 않은 경로로 대체하지 않고 안전하게 실패합니다.
+지원되는 호스트 플랫폼은 Windows x64입니다. 현재 Stable 릴리스 0.67.4는 5.0.00부터 5.3.04까지 검토된 20개 Cubism Editor 버전 전체를 지원합니다([호환성](/docs/use/compatibility) 참고). 지원되지 않는 조합은 검증되지 않은 경로로 대체하지 않고 안전하게 실패합니다.
 
-0.67.0-beta.3부터 Turboism은 Full 및 Thin 변형으로 나뉜 4가지 정식 릴리스 자산(`TurboismInstaller-<version>-full.exe`, `TurboismInstaller-<version>-thin.exe`, `turboism-<version>-full.zip`, `turboism-<version>-thin.zip`)을 제공합니다. 0.67.0-beta.3 이전 릴리스에서는 레거시 자산을 사용했으며 크로스 플랫폼 Java 설치 프로그램 JAR은 폐지되었습니다.
+0.67.0부터 각 릴리스의 제품 다운로드는 Windows 설치 프로그램 `TurboismInstaller-<version>.exe`와 포터블 `turboism-<version>.zip` 두 가지뿐이며, 각각 `.sha256` 파일이 함께 제공됩니다. 두 패키지 모두 번들된 모든 퍼스트 파티 플러그인을 포함합니다. 0.67.0 Beta 릴리스에서만 사용된 Full/Thin 4개 다운로드 구성은 폐지되었으며, 크로스 플랫폼 Java 설치 프로그램 JAR도 더 이상 게시되지 않습니다.
 
 이어서 읽기:
 

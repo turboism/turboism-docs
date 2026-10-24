@@ -6,7 +6,7 @@ description: 公開 SDK を使用して最小限の Java 17 Turboism プラグ�
 Turboism は公式のスタンドアロンプロジェクトテンプレートとスキャフォールディングツールを提供しています。テンプレートから独立リポジトリを作成し、自動セットアップスクリプトを実行して対応する SDK とアノテーションプロセッサを取得できます。
 
 
-この例は現在開発中の SDK を対象としています。セットアップは最新の**公開済み** Beta SDK を取得するため、ホスト中のリファレンスより古い場合があります。`gradle.properties` とダウンロードしたファイル名で実際の SDK バージョンを確認してください。生成リファレンスはリリース告知ではありません。
+この例は Stable 0.67.4 を対象としています。セットアップスクリプトは既定で stable チャネルを解決し、そのリリースから `turboism-sdk-<version>.jar` と `turboism-event-processor-<version>.jar` を取得します。`gradle.properties`（`turboismSdkVersion`）とダウンロードしたファイル名で、コンパイルに使う SDK バージョンを確認してください。`--channel beta` や `--version <version>` は、意図的に別のリリースを対象にする場合にのみ使用します。
 
 ## 1. 公式テンプレートの使用（推奨）
 
@@ -21,10 +21,10 @@ cd my-plugin
 
 ```bash
 # Linux / macOS
-./scripts/setup.sh --channel beta
+./scripts/setup.sh --channel stable
 
 # Windows (PowerShell)
-.\scripts\setup.ps1 -Channel beta
+.\scripts\setup.ps1 -Channel stable
 ```
 
 ターミナルの対話式プロンプトに従ってプラグイン ID（例: `com.example.myplugin`）、表示名、パッケージ名、作者情報を入力します。スクリプトが Java パッケージとクラス名を再構成し、`libs/` に依存関係を設定します。
@@ -43,10 +43,10 @@ my-plugin/
 │   └── turboism-event-processor-*.jar
 ├── src/main/java/com/example/myplugin/MyPlugin.java
 ├── src/main/resources/META-INF/turboism/plugin.json
-└── src/test/java/com/example/myplugin/MyPluginTest.java
+└── src/main/resources/META-INF/turboism/cubism-versions.json
 ```
 
-`build.gradle.kts` の構成:
+セットアップスクリプトが JAR を `libs/` に配置した場合の `build.gradle.kts` の構成（JAR がない場合、テンプレートは `turboismSdkVersion` を使って `mavenLocal()` から `dev.turboism:sdk` と `dev.turboism:event-processor` を解決します）:
 
 ```kotlin
 plugins {
@@ -54,19 +54,19 @@ plugins {
 }
 
 java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 val sdkJars = fileTree("libs") { include("turboism-sdk-*.jar") }
-val processorJars = fileTree("libs") { include("turboism-event-processor-*.jar") }
+val eventProcessorJars = fileTree("libs") { include("turboism-event-processor-*.jar") }
 
 dependencies {
     compileOnly(sdkJars)
-    testImplementation(sdkJars)
-    annotationProcessor(processorJars)
-    annotationProcessor(sdkJars)
+    if (!eventProcessorJars.isEmpty) {
+        annotationProcessor(eventProcessorJars)
+        annotationProcessor(sdkJars)
+    }
 }
 ```
 
@@ -138,7 +138,7 @@ public final class MyPlugin implements TurboismPlugin {
   "entrypoints": [
     "com.example.myplugin.MyPlugin"
   ],
-  "turboismApi": "[0.1.0,0.2.0)",
+  "turboismApi": "[0.67.0,1.0.0)",
   "authors": [
     { "name": "Example Author" }
   ],
@@ -166,6 +166,7 @@ public final class MyPlugin implements TurboismPlugin {
 ```
 
 - `"lifecycle": { "hotReload": true }` はプラグインがホットリロードに対応していることを示し、Cubism を再起動せずに有効化、無効化、更新が即座に反映されます。
+- `turboismApi` はプラグイン SDK API 範囲です。`[0.67.0,1.0.0)` は 0.67.0 以上 1.0.0 未満のすべてのフレームワーク API を受け入れます。後のリリースで追加された SDK メンバーを使う場合は下限を引き上げてください。旧来の `[0.1.0,0.2.0)` 記述子は拒否されます。
 - 権限、リソース、国際化の詳細については [プラグインマニフェストとパッケージング](./manifest) を参照してください。
 
 ## 5. ビルドと検証
@@ -177,7 +178,7 @@ public final class MyPlugin implements TurboismPlugin {
 成果物は以下に書き込まれます:
 
 ```text
-build/libs/com.example.myplugin-0.1.0.jar
+build/libs/myplugin-turboism-plugin-0.1.0.jar
 ```
 
 ## 6. インストールとデバッグ

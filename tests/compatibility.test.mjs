@@ -6,7 +6,7 @@ const data = JSON.parse(readFileSync("lib/compatibility/data.json", "utf8"));
 
 test("compatibility data records pinned source commit and reviewed versions", () => {
   assert.equal(data.format, "turboism-docs.compatibility/v1");
-  assert.equal(data.sourceCommit, "4a21b8b2b");
+  assert.equal(data.sourceCommit, "5e0f8b02c");
   assert.equal(data.reviewedVersions.length, 20);
   assert.equal(data.reviewedRange, "5.0.00–5.3.04");
   assert.equal(data.plugins.length, 32);
@@ -14,16 +14,17 @@ test("compatibility data records pinned source commit and reviewed versions", ()
   assert.equal(data.restrictedCapabilities.length, 14);
 });
 
-test("release table covers 0.44.0 stable and 0.67.0-beta.1", () => {
-  const stable = data.releases.find((r) => r.version === "0.44.0");
-  const beta = data.releases.find((r) => r.version === "0.67.0-beta.1");
-  assert.ok(stable);
-  assert.deepEqual(stable.cubismVersions, ["5.2.03", "5.3.02", "5.3.03"]);
-  assert.deepEqual(stable.platforms, ["windows-x64"]);
-  assert.ok(beta);
-  assert.equal(beta.cubismVersions.length, 20);
-  assert.equal(beta.cubismRange, "5.0.00–5.3.04");
-  assert.deepEqual(beta.platforms, ["windows-x64"]);
+test("release table covers 0.67.4 stable and 0.44.0 history", () => {
+  const current = data.releases.find((r) => r.version === "0.67.4");
+  const previous = data.releases.find((r) => r.version === "0.44.0");
+  assert.ok(current);
+  assert.equal(current.channel, "stable");
+  assert.equal(current.cubismVersions.length, 20);
+  assert.equal(current.cubismRange, "5.0.00–5.3.04");
+  assert.deepEqual(current.platforms, ["windows-x64"]);
+  assert.ok(previous);
+  assert.deepEqual(previous.cubismVersions, ["5.2.03", "5.3.02", "5.3.03"]);
+  assert.deepEqual(previous.platforms, ["windows-x64"]);
 });
 
 test("all four locales provide compatibility pages and navigation entries", () => {
@@ -44,7 +45,7 @@ test("all four locales provide compatibility pages and navigation entries", () =
     assert.match(page, /<CompatibilityPluginTable\b/);
     assert.match(page, /<CompatibilityCapabilityTable\b/);
     assert.match(page, /0\.44\.0/);
-    assert.match(page, /0\.67\.0-beta\.1/);
+    assert.match(page, /0\.67\.4/);
     assert.match(page, /5\.1\.02/);
     assert.match(page, /5\.2\.00/);
   }

@@ -1,6 +1,6 @@
 ---
 title: プラグインマニフェストとパッケージング
-description: schema version 2、3、4 の plugin descriptor を定義し、ビルドした JAR を配布する。
+description: schema version 2〜5 の plugin descriptor を定義し、ビルドした JAR を配布する。
 ---
 
 すべての Turboism plugin JAR には、次の場所に descriptor が正確に 1 つあります。
@@ -9,13 +9,14 @@ description: schema version 2、3、4 の plugin descriptor を定義し、ビ�
 META-INF/turboism/plugin.json
 ```
 
-descriptor は `"format": "turboism.plugin.meta"` と `schemaVersion` を宣言します。Runtime が受け入れる schema version は **2**、**3**、**4** で、対応する contract に対して厳格に検証し、descriptor を自動で upgrade することはありません。
+descriptor は `"format": "turboism.plugin.meta"` と `schemaVersion` を宣言します。Runtime が受け入れる schema version は **2**、**3**、**4**、**5** で、対応する contract に対して厳格に検証し、descriptor を自動で upgrade することはありません。
 
 | バージョン | 契約 |
 | --- | --- |
 | 2 | 基本的な lifecycle、entrypoint、API range、dependency、permission、resource、localization。 |
 | 3 | 必須の `category` フィールドと任意の `tags` を追加します（first-party plugin が使用しているのは v3 です）。 |
 | 4 | 宣言された cross-plugin event contract（`eventExports` と `eventImports`）を追加します。 |
+| 5 | `eventContracts` を追加します。`META-INF/turboism/contracts/` 配下に埋め込む class のみの public event contract JAR で、それぞれ `id`、`version`、`artifact`、`sha256` で固定されます。 |
 
 schema version 1 はロードされません。未知のフィールドは無視されず、拒否されます。
 
@@ -34,7 +35,7 @@ schema version 1 はロードされません。未知のフィールドは無視
   "entrypoints": [
     "dev.example.plugin.HelloPlugin"
   ],
-  "turboismApi": "[0.1.0,0.2.0)",
+  "turboismApi": "[0.67.0,1.0.0)",
   "authors": [
     { "name": "Example Author" }
   ],
@@ -56,6 +57,8 @@ schema version 1 はロードされません。未知のフィールドは無視
 ```
 
 必須フィールドは `id`、`name`、`version`、`entrypoints`、`turboismApi`、`authors`、`website`、`resources`、`i18n` です。schema 3 ではさらに `category` が必須です。
+
+`turboismApi` は `[min,max)` 形式で、最小値を含み最大値を含みません。現在の plugin SDK API 範囲は `[0.67.0,1.0.0)` です。下限は最小のフレームワーク基底バージョンで、beta、nightly、SNAPSHOT のサフィックスは無視されます。使用するすべての SDK メンバーを提供する最小値を選んでください。旧来の `[0.1.0,0.2.0)` plugin は discovery の段階で `TURBOISM_API_INCOMPATIBLE` により失敗します。
 
 ## Entrypoint のルール
 

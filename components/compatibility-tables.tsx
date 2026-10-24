@@ -143,8 +143,8 @@ const UI_STRINGS: Record<
     releaseColPlatform: "Host platform",
     channelLabels: {
       stable: "Stable",
-      nightly: "Nightly (0.44.1-0.nightly.*)",
-      beta: "Beta / current main",
+      nightly: "Nightly",
+      beta: "Beta",
     },
     platformLabels: {
       "windows-x64": "Windows x64",
@@ -192,8 +192,8 @@ const UI_STRINGS: Record<
     releaseColPlatform: "宿主平台",
     channelLabels: {
       stable: "Stable（稳定版）",
-      nightly: "Nightly（0.44.1-0.nightly.*）",
-      beta: "Beta / 当前 main",
+      nightly: "Nightly",
+      beta: "Beta",
     },
     platformLabels: {
       "windows-x64": "Windows x64",
@@ -241,8 +241,8 @@ const UI_STRINGS: Record<
     releaseColPlatform: "ホストプラットフォーム",
     channelLabels: {
       stable: "Stable（安定版）",
-      nightly: "Nightly（0.44.1-0.nightly.*）",
-      beta: "Beta / 現在の main",
+      nightly: "Nightly",
+      beta: "Beta",
     },
     platformLabels: {
       "windows-x64": "Windows x64",
@@ -290,8 +290,8 @@ const UI_STRINGS: Record<
     releaseColPlatform: "호스트 플랫폼",
     channelLabels: {
       stable: "Stable (안정판)",
-      nightly: "Nightly (0.44.1-0.nightly.*)",
-      beta: "Beta / 현재 main",
+      nightly: "Nightly",
+      beta: "Beta",
     },
     platformLabels: {
       "windows-x64": "Windows x64",

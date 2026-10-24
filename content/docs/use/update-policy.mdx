@@ -15,7 +15,8 @@ Turboism publishes product releases in three channels and mirrors every package 
 
 - A channel can legitimately report `status: not_published`; that is an empty channel, not an error.
 - Nightly builds are development builds: back up projects before use.
-- Starting with **0.67.0-beta.3**, every channel produces exactly four package downloads: `TurboismInstaller-<version>-full.exe`, `TurboismInstaller-<version>-thin.exe`, `turboism-<version>-full.zip`, and `turboism-<version>-thin.zip`, with matching `.sha256` checksums. Releases before 0.67.0-beta.3 used the legacy assets (`TurboismInstaller-<version>.exe`, the Java installer `TurboismInstaller-<version>.jar`, and `turboism-<version>-lite.zip`). The Java installer JAR is retired.
+- Since **0.67.0** Stable, each release provides exactly two product downloads: `TurboismInstaller-<version>.exe` and `turboism-<version>.zip`, with matching `.sha256` checksums. Both include every bundled first-party plugin and the complete offline GraalJS engine. Developer assets (`turboism-sdk-<version>.jar` and `turboism-event-processor-<version>.jar`) are published alongside them.
+- The current Stable release is **0.67.4**. The 0.67.0 Beta releases (0.67.0-beta.3 to 0.67.0-beta.7) temporarily used a four-download Full/Thin layout, which is retired. Releases 0.44.0 and earlier used legacy assets (`TurboismInstaller-<version>.exe`, the Java installer `TurboismInstaller-<version>.jar`, and `turboism-<version>-full.zip` / `turboism-<version>-lite.zip`). The Java installer is no longer published.
 
 ## Machine-readable feeds
 
@@ -36,7 +37,7 @@ The product website uses the same data for [turboism.dev/download](https://turbo
 1. Back up `config.json` and any persistent plugin `config/` and `data/` content that matters.
 2. Download the newer package for your platform and channel, and verify its SHA-256 checksum.
 3. Run the newer installer targeting the same Turboism home directory, or replace the files of a portable archive you extracted.
-4. Upgrades across variants are safe: the installers no longer have mode or plugin-selection pages. Running Thin over Full leaves existing plugins untouched; running Full over Thin installs or updates all bundled first-party plugins and keeps existing `disabledPlugins` entries disabled.
+4. The installer has no mode or plugin-selection pages. It installs or updates all bundled first-party plugins, retires obsolete official plugin JARs, and keeps existing `disabledPlugins` entries disabled. Installations from the retired 0.67.0 Beta Thin installer receive the bundled plugins the same way.
 5. Verify startup, plugin discovery, host capability status, and logs after the update.
 
 Rerunning the installer updates the same home without overwriting unrelated configuration. Do not overwrite or rewrite Cubism installation files as an update mechanism.
@@ -45,13 +46,14 @@ Rerunning the installer updates the same home without overwriting unrelated conf
 
 ### First-party plugin auto-updates
 
-Starting with 0.67.0-beta.3, first-party plugins auto-update in the background:
+Since 0.67.0, first-party plugins auto-update in the background:
 
 - The runtime checks for signed first-party updates against the catalog.
 - Downloaded updates undergo strict signature and payload verification before staging.
 - Plugins marked **hot-reload** apply immediately to the running session without restarting Cubism.
 - Other plugin updates apply the next time Cubism restarts.
-- Users can disable automatic first-party plugin updates anytime in framework settings (`settings.plugins.automatic-updates`).
+- Users can disable automatic first-party plugin updates anytime in framework settings (**Automatically update official plugins**, `settings.plugins.automatic-updates`).
+- An update is installed only if its declared Turboism API range includes the running framework. Several official plugins require API `0.67.2` or `0.67.4` (see [First-Party Plugins](./first-party-plugins)); update the framework to receive them.
 - You can also manually browse, install, or update plugins via **Turboism → Plugin Market…** or [turboism.dev/plugins](https://turboism.dev/plugins).
 
 ### Custom and third-party plugins
@@ -70,8 +72,10 @@ A failed apply restores the previous plugin files from a private backup.
 - Turboism publishes one public SDK tier. The reviewed binary API baseline in the source repository is the compatibility gate.
 - API presence does not guarantee every Cubism version has a Provider.
 - Host-sensitive operations can remain unavailable on unsupported or unverified versions.
+- Plugin API ranges start at the minimum Turboism framework version a plugin needs and end before `1.0.0` (for example `[0.67.0,1.0.0)`); legacy `[0.1.0,0.2.0)` plugins are rejected.
 - Plugin authors should use the declared Turboism API range and test unavailable behavior.
-- Supported Cubism Editor versions depend on the Turboism release (5.2.03, 5.3.02, and 5.3.03 on Stable 0.44.0; 5.0.00–5.3.04 on Beta 0.67.0-beta.3; see [Compatibility](/docs/use/compatibility)), with Windows x64 as the supported host platform.
+- Plugin management shows each plugin's API range and its declared exact Cubism Editor versions (since 0.67.2).
+- The current Stable release 0.67.4 supports all 20 reviewed Cubism Editor versions from 5.0.00 to 5.3.04 (see [Compatibility](/docs/use/compatibility)), with Windows x64 as the supported host platform.
 
 ## Update checker
 

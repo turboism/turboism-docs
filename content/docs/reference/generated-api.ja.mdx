@@ -9,14 +9,25 @@ SDK Javadoc は対応する Turboism ソースツリーから生成し、レビ�
 
 | 項目 | 値 |
 | --- | --- |
-| 生成元 | Turboism 開発ソース `4a21b8b2b`（ドキュメントバージョン 0.67.0） |
-| 自己申告バージョン | `sdk 0.67.0 API` |
+| 生成元 | Turboism Stable ソース `5e0f8b02c`（タグ `v0.67.4`） |
+| 自己申告バージョン | `sdk 0.67.4 API` |
 | 公開パッケージ数 | 63 |
-| 検索可能な公開型数 | 933 |
+| 検索可能な公開型数 | 948 |
 | ホスト先 | [turboism.dev/sdk/index.html](https://turboism.dev/sdk/index.html) |
 
 
-[Beta `0.67.0-beta.3`](https://github.com/turboism/Turboism/releases/tag/v0.67.0-beta.3)（`e4bbe7f64`）の SDK ソースは、このリファレンスの生成元と同一です。例のコンパイルには同リリースの SDK とイベントプロセッサの JAR を使用できます。セットアップは最新の**公開済み** Beta を取得するため、`gradle.properties` とファイル名で実際のバージョンを確認してください。
+このリファレンスは [Stable `0.67.4`](https://github.com/turboism/Turboism/releases/tag/v0.67.4) のリリースタグから生成されています。例のコンパイルには同リリースの `turboism-sdk-0.67.4.jar` と `turboism-event-processor-0.67.4.jar` を使用してください。テンプレートのセットアップスクリプトは既定で stable チャネルを使用します。`gradle.properties` とファイル名で実際にコンパイルするバージョンを確認してください。
+
+## 0.67.0 リファレンスからの変更
+
+以前の 0.67.0 リファレンスと比べて、公開型が 15 件追加されています。
+
+- `dev.turboism.sdk.cubism.model`: `AtlasPageAppendPlan`、`Drawables.SourceGeometryRequest`、`ModelImagePlacement`、`WarpMorphSnapshot`（`WarpMorphSnapshot.Form` と `WarpMorphSnapshot.Key` を含む）
+- `dev.turboism.sdk.cubism.textureatlas`: `TextureAtlasPackingException`（`TextureAtlasPackingException.Reason` を含む）、`TextureAtlasPageSize`、`TextureAtlasPolygonLayoutPlanner`（`@Incubating`）
+- `dev.turboism.sdk.plugin`: `AbstractTurboismPlugin`
+- `dev.turboism.sdk.ui.appearance`: `PaletteRowAction`（`PaletteRowAction.State` を含む）
+- `dev.turboism.sdk.ui.settings`: `SettingsControl.FilePath`
+- `dev.turboism.sdk.ui.window`: `TurboismProgressDialog`
 
 ## ドキュメント更新フロー
 
@@ -34,7 +45,7 @@ SDK Javadoc は対応する Turboism ソースツリーから生成し、レビ�
 
 ## レビュー済みの公開例外
 
-公開中のリファレンスは `4a21b8b2b` のコンパイル済み公開面をそのまま反映しているため、レビューが「隠れた問題」ではなく例外と判定した 2 件を含みます。どちらも同期のたびに再検査され、この一覧にない阻害要因は引き続き実行を失敗させます。
+公開中のリファレンスは `5e0f8b02c` のコンパイル済み公開面をそのまま反映しているため、レビューが「隠れた問題」ではなく例外と判定した 2 件を含みます。どちらも同期のたびに再検査され、この一覧にない阻害要因は引き続き実行を失敗させます。
 
 ### `ActiveReadProjections` は public だが契約ではない
 

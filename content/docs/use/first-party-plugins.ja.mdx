@@ -1,9 +1,9 @@
 ---
 title: ファーストパーティプラグイン
-description: Full インストールに含まれるレビュー済みプラグインバンドル。
+description: すべてのインストーラーおよび ZIP パッケージに含まれるレビュー済みプラグインバンドル。
 ---
 
-Full インストールには、レビュー済みのファーストパーティプラグインバンドルが同梱されています。これらはサードパーティプラグインと同じパブリック SDK 境界を使用します。Thin インストールには既定でプラグインが含まれず、Cubism 内のプラグインマーケット（**Turboism** メニュー → **プラグインマーケット…**）または [turboism.dev/plugins](https://turboism.dev/plugins) から後から導入できます。
+すべての Turboism パッケージ（`TurboismInstaller-<version>.exe` と `turboism-<version>.zip`）には、レビュー済みのファーストパーティプラグインバンドルが同梱されています。これらはサードパーティプラグインと同じパブリック SDK 境界を使用します。プラグインは Cubism 内のプラグインマーケット（**Turboism** メニュー → **プラグインマーケット…**）または [turboism.dev/plugins](https://turboism.dev/plugins) からインストールまたは再インストールすることもできます。
 
 個々の機能の利用可否は、Cubism Editor のバージョンと、そのバージョンが公開している capability Provider に依存します。同梱プラグインであっても、すべての対応バージョンで全機能が動作することを保証するものではありません。各プラグインの対応バージョン範囲と機能差分については [互換性](/docs/use/compatibility) を参照してください。
 
@@ -12,8 +12,11 @@ Full インストールには、レビュー済みのファーストパーティ
 | プラグイン | 機能 |
 | --- | --- |
 | 3D Model Import | GLB、glTF、OBJ、ZIP から 3D メッシュ、テクスチャ、ジオメトリを Cubism へ直接インポート。 |
+| Bitmask Nesting | 保守的なビットマスクを使った凹形状のテクスチャアトラスネスティング。ポリゴンサービスがないバージョンでは矩形配置を使用。 |
 | Bounding Box Warp Mirror | バウンディングボックス操作中にワープデフォーマを整列および反転。 |
 | DalSoo Polygon Layout Algorithm | 複雑・不規則なポリゴンに最適化されたコンパクトなテクスチャアトラス配置アルゴリズム。 |
+| Folder Atlas Layout | パーツフォルダー階層に基づくワンクリックのテクスチャアトラス配置。登録済みの配置アルゴリズム（Bitmask や Dalsoo ポリゴン配置を含む）を使い、フォルダー間でページを再利用。新しくインポートした PSD ではアトラスを自動作成。 |
+| Frame Animation Import | スプライトシートや画像リストから連番フレームアニメーションをインポートし、キーフレームの表示切り替えでパラメータにバインド。 |
 | MaxRects-BSSF Layout Algorithm | 並列探索を備えた MaxRects-BSSF テクスチャアトラス配置アルゴリズムを登録。 |
 | Mesh Edit Mirror Axis Enhance | メッシュ編集に対称軸回転とホスト完全互換の対称ツールを追加。 |
 | Parameter Batch Transfer | ArtMesh または Deformer のパラメータバインドを他のパラメータへ一括転送（反転オプションあり）。 |
@@ -27,6 +30,7 @@ Full インストールには、レビュー済みのファーストパーティ
 | --- | --- |
 | Command Palette | Cubism と Turboism のアクションを即時検索・実行できる IDE スタイルのグローバルコマンドパレット（Ctrl+K）。 |
 | Cubism Tab Filter | パラメータ、デフォーマ、シーン、ログの各パレットタブにキーワード絞り込みボックスを追加。 |
+| Parameter Lock | Cubism のパラメータ値を誤編集から保護するロック機能。セッションをまたいで保持され、ネイティブのロックアイコンを表示。 |
 | External PSD Edit | 外部画像エディタ（Photoshop 等）と連携し、ネイティブ PSD のエクスポート、編集、再読み込みを実行。 |
 | PSD Clip Mask Import | 順序付き PSD クリッピング関係を ArtMesh クリップマスク割り当てとしてインポート（明示的な上書きポリシー付き）。 |
 | History Panel | アクティブドキュメントのネイティブ Undo 履歴を Photoshop スタイルのペインに投影し、スナップショット連携の Undo/Redo ナビゲーションを提供。 |
@@ -57,15 +61,28 @@ Full インストールには、レビュー済みのファーストパーティ
 | ACP Agent Client | Agent Client Protocol に接続し、AI 支援モデリングと自然言語コマンド実行のためのコンテキストとブリッジを提供。 |
 | Turboism MCP Server | 型付きの Cubism 検査、編集、履歴、Editor コマンドのワークフローを公開する loopback Model Context Protocol サーバー。bearer 認証が必要です。[MCP](../build-a-plugin/mcp) を参照してください。 |
 
+## 最小 Turboism API
+
+各プラグインは必要な Turboism API 範囲を宣言します。ほとんどの同梱プラグインは `[0.67.0,1.0.0)` を必要とします。新しい SDK 追加機能を使うプラグインは下限が高くなります。
+
+| 最小 API | プラグイン |
+| --- | --- |
+| `0.67.4` | Folder Atlas Layout（`atlas-folder-layout`）、Bitmask Nesting（`atlas-bitmask-nesting`）、DalSoo Polygon Layout Algorithm（`atlas-dalsoo-polygon`）、PSD Clip Mask Import（`psd-clip-mask-import`） |
+| `0.67.2` | External PSD Edit（`external-psd-edit`）、MaxRects-BSSF Layout Algorithm（`atlas-maxrects-bssf`） |
+
+**Turboism → プラグイン管理…** のプラグイン詳細には、各プラグインの API 範囲と宣言された Cubism Editor バージョンが表示されます。
+
+## 組み込みフレームワークシェル
+
 組み込みの Turboism メニュー、設定、ログ、バージョン情報、プラグイン管理、更新ヒントはプラグインではありません。これらは予約された `turboism.core` 識別子を持つランタイム所有のフレームワークシェル（`dev.turboism.shell`）によって提供されます。プラグイン管理には組み込みの削除不可能な行として表示され、無効化やアンインストールはできません。Cubism Editor 内では、トップメニュー名が **Turboism**（以前は「プラグイン」/「插件」）になり、**プラグインマーケット…**、**プラグイン管理…**、**プラグイン設定…**（専用の 2 ペインウィンドウ）、**更新を確認**、**Turboism 設定…**、**キーバインド…**、**ログ…**、プラグインアクション、**バージョン情報** が含まれます。
 
 ## 管理方法
 
-- インストーラーにはモードやプラグイン選択の画面はありません。Full インストーラーはすべてのファーストパーティプラグインを導入し、Thin インストーラーはプラグインを導入しません。
-- Thin 環境や追加プラグインの導入には、**Turboism → プラグインマーケット…** または [turboism.dev/plugins](https://turboism.dev/plugins) を使用します。
+- インストーラーと ZIP にはモードやプラグイン選択の画面はなく、すべての同梱ファーストパーティプラグインが導入されます。
+- プラグインを追加したり、削除したプラグインを再インストールしたりするには、**Turboism → プラグインマーケット…** を開くか [turboism.dev/plugins](https://turboism.dev/plugins) にアクセスします。
 - インストール済みプラグインは **Turboism → プラグイン管理…** で有効化・無効化できます。変更は Cubism 再起動後に適用されます。
 - プラグインの各種設定は、専用の 2 ペインウィンドウ **Turboism → プラグイン設定…** から行えます。
 - ファーストパーティプラグインは署名検証を経てバックグラウンドで自動更新されます。ホットリロード（hot-reload）対応プラグインは即座に反映され、その他の更新は Cubism 再起動後に反映されます。設定で公式プラグインの自動更新を無効化できます。
-- バリアント間の安全なアップグレード: Full 環境に Thin を上書きしても既存のプラグインは保持されます。Thin 環境に Full を上書きすると、既存の `disabledPlugins` 設定を維持しながらすべてのファーストパーティプラグインが導入・更新されます。
+- 新しいインストーラーを再実行すると、すべての同梱ファーストパーティプラグインが導入または更新され、無効化済みのプラグインは無効のまま保持されます。
 - [プラグイン管理](./plugin-management)は、インストール、置換、有効化/無効化、アンインストール、および各プラグインが保持するデータを扱います。
 - [更新ポリシー](./update-policy)は、新しいフレームワークやプラグインが既存の環境に届く方法を扱います。

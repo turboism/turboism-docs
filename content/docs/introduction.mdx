@@ -22,7 +22,7 @@ Plugins depend on the Turboism SDK only. Runtime owns host access, lifecycle, sa
 
 ## Turboism in Cubism Editor
 
-At runtime, Turboism integrates directly into Live2D Cubism Editor under a top-level **Turboism** menu (previously named "插件"/Plugins in releases before 0.67.0-beta.3):
+At runtime, Turboism integrates directly into Live2D Cubism Editor under a top-level **Turboism** menu (previously named "插件"/Plugins in releases before 0.67.0):
 
 - **Plugin Market…** — discover and install first-party and curated plugins from the in-app market or [turboism.dev/plugins](https://turboism.dev/plugins).
 - **Manage Plugins…** — enable, disable, and uninstall plugins, or stage local plugin JARs.
@@ -30,7 +30,7 @@ At runtime, Turboism integrates directly into Live2D Cubism Editor under a top-l
 - **Check for Updates** — check for the latest framework releases.
 - **Turboism Settings…**, **Keybindings…**, **Logs…**, active plugin actions, and **About**.
 
-Starting with 0.67.0-beta.3, first-party plugins auto-update in the background after signature verification. Plugins marked hot-reload apply immediately, while others apply upon restarting Cubism.
+Since 0.67.0, first-party plugins auto-update in the background after signature verification. Plugins marked hot-reload apply immediately, while others apply upon restarting Cubism. Background updates can be turned off in settings.
 
 ## Documentation scope
 
@@ -41,9 +41,9 @@ Two limits apply throughout this documentation:
 - an API that exists in the SDK does not mean every supported Cubism Editor version can execute it;
 - a supported Editor version does not mean every plugin feature is available on it.
 
-Windows x64 is the supported host platform. Supported Cubism Editor versions depend on the Turboism release: Stable 0.44.0 admits 5.2.03, 5.3.02, and 5.3.03, while Beta 0.67.0-beta.3 admits all 20 reviewed versions from 5.0.00 to 5.3.04 (see [Compatibility](/docs/use/compatibility)). Unsupported combinations fail closed rather than falling back to an unverified path.
+Windows x64 is the supported host platform. The current Stable release, 0.67.4, supports all 20 reviewed Cubism Editor versions from 5.0.00 to 5.3.04 (see [Compatibility](/docs/use/compatibility)). Unsupported combinations fail closed rather than falling back to an unverified path.
 
-Starting with 0.67.0-beta.3, Turboism ships four product downloads across Full and Thin variants (`TurboismInstaller-<version>-full.exe`, `TurboismInstaller-<version>-thin.exe`, `turboism-<version>-full.zip`, `turboism-<version>-thin.zip`). Releases before 0.67.0-beta.3 used legacy assets, and the cross-platform Java installer JAR is retired.
+Since 0.67.0, each release ships exactly two product downloads: the Windows installer `TurboismInstaller-<version>.exe` and the portable `turboism-<version>.zip`, each with a `.sha256` file. Both include every bundled first-party plugin. The Full/Thin four-download layout used only by the 0.67.0 Beta releases is retired, and the cross-platform Java installer JAR is no longer published.
 
 Continue with:
 

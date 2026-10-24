@@ -3,7 +3,7 @@ title: SDK API Guide
 description: The current Turboism plugin SDK entrypoints, services, object model, lifecycle, and capability boundaries.
 ---
 
-The Turboism SDK is the only public dependency for plugins. Turboism publishes one public SDK tier, and the reviewed binary API baseline in the source repository (currently **v17**) is the compatibility gate. Availability depends on four separate facts:
+The Turboism SDK is the only public dependency for plugins. Turboism publishes one public SDK tier, and the reviewed binary API baseline in the source repository (currently **v23**, the live release gate for 0.67.4; v2–v22 are kept as historical audits) is the compatibility gate. Availability depends on four separate facts:
 
 1. the API exists in the SDK;
 2. the plugin declares the required permission;
@@ -11,6 +11,12 @@ The Turboism SDK is the only public dependency for plugins. Turboism publishes o
 4. the active Cubism version and object generation are supported.
 
 For the generated type and method index, open the [SDK HTML API reference](https://turboism.dev/sdk/index.html).
+
+## SDK API range and incubating APIs
+
+Plugins declare `"turboismApi": "[0.67.0,1.0.0)"`. The lower bound is the minimum framework base version the plugin needs; beta, nightly, and SNAPSHOT suffixes are ignored when Runtime computes its API version. Legacy `[0.1.0,0.2.0)` plugins are rejected. Raise the lower bound deliberately when you use SDK members added later: compiling against a newer SDK does not make its additions work on an older Runtime. For example, the official `atlas-folder-layout`, `atlas-bitmask-nesting`, `atlas-dalsoo-polygon`, and `psd-clip-mask-import` plugins require `0.67.4`, while `external-psd-edit` and `atlas-maxrects-bssf` require `0.67.2`.
+
+`@Incubating` (`dev.turboism.sdk.Incubating`) marks experimental API that may change or disappear, including breaking signature changes. It is excluded from the exact compatibility baselines, and an annotation on a type covers its members. Treat any dependency on incubating API as pinned to the SDK version you built against and review it on every SDK update. Before the first stable SDK release, breaking changes are still allowed, so an unannotated API is not proof that the first stable SDK release has happened.
 
 ## Plugin lifecycle
 
@@ -270,6 +276,19 @@ A permission does not bypass operation validation and does not create a missing 
 
 Plugin descriptors using schema 4 can declare the public event types they export and import, each bound to a contract version and an ABI digest of the event type. Runtime resolves those contracts without ClassLoader delegation, rejects duplicate exports, and refuses imports whose provider contract is not admitted. Declaring an event contract grants no host write authority; it only makes a plugin-owned event type consumable by another plugin. See [Plugin Manifest and Packaging](../build-a-plugin/manifest).
 
+## SDK additions in 0.67.2 and 0.67.4
+
+The v22 (0.67.2) and v23 (0.67.4) baselines add API without removing any existing public type or callable JVM descriptor:
+
+- **Texture atlas per-page sizes**: `TextureAtlasPageSize` and a `TextureAtlasLayoutPlan` constructor with independent page sizes; `TextureAtlasLayoutPlanner.supportsCompleteAtlas()` is a default method that current-page-only planners override to return `false`.
+- **Packing failures**: planners report that inputs cannot fit with the public, extensible `TextureAtlasPackingException` and its `Reason` (`PAGE_BUDGET_EXHAUSTED`, `ITEM_DOES_NOT_FIT`, `INVALID_RESERVED_SIZE`).
+- **Polygon outlines and polygon pages** (0.67.4): `TextureAtlasLayoutItem` gains an optional source `outline` (a four-argument constructor and accessor; the three-argument constructor is retained), `TextureAtlasLayoutPlan` gains `polygonPages` (an eight-argument constructor and accessor), and `TextureAtlasOutline` gains value equality, `hashCode`, and `toString`. `TextureAtlasPolygonLayoutPlanner` is `@Incubating`.
+- **PSD editing**: `PsdEditFile.openInApplication(String)` is a default method.
+- **`SettingsControl.FilePath`**: `SettingsControl` is a sealed interface, so the new variant is a source change for exhaustive `switch` statements. Add a `FilePath` case when you recompile against the current SDK.
+- **`TurboismProgressDialog`** (`dev.turboism.sdk.ui.window`, 0.67.4): a shared modeless progress window centered on the Cubism Editor, with a `(title, message)` constructor and `show`, `focus`, `setMessage`, `setProgress`, and `close`. It implements `AutoCloseable`.
+
+Records that gained components change their reflection shape, `equals`, `hashCode`, and `toString`, and the retained former canonical constructors lose parameter-name metadata. Code that inspects these records reflectively must adapt.
+
 ## Non-contractual public types
 
 A few classes are compiled as public SDK classes because shared internal helpers
@@ -289,11 +308,12 @@ bytecode, and they are listed with their reason on the
 - **Core Capability Families in 0.67**:
   - **Unified Model Object Graph** (`CubismModel`, `Drawables`, `Deformers`, `Parts`, `Parameters`);
   - **Mesh Modeling & Tool Session** (`MeshEditService`, `MeshEditParticipation`, `MeshMirrorAxisService`);
-  - **Texture Atlas Layout & Stats** (`TextureAtlasLayoutService`, `TextureAtlasEditorSession`, `TextureAtlasStatistics`);
-  - **PSD & Clipmask Operations** (`PsdClipMaskDocumentSnapshot`, `PsdEditFile`);
+  - **Texture Atlas Layout & Stats** (`TextureAtlasLayoutService`, `TextureAtlasEditorSession`, `TextureAtlasSummary`, `TextureAtlasLayoutPlanner`, `TextureAtlasPageSize`, `TextureAtlasPackingException`, `TextureAtlasOutline`; `TextureAtlasPolygonLayoutPlanner` is `@Incubating`);
+  - **PSD & Clipmask Operations** (`PsdClipMaskDocumentSnapshot`, `PsdEditFile`, including `openInApplication`);
   - **Parameter Batch Transfer & Morph Operations** (`ParameterBindingBatchOperations`, `ParameterBindingTransferPlan`);
   - **3D Model Import Hooks** (`ModelObjectCreateRequest`, etc.);
-  - **Dedicated Plugin Settings** (`SettingsRegistry`, `SettingsContribution`);
+  - **Dedicated Plugin Settings** (`SettingsRegistry`, `SettingsContribution`, `SettingsControl` variants `Choice`, `Toggle`, `Text`, `FilePath`, and `Note`);
+  - **Progress Window** (`TurboismProgressDialog`);
   - **Canvas Hint Notifications** (`CanvasHintNotification`, `turboism.ui.canvas.hint`).
 - For exact capability and SDK surface details across all versions, see [Compatibility](../use/compatibility).
 - History DTOs (`HistoryEntry`, `HistoryChange`, `HistoryEditContext`, `HistoryGroup`, `HistoryOrigin`, `HistoryTarget`) are bounded immutable semantic projections. They never grant host write authority.

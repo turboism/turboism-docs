@@ -9,14 +9,25 @@ The SDK Javadoc is generated from the matching Turboism source tree and hosted u
 
 | Item | Value |
 | --- | --- |
-| Generated from | Turboism development source `4a21b8b2b` (0.67.0 documentation version) |
-| Identifies itself as | `sdk 0.67.0 API` |
+| Generated from | Turboism Stable source `5e0f8b02c` (tag `v0.67.4`) |
+| Identifies itself as | `sdk 0.67.4 API` |
 | Public packages | 63 |
-| Searchable public types | 933 |
+| Searchable public types | 948 |
 | Hosted at | [turboism.dev/sdk/index.html](https://turboism.dev/sdk/index.html) |
 
 
-The SDK source in [Beta `0.67.0-beta.3`](https://github.com/turboism/Turboism/releases/tag/v0.67.0-beta.3) (`e4bbe7f64`) is identical to the source used to generate this reference. Use that release’s SDK and event-processor JARs with these examples. The setup script downloads the latest **published** Beta; check `gradle.properties` and the filenames to confirm the version you are compiling against.
+The reference is generated from the [Stable `0.67.4`](https://github.com/turboism/Turboism/releases/tag/v0.67.4) release tag. Use that release’s `turboism-sdk-0.67.4.jar` and `turboism-event-processor-0.67.4.jar` with these examples. The template setup script defaults to the stable channel; check `gradle.properties` and the filenames to confirm the version you are compiling against.
+
+## Changes since the 0.67.0 reference
+
+The hosted reference adds 15 public types compared with the previous 0.67.0 reference:
+
+- `dev.turboism.sdk.cubism.model`: `AtlasPageAppendPlan`, `Drawables.SourceGeometryRequest`, `ModelImagePlacement`, `WarpMorphSnapshot` (with `WarpMorphSnapshot.Form` and `WarpMorphSnapshot.Key`);
+- `dev.turboism.sdk.cubism.textureatlas`: `TextureAtlasPackingException` (with `TextureAtlasPackingException.Reason`), `TextureAtlasPageSize`, and `TextureAtlasPolygonLayoutPlanner`, which is `@Incubating`;
+- `dev.turboism.sdk.plugin`: `AbstractTurboismPlugin`;
+- `dev.turboism.sdk.ui.appearance`: `PaletteRowAction` (with `PaletteRowAction.State`);
+- `dev.turboism.sdk.ui.settings`: `SettingsControl.FilePath`;
+- `dev.turboism.sdk.ui.window`: `TurboismProgressDialog`.
 
 ## Documentation update workflow
 
@@ -34,7 +45,7 @@ Successful generation alone does not approve publication.
 
 ## Reviewed publication exceptions
 
-The published reference reproduces the compiled public surface of `4a21b8b2b`, so it documents two conditions that review classified as exceptions rather than as hidden problems. Both are re-checked on every synchronisation, and any blocker outside this list still fails the run.
+The published reference reproduces the compiled public surface of `5e0f8b02c`, so it documents two conditions that review classified as exceptions rather than as hidden problems. Both are re-checked on every synchronisation, and any blocker outside this list still fails the run.
 
 ### `ActiveReadProjections` is public but not a contract
 

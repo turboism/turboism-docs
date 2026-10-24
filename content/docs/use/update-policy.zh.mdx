@@ -15,7 +15,8 @@ Turboism 在三个渠道发布产品版本，并在机器可读的发布信息�
 
 - 渠道可以合法地报告 `status: not_published`；这表示渠道为空，而不是错误。
 - nightly 构建是开发构建：使用前请备份项目。
-- 自 **0.67.0-beta.3** 起，每个渠道严格产出四种产品构件：`TurboismInstaller-<version>-full.exe`、`TurboismInstaller-<version>-thin.exe`、`turboism-<version>-full.zip` 和 `turboism-<version>-thin.zip`，并附带配对的 `.sha256` 校验和。0.67.0-beta.3 之前的历史版本采用旧版构件（`TurboismInstaller-<version>.exe`、Java 安装器 `TurboismInstaller-<version>.jar` 以及 `turboism-<version>-lite.zip`）。Java 安装器 JAR 已退役。
+- 自 **0.67.0** 稳定版起，每个发行版只提供两种产品下载：`TurboismInstaller-<version>.exe` 和 `turboism-<version>.zip`，并附带配对的 `.sha256` 校验和。两者都包含全部随包第一方插件以及完整的离线 GraalJS 引擎。开发者构件（`turboism-sdk-<version>.jar` 和 `turboism-event-processor-<version>.jar`）也会一同发布。
+- 当前稳定版为 **0.67.4**。0.67.0 Beta 版本（0.67.0-beta.3 至 0.67.0-beta.7）曾临时采用四种下载的 Full/Thin 布局，该布局现已退役。0.44.0 及更早版本采用旧版构件（`TurboismInstaller-<version>.exe`、Java 安装器 `TurboismInstaller-<version>.jar` 以及 `turboism-<version>-full.zip` / `turboism-<version>-lite.zip`）。Java 安装器已不再发布。
 
 ## 机器可读的信息源
 
@@ -36,7 +37,7 @@ https://api.turboism.dev/v1/releases/nightly.json
 1. 备份 `config.json` 以及任何重要的持久化插件 `config/` 和 `data/` 内容。
 2. 下载适用于你的平台和渠道的更新安装包，并验证其 SHA-256 校验和。
 3. 运行新版安装器并指向同一个 Turboism home 目录，或替换你解压出的便携归档中的文件。
-4. 变体间升级安全可靠：安装器不再包含模式或插件选择页。使用 Thin 覆盖 Full 安装时原样保留现有的 `plugins/` 目录；使用 Full 覆盖 Thin 安装时安装或更新全部随包第一方插件，并保留现有的 `disabledPlugins` 停用设置。
+4. 安装器没有模式或插件选择页。它会安装或更新全部随包第一方插件，退役已废弃的官方插件 JAR，并保持现有 `disabledPlugins` 条目为停用状态。通过已退役的 0.67.0 Beta Thin 安装器安装的环境也会以同样方式获得随包插件。
 5. 更新后验证启动、插件发现、宿主 capability 状态和日志。
 
 重新运行安装器会更新同一个 home，不会盲目覆盖无关配置。不要把覆盖或重写 Cubism 安装文件作为更新机制。
@@ -45,13 +46,14 @@ https://api.turboism.dev/v1/releases/nightly.json
 
 ### 第一方插件自动更新
 
-自 0.67.0-beta.3 起，第一方插件可在后台自动更新：
+自 0.67.0 起，第一方插件可在后台自动更新：
 
 - 运行时会对照官方在线目录检查第一方插件更新。
 - 下载的更新在暂存前经过严格的数字签名与文件完整性校验。
 - 标记为**热更新**（hot-reload）的插件会在当前会话中即刻生效，无需重启 Cubism。
 - 其他插件更新会在下一次重启 Cubism 时应用。
-- 用户可在设置中随时关闭官方插件自动更新（`settings.plugins.automatic-updates`）。
+- 用户可在框架设置中随时关闭官方插件自动更新（**自动更新官方插件**，`settings.plugins.automatic-updates`）。
+- 只有当更新声明的 Turboism API 范围包含当前运行的框架时才会安装该更新。部分官方插件要求 API `0.67.2` 或 `0.67.4`（参见[第一方插件](./first-party-plugins)）；请更新框架以获取这些插件。
 - 你也可以随时通过 **Turboism → 插件市场…** 或访问 [turboism.dev/plugins](https://turboism.dev/plugins) 手动浏览和更新插件。
 
 ### 本地与第三方插件
@@ -70,8 +72,10 @@ https://api.turboism.dev/v1/releases/nightly.json
 - Turboism 发布单一的公共 SDK 层级。源代码仓库中已审查的二进制 API 基线是兼容性门禁。
 - API 存在并不保证每个 Cubism 版本都有 Provider。
 - 不受支持或未经验证的版本上的宿主敏感操作可能仍然不可用。
+- 插件 API 范围从插件所需的最低 Turboism 框架版本开始，并在 `1.0.0` 之前结束（例如 `[0.67.0,1.0.0)`）；声明 `[0.1.0,0.2.0)` 的旧版插件会被拒绝。
 - 插件作者应使用已声明的 Turboism API 范围，并测试不可用行为。
-- 受支持的 Cubism Editor 版本取决于 Turboism 发行版（Stable 0.44.0 为 5.2.03、5.3.02 和 5.3.03；Beta 0.67.0-beta.3 为 5.0.00–5.3.04；请参阅[兼容性](/docs/use/compatibility)），Windows x64 是受支持的宿主平台。
+- 插件管理会显示每个插件的 API 范围及其声明的精确 Cubism Editor 版本（自 0.67.2 起）。
+- 当前稳定版 0.67.4 支持 5.0.00 至 5.3.04 的全部 20 个已审核 Cubism Editor 版本（请参阅[兼容性](/docs/use/compatibility)），Windows x64 是受支持的宿主平台。
 
 ## 更新检查
 

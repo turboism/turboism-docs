@@ -15,7 +15,8 @@ Turboism は 3 つのチャンネルで製品バージョンを公開し、機�
 
 - チャンネルが正当に `status: not_published` を返すことがあります。これはエラーではなく空のチャンネルを意味します。
 - nightly ビルドは開発用ビルドです。利用前にプロジェクトをバックアップしてください。
-- **0.67.0-beta.3** 以降、各チャンネルは正確に 4 つのパッケージ資産（`TurboismInstaller-<version>-full.exe`、`TurboismInstaller-<version>-thin.exe`、`turboism-<version>-full.zip`、`turboism-<version>-thin.zip`）および対応する `.sha256` チェックサムを提供します。0.67.0-beta.3 より前のリリースでは従来の資産（`TurboismInstaller-<version>.exe`、Java インストーラー `TurboismInstaller-<version>.jar`、`turboism-<version>-lite.zip`）が使用されていました。Java インストーラー JAR は廃止されました。
+- **0.67.0** 安定版以降、各リリースが提供する製品ダウンロードは `TurboismInstaller-<version>.exe` と `turboism-<version>.zip` の 2 つだけで、それぞれに対応する `.sha256` チェックサムが付きます。どちらにもすべての同梱ファーストパーティプラグインと完全なオフライン GraalJS エンジンが含まれます。開発者向け資産（`turboism-sdk-<version>.jar` と `turboism-event-processor-<version>.jar`）も併せて公開されます。
+- 現在の安定版は **0.67.4** です。0.67.0 のベータ版（0.67.0-beta.3 〜 0.67.0-beta.7）は一時的に 4 つのダウンロードからなる Full/Thin 構成を使用していましたが、この構成は廃止されました。0.44.0 以前のリリースでは従来の資産（`TurboismInstaller-<version>.exe`、Java インストーラー `TurboismInstaller-<version>.jar`、`turboism-<version>-full.zip` / `turboism-<version>-lite.zip`）が使用されていました。Java インストーラーは現在公開されていません。
 
 ## 機械可読フィード
 
@@ -36,7 +37,7 @@ https://api.turboism.dev/v1/releases/nightly.json
 1. `config.json` と、重要な persistent プラグインの `config/`・`data/` の内容を backup します。
 2. プラットフォームとチャンネルに合った新しいパッケージをダウンロードし、その SHA-256 チェックサムを検証します。
 3. 新しいインストーラーを実行し、同じ Turboism home ディレクトリを対象にします。または、展開済みのポータブルアーカイブのファイルを置き換えます。
-4. バリアント間のアップグレードは安全です。インストーラーにモード選択やプラグイン選択画面はありません。Thin を Full に上書きすると既存の `plugins/` ディレクトリは保持され、Full を Thin に上書きすると既存の `disabledPlugins` 設定を維持しながらすべての同梱ファーストパーティプラグインが導入・更新されます。
+4. インストーラーにモード選択やプラグイン選択画面はありません。すべての同梱ファーストパーティプラグインを導入・更新し、廃止された公式プラグイン JAR を撤去し、既存の `disabledPlugins` を無効のまま保持します。廃止された 0.67.0 ベータ版の Thin インストーラーで導入した環境にも、同じ方法で同梱プラグインが導入されます。
 5. 更新後に startup、plugin discovery、host capability status、logs を確認します。
 
 インストーラーを再実行すると、同じ home が更新され、無関係な設定を盲目的に上書きすることはありません。更新の手段として Cubism installation file を上書きまたは書き換えないでください。
@@ -45,13 +46,14 @@ https://api.turboism.dev/v1/releases/nightly.json
 
 ### ファーストパーティプラグインの自動更新
 
-0.67.0-beta.3 以降、ファーストパーティプラグインはバックグラウンドで自動更新されます。
+0.67.0 以降、ファーストパーティプラグインはバックグラウンドで自動更新されます。
 
 - ランタイムが署名付きカタログと照合してファーストパーティプラグインの更新を確認します。
 - ダウンロードされた更新ファイルは、ステージング前に厳格な署名と整合性の検証を受けます。
 - **ホットリロード**（hot-reload）対応プラグインは、Cubism を再起動することなく現在のセッションに即座に適用されます。
 - その他のプラグイン更新は次回の Cubism 再起動時に適用されます。
-- ユーザーは設定（`settings.plugins.automatic-updates`）で公式プラグインの自動更新を無効化できます。
+- ユーザーはフレームワーク設定（**公式プラグインを自動的に更新する**、`settings.plugins.automatic-updates`）で公式プラグインの自動更新をいつでも無効化できます。
+- 更新がインストールされるのは、その更新が宣言する Turboism API 範囲に実行中のフレームワークが含まれる場合のみです。一部の公式プラグインは API `0.67.2` または `0.67.4` を必要とします（[ファーストパーティプラグイン](./first-party-plugins)を参照）。これらを受け取るにはフレームワークを更新してください。
 - **Turboism → プラグインマーケット…** または [turboism.dev/plugins](https://turboism.dev/plugins) から手動で更新・確認することも可能です。
 
 ### カスタムおよびサードパーティプラグイン
@@ -70,8 +72,10 @@ https://api.turboism.dev/v1/releases/nightly.json
 - Turboism は単一の public SDK 階層を公開します。source repository のレビュー済みバイナリ API ベースラインが compatibility gate です。
 - API が存在しても、すべての Cubism version に Provider があるとは限りません。
 - host-sensitive operation は、未サポートまたは未検証の version では利用できないままになることがあります。
+- プラグインの API 範囲は、そのプラグインが必要とする最小の Turboism フレームワークバージョンから始まり、`1.0.0` の手前で終わります（例: `[0.67.0,1.0.0)`）。`[0.1.0,0.2.0)` を宣言する旧式のプラグインは拒否されます。
 - plugin author は宣言された Turboism API range を使用し、unavailable behavior をテストすべきです。
-- 対応する Cubism Editor バージョンは Turboism のリリースによって異なり（Stable 0.44.0 は 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.3 は 5.0.00–5.3.04。[互換性](/docs/use/compatibility)を参照）、Windows x64 が対応するホストプラットフォームです。
+- プラグイン管理には、各プラグインの API 範囲と宣言された正確な Cubism Editor バージョンが表示されます（0.67.2 以降）。
+- 現在の安定版 0.67.4 は、5.0.00 から 5.3.04 までのレビュー済み全 20 の Cubism Editor バージョンに対応しており（[互換性](/docs/use/compatibility)を参照）、Windows x64 が対応するホストプラットフォームです。
 
 ## 更新チェッカー
 

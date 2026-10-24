@@ -1,9 +1,9 @@
 ---
 title: 第一方插件
-description: Full 安装中包含的已审查插件捆绑包。
+description: 每个安装器和 ZIP 安装包中都包含的已审查插件捆绑包。
 ---
 
-Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与第三方插件相同的公共 SDK 边界。Thin 安装默认不包含插件；插件可后续通过 Cubism 内的插件市场（**Turboism** 菜单 → **插件市场…**）或 [turboism.dev/plugins](https://turboism.dev/plugins) 获取。
+每个 Turboism 安装包（`TurboismInstaller-<version>.exe` 和 `turboism-<version>.zip`）都随附一个已审查的第一方插件捆绑包。它们使用与第三方插件相同的公共 SDK 边界。也可以通过 Cubism 内的插件市场（**Turboism** 菜单 → **插件市场…**）或 [turboism.dev/plugins](https://turboism.dev/plugins) 安装或重新安装插件。
 
 单个功能的可用性仍取决于 Cubism Editor 版本以及该版本公开的能力 Provider。随包提供某个插件并不代表每个功能在每个受支持的版本上都可用；各插件的支持版本范围与版本差异请参阅[兼容性](/docs/use/compatibility)。
 
@@ -12,8 +12,11 @@ Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与
 | 插件 | 功能 |
 | --- | --- |
 | 3D Model Import | 从 GLB、glTF、OBJ 或 ZIP 文件导入 3D 网格、材质和几何数据至 Cubism。 |
+| Bitmask Nesting | 使用保守位掩码的凹形纹理集嵌套排布；在不提供多边形服务的版本上使用矩形排布。 |
 | Bounding Box Warp Mirror | 包围盒操作期间对齐与镜像 Warp 变形器。 |
 | DalSoo Polygon Layout Algorithm | 针对复杂与不规则多边形的紧凑纹理集排版算法。 |
+| Folder Atlas Layout | 按部件文件夹层级一键排布纹理集，使用已注册的排布算法（包括 Bitmask 与 Dalsoo 多边形排布）并支持跨文件夹复用页面；新导入 PSD 时自动创建纹理集。 |
+| Frame Animation Import | 从精灵图或图像列表导入序列帧动画，并通过关键帧可见性绑定到参数。 |
 | MaxRects-BSSF Layout Algorithm | 注册带并行搜索的 MaxRects-BSSF 纹理集排布算法。 |
 | Mesh Edit Mirror Axis Enhance | 为网格编辑添加对称轴旋转和与宿主完全一致的对称工具。 |
 | Parameter Batch Transfer | 批量将一个 ArtMesh 或 Deformer 的参数绑定转移至其他参数，支持可选的反转。 |
@@ -27,6 +30,7 @@ Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与
 | --- | --- |
 | Command Palette | 类似 IDE 的全局命令面板（快捷键 Ctrl+K），支持即时搜索与触发 Cubism 及 Turboism 命令。 |
 | Cubism Tab Filter | 为 Parameter、Deformer、Scene 和 Log 面板选项卡添加关键字过滤框。 |
+| Parameter Lock | 锁定 Cubism 参数值以防误编辑，支持跨会话保留并显示原生锁定图标。 |
 | External PSD Edit | 联动外部图像编辑器（Photoshop 等）进行原生 PSD 导出、编辑与重新载入。 |
 | PSD Clip Mask Import | 将有序的 PSD 剪贴关系导入为 ArtMesh 剪贴蒙版分配，具备明确的覆盖策略。 |
 | History Panel | 将当前活动文档的内部 Undo 历史投射到 Photoshop 风格的面板中，支持基于快照的撤销/重做导航。 |
@@ -57,15 +61,28 @@ Full 安装会随附一个已审查的第一方插件捆绑包。它们使用与
 | ACP Agent Client | 接入 Agent Client Protocol，为 AI 辅助建模与自然语言指令执行提供上下文和桥接。 |
 | Turboism MCP Server | 提供类型化 Cubism 检查、编辑、历史和 Editor 命令工作流的 loopback Model Context Protocol server。需要 bearer 认证；请参阅 [MCP](../build-a-plugin/mcp)。 |
 
+## 最低 Turboism API
+
+每个插件都会声明其所需的 Turboism API 范围。大多数随包插件要求 `[0.67.0,1.0.0)`。使用较新 SDK 新增功能的插件下限更高：
+
+| 最低 API | 插件 |
+| --- | --- |
+| `0.67.4` | Folder Atlas Layout（`atlas-folder-layout`）、Bitmask Nesting（`atlas-bitmask-nesting`）、DalSoo Polygon Layout Algorithm（`atlas-dalsoo-polygon`）、PSD Clip Mask Import（`psd-clip-mask-import`） |
+| `0.67.2` | External PSD Edit（`external-psd-edit`）、MaxRects-BSSF Layout Algorithm（`atlas-maxrects-bssf`） |
+
+**Turboism → 管理插件…** 中的插件详情会显示每个插件的 API 范围及其声明的 Cubism Editor 版本。
+
+## 内置框架 shell
+
 内置的 Turboism 菜单、设置、日志、关于、插件管理和更新提示不是插件。它们由 Runtime 自有的框架 shell（`dev.turboism.shell`）以保留的 `turboism.core` 身份提供；插件管理将其列为内置、不可移除的行，无法禁用或卸载。在 Cubism Editor 中，顶部菜单更名为 **Turboism**（原为“插件”/Plugins 菜单），包含以下菜单项：**插件市场…**、**管理插件…**、**插件设置…**（专用双栏窗口）、**检查更新**、**Turboism 设置…**、**快捷键…**、**日志…**、各插件操作以及**关于**。
 
 ## 如何管理它们
 
-- 安装器不再包含模式或插件选择页：Full 安装器会安装全部第一方插件，无需逐项勾选；Thin 安装器不包含任何插件。
-- 在 Thin 环境中（或需要添加新插件时），打开 **Turboism → 插件市场…** 或访问 [turboism.dev/plugins](https://turboism.dev/plugins)。
+- 安装器和 ZIP 都没有模式或插件选择页：会安装全部随包第一方插件。
+- 如需添加更多插件或重新安装已移除的插件，请打开 **Turboism → 插件市场…** 或访问 [turboism.dev/plugins](https://turboism.dev/plugins)。
 - 从 **Turboism → 管理插件…** 中启用或停用已安装的插件；更改会在 Cubism 重启后生效。
 - 通过 **Turboism → 插件设置…** 专用的双栏窗口集中配置各插件选项。
 - 第一方插件在通过签名验证后会在后台自动更新。标记为热更新（hot-reload）的插件立即生效；其他插件在重启 Cubism 后生效。用户可在设置中关闭官方插件自动更新。
-- 变体间升级安全可靠：使用 Thin 覆盖 Full 安装时原样保留现有的 `plugins/` 目录；使用 Full 覆盖 Thin 安装时安装或更新全部第一方插件，并保留现有的 `disabledPlugins` 停用设置。
+- 重新运行较新的安装器会安装或更新全部随包第一方插件，同时保持现有已停用的插件为停用状态。
 - [插件管理](./plugin-management)涵盖安装、替换、启用/禁用、卸载，以及每个插件保留的数据。
 - [更新策略](./update-policy)涵盖框架与插件更新如何到达现有安装。

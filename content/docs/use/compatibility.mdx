@@ -7,12 +7,14 @@ Cubism Editor version support in Turboism depends on both the Turboism release y
 
 ## Supported versions by Turboism release
 
-Each Turboism release channel embeds its reviewed Cubism Editor version set:
+Each Turboism release embeds its reviewed Cubism Editor version set and declares it in its release metadata:
 
-- **Stable `0.44.0`** (and **Nightly `0.44.1-0.nightly.11`**) supports exact Cubism Editor versions **5.2.03**, **5.3.02**, and **5.3.03** on Windows x64.
-- **Beta `0.67.0-beta.3`** (and current `main`) supports all **20 reviewed Cubism Editor versions from 5.0.00 to 5.3.04** (`5.0.00–5.0.06`, `5.1.00–5.1.03`, `5.2.00–5.2.03`, and `5.3.00–5.3.04`) on Windows x64.
+- The current **Stable `0.67.4`**, like every 0.67.x Stable release (`0.67.0`, `0.67.1`, `0.67.2`), supports all **20 reviewed Cubism Editor versions from 5.0.00 to 5.3.04** (`5.0.00–5.0.06`, `5.1.00–5.1.03`, `5.2.00–5.2.03`, and `5.3.00–5.3.04`) on Windows x64.
+- The previous Stable release, `0.44.0`, supported only the exact versions **5.2.03**, **5.3.02**, and **5.3.03**. It is listed for history only.
 
 <CompatibilityReleaseTable locale="en" />
+
+Beta and Nightly builds declare their own version sets in their release metadata; the [download page](https://turboism.dev/download) shows them per channel.
 
 ## Patch continuity within a minor line
 
@@ -22,7 +24,7 @@ Differences across minor lines (for example between `5.0.06` and `5.1.00`, `5.1.
 
 ## First-party plugin compatibility
 
-Every row below is generated from the reviewed compatibility matrix in the Turboism source repository. **Supported versions** lists the reviewed Cubism Editor builds on which the plugin's declared capabilities resolve; **Feature deltas** lists functions that exist only on a subset of reviewed versions.
+Every row below is generated from the reviewed compatibility matrix in the Turboism source repository at the 0.67.4 release commit. The matrix also covers in-repository plugins that are not part of the release bundle, such as the development-only demo plugin; see [First-Party Plugins](./first-party-plugins) for the bundled set. **Supported versions** lists the reviewed Cubism Editor builds on which the plugin's declared capabilities resolve; **Feature deltas** lists functions that exist only on a subset of reviewed versions.
 
 When Cubism runs under a **FREE** licence, saving is subject to the FREE parameter-count limit; a **PRO** licence (including the PRO trial) lifts that limit. Turboism plugin version support is independent of the licence tier — the licence constrains what the editor may save, not which APIs the runtime admits.
 
@@ -30,7 +32,7 @@ When Cubism runs under a **FREE** licence, saving is subject to the FREE paramet
 
 ## Capability coverage by minor line
 
-Turboism organizes host capabilities into **37 capability groups** (**143 capabilities** total). Across the 20 reviewed versions (`5.0.00–5.3.04`), **27 of 37 groups** are fully admitted on every reviewed version, while **10 groups** have version floors where Cubism Editor introduced the underlying subsystem.
+Turboism organizes host capabilities into **37 capability groups** (**143 capabilities** total). Across the 20 reviewed versions (`5.0.00–5.3.04`), **129 of 143 capabilities** are admitted on every reviewed version. Coverage is **100%** on `5.3.x`, **97.9%** on `5.2.x`, up to **95.1%** on `5.1.x`, and **90.2%** on `5.0.x`. **27 of 37 groups** are fully admitted on every reviewed version, while **10 groups** have version floors where Cubism Editor introduced the underlying subsystem. Version support therefore does not mean every feature is available on every version.
 
 <CompatibilityCapabilityTable locale="en" />
 

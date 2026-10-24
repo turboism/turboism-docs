@@ -7,7 +7,7 @@ This site hosts the Turboism user and developer documentation, including a hoste
 
 ## What is covered
 
-- installation, installer modes, first run, plugin management, first-party plugins, updates, uninstall, and recovery;
+- installation, installer options, first run, plugin management, first-party plugins, updates, uninstall, and recovery;
 - Java 17 plugin development, plugin metadata schemas, GraalJS scripts, and the MCP integration path;
 - concepts, the SDK API guide, and the generated API reference status;
 - safety, licensing, feedback channels, and the current development status.
@@ -19,10 +19,10 @@ English is the authoritative language for documentation body content. Simplified
 ## What remains provisional
 
 - **Generated SDK Javadoc** — see [Generated API Reference](./reference/generated-api) for the version currently hosted and any open blockers. A method appearing in generated Javadoc does not by itself prove that every host version has a compatible Provider.
-- **Third-party plugin directory** — the directory client exists, but production activation and signed catalog readiness are not established, so listings must not be treated as published.
-- **Platform coverage** — Windows x64 is the only supported Cubism host platform; macOS packaging is preview-only and Linux covers installer behavior only.
-- **Per-version readiness** — supported Cubism Editor versions depend on the Turboism release (5.2.03, 5.3.02, and 5.3.03 on Stable 0.44.0; 5.0.00–5.3.04 on Beta 0.67.0-beta.3; see [Compatibility](/docs/use/compatibility)), and individual operations remain version-specific. Verify availability per operation rather than per framework version.
-- **Automatic updates** — Turboism checks for stable updates and notifies you; automatic installer downloads and plugin auto-updates are not available.
+- **Plugin Directory listings** — since 0.67.0 the in-Cubism Plugin Market and [turboism.dev/plugins](https://turboism.dev/plugins) read the signed Plugin Directory. A listing is not a compatibility promise: check each plugin's declared SDK API range and exact Cubism versions, which plugin management labels separately.
+- **Platform coverage** — Windows x64 is the only supported Cubism host platform; macOS packaging is preview-only and Linux covers runtime behavior only.
+- **Per-version readiness** — the current Stable release, 0.67.4, supports all 20 reviewed Cubism Editor versions from 5.0.00 to 5.3.04 (see [Compatibility](/docs/use/compatibility)), but individual operations and plugin features remain version-specific. Verify availability per operation rather than per framework version.
+- **Automatic updates** — Turboism checks for stable framework updates and notifies you; framework installers are never downloaded or run automatically. Since 0.67.0, first-party plugins update automatically in the background after signature verification, and this can be turned off in settings.
 
 ## How to check a product fact
 

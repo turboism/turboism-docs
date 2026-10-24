@@ -5,7 +5,7 @@ description: What the current Turboism codebase implements, what remains version
 
 Turboism is a Java 17 runtime enhancement tool and plugin framework for Live2D Cubism Editor. Development is organized around usable framework and product capabilities rather than the retired M1–M16 migration sequence.
 
-This page is a source-backed snapshot of the current development branch. It is not a release announcement; use the [release feeds](./use/update-policy) for published versions.
+This page is a source-backed snapshot of the current Stable release, **0.67.4** (tag `v0.67.4`, published 2026-10-24). It is not a release announcement; use the [release feeds](./use/update-policy) for published versions.
 
 ## Current architecture
 
@@ -18,13 +18,16 @@ Plugins depend on the Turboism SDK only. Runtime owns host access, lifecycle, sa
 ## Supported host versions
 
 - Windows x64 is the supported Cubism host platform.
-- Supported Cubism Editor versions are release-dependent: Stable **0.44.0** admits **5.2.03**, **5.3.02**, and **5.3.03**, while Beta **0.67.0-beta.3** and the current development branch admit all 20 reviewed versions from **5.0.00 to 5.3.04**, each with version-routed adapters and Providers (see [Compatibility](/docs/use/compatibility)).
+- The current Stable release, **0.67.4**, like every 0.67.x Stable, supports all 20 reviewed Cubism Editor versions from **5.0.00 to 5.3.04**, each with version-routed adapters and Providers (see [Compatibility](/docs/use/compatibility)). The previous Stable, 0.44.0, admitted only 5.2.03, 5.3.02, and 5.3.03.
+- Version support is not feature parity: 129 of 143 capabilities are admitted on every version, and coverage is 100% on 5.3.x, 97.9% on 5.2.x, up to 95.1% on 5.1.x, and 90.2% on 5.0.x. Every exclusion is an evidence-backed version boundary.
 - Unlisted Editor versions are not claimed compatible, and unsupported or unverified capabilities fail closed.
-- macOS packaging is preview-only with no verified host support; Linux is limited to installer and payload behavior.
+- macOS packaging is preview-only with no verified host support; Linux covers runtime behavior only and is not a supported Cubism host.
 
 ## Release and delivery
 
-- One product identity with three channels: `stable`, `beta`, and `nightly`. Each channel produces the same four package formats.
+- One product identity with three channels: `stable`, `beta`, and `nightly`.
+- Stable releases in the 0.67 line are 0.67.0 (2026-10-19), 0.67.1 (2026-10-20), 0.67.2 (2026-10-23), and 0.67.4 (2026-10-24); there is no 0.67.3 release. The previous Stable was 0.44.0 (2026-09-11).
+- Each release publishes two product downloads, `TurboismInstaller-<version>.exe` and `turboism-<version>.zip`, plus the developer assets `turboism-sdk-<version>.jar` and `turboism-event-processor-<version>.jar`, each with a `.sha256` file.
 - Product releases are split into read-only candidate builds and an explicitly protected GitHub promotion step. A failed candidate reuses the intended version; only promotion creates the annotated tag and publishes the verified bytes without rebuilding.
 - Every build embeds a global build identity: version, channel, build number, source revision, and dirty flag (`FrameworkBuildInfo`).
 - A release API at `api.turboism.dev` mirrors every channel with per-asset SHA-256 and checksum files, resolves the official mirror and GitHub sources, and reports per-release download requests.
@@ -34,26 +37,27 @@ Plugins depend on the Turboism SDK only. Runtime owns host access, lifecycle, sa
 ## Framework foundations
 
 - Java Agent bootstrap, Runtime, SDK, first-party plugin, test-framework, and integration-test modules.
+- Plugin SDK API ranges start at `0.67.0` and end before `1.0.0`. The lower bound is the minimum framework base version (beta, nightly, and SNAPSHOT suffixes are ignored), and legacy `[0.1.0,0.2.0)` plugins are rejected.
 - Plugin metadata schema versions **2**, **3** (adds required `category` and bounded `tags`), and **4** (adds declared event imports and exports), with strict validation per version.
 - Local plugin JAR discovery, manifest and API-range validation, dependency resolution, one ClassLoader per plugin, lifecycle execution, reverse shutdown, and scope/ClassLoader cleanup.
 - Ordered multiple entrypoints per JAR with whole-JAR startup rollback.
 - `PluginContext` services for logging, paths, localization, tasks, configuration, storage, user files, events, actions, UI contributions, Cubism access, and diagnostics.
-- Managed local JAR install, replacement, enable, disable, and uninstall. Changes are staged in a journal and applied after Cubism restarts; the built-in framework shell is runtime-owned framework code, not a plugin, and cannot be disabled or uninstalled.
+- Managed local JAR install, replacement, enable, disable, and uninstall. Changes are staged in a journal and applied after Cubism restarts; the built-in framework shell (`dev.turboism.shell`, which replaced the separate core plugin in 0.67.0) is runtime-owned framework code, not a plugin, and cannot be disabled or uninstalled.
 - Startup preflight revalidates the staged payload identity (SHA-256, size, descriptor hash) before apply, and a private backup/restore protects failed replacement applies.
 - Framework message catalogs are held to the same locale matrix as the first-party plugins, so a missing catalog fails a build gate instead of silently degrading to English.
 
 ## Installer and delivery
 
-Starting with 0.67.0-beta.3, Turboism ships four product downloads across Full and Thin variants:
+Since 0.67.0, each release ships exactly two product downloads:
 
-- the Windows-native NSIS installers (`TurboismInstaller-<version>-full.exe` and `TurboismInstaller-<version>-thin.exe`), offering an optional managed GraalVM component and safe upgrades;
-- the portable `turboism-<version>-full.zip` and `turboism-<version>-thin.zip` archives.
+- the Windows-native NSIS installer `TurboismInstaller-<version>.exe`, offering an optional managed GraalVM component and safe upgrades;
+- the portable `turboism-<version>.zip` archive.
 
-Releases before 0.67.0-beta.3 used the legacy assets (`TurboismInstaller-<version>.exe`, the Java 17 IzPack installer `TurboismInstaller-<version>.jar`, and `turboism-<version>-lite.zip`). The Java installer JAR is retired.
+Both include every bundled first-party plugin and the complete offline GraalJS engine; GraalVM runtime installation remains separate. The four-download Full/Thin layout (`-full` and `-thin` installers and ZIPs) existed only in the 0.67.0 Beta releases and is retired. Releases up to 0.44.0 used the legacy assets (`TurboismInstaller-<version>.exe`, the Java 17 IzPack installer `TurboismInstaller-<version>.jar`, and `turboism-<version>-full.zip` / `turboism-<version>-lite.zip`). The Java installer is no longer published.
 
-Installers no longer feature mode or plugin-selection pages: Full installs all first-party plugins, and Thin installs zero plugins. Inside Cubism Editor, the top menu is named **Turboism** (previously "插件"/Plugins), offering the in-Cubism **Plugin Market…**, **Manage Plugins…**, **Plugin Settings…** (a dedicated two-pane window), **Check for Updates**, and background auto-updates for verified first-party plugins.
+Installers have no mode or plugin-selection pages. Since 0.67.4, Windows installers use Turboism branding and hide the elevated configuration console. Inside Cubism Editor, the top menu is named **Turboism** (previously "插件"/Plugins), offering the in-Cubism **Plugin Market…**, **Manage Plugins…**, **Plugin Settings…** (a dedicated two-pane window), **Check for Updates**, and background auto-updates for verified first-party plugins.
 
-The installer gates installation behind four required acknowledgements and a full localized runtime declaration. It does not modify Cubism installation files. `config.json` has explicit update ownership: on an existing valid document the installer preserves user configuration, and upgrades between Full and Thin are safe (Thin over Full leaves `plugins/` untouched; Full over Thin respects `disabledPlugins`). The Windows configurator lists only exact supported Cubism installations and keeps Turboism-owned shortcuts separate from optional, hash-guarded official BAT integration.
+The installer gates installation behind four required acknowledgements and a full localized runtime declaration. `config.json` has explicit update ownership: on an existing valid document the installer preserves user configuration. The Windows configurator lists only exact supported Cubism installations and keeps Turboism-owned shortcuts separate from official BAT integration. Since 0.67.0 the installer pre-selects official Cubism BAT integration: it backs up and modifies the selected `CubismEditor5.bat` launchers so existing Cubism shortcuts and file associations load Turboism. The option can be unchecked on the launch-options page, is hash-guarded and idempotent, is restored on uninstall, also applies to silent installs, and is the only step that elevates through UAC.
 
 ## Cubism and Editor API progress
 
@@ -64,18 +68,26 @@ The installer gates installation behind four required acknowledgements and a ful
 - Exact-version verification records, selector contracts, and profiles now cover all 20 reviewed builds from 5.0.00 to 5.3.04; per-plugin and per-capability version boundaries are generated on [Compatibility](/docs/use/compatibility).
 - Parameter lifecycle hooks support ordered synchronous `before` rewriting, changed-only `on`, normal-completion `after`, recursion rejection, bounded observation work, and unload cleanup.
 - History now projects immutable semantic detail: `HistoryEntry`, `HistoryChange`, `HistoryEditContext`, `HistoryGroup`, `HistoryOrigin`, `HistoryTarget`, and bounded validation of targets, coordinates, and grouping. These values grant no host write authority.
-- The current-page texture-atlas layout contract is bound as a reviewed SDK compatibility baseline (v10), with linkage gates for retained constructors.
+- The animation workspace SDK (documents, timelines, tracks, keyframes, scenes, and playback) is available on Cubism 5.2.00–5.3.04.
+- Texture-atlas SDK support covers per-page sizes, packing failure diagnostics, and planner negotiation (0.67.2), plus source outlines and polygon output pages (0.67.4), with linkage gates for retained constructors.
+
+## SDK compatibility baseline
+
+- The reviewed binary API baseline **v23** is the live release gate for 0.67.4; v2–v22 are kept as historical audits (v21 was the 0.67.0 baseline and v22 the 0.67.2 baseline).
+- v22 added `TextureAtlasPageSize`, a per-page `TextureAtlasLayoutPlan` constructor, `TextureAtlasLayoutPlanner.supportsCompleteAtlas()`, `TextureAtlasPackingException` with `Reason`, `PsdEditFile.openInApplication(String)`, and the `SettingsControl.FilePath` variant. Exhaustive switches over `SettingsControl` must add a case when recompiling.
+- v23 added an optional source `outline` on `TextureAtlasLayoutItem`, `TextureAtlasLayoutPlan.polygonPages`, value equality for `TextureAtlasOutline`, and `TurboismProgressDialog`. Existing constructor signatures remain, but records that gained components change reflection, equality, `hashCode`, and `toString`, and the retained former canonical constructors no longer expose parameter-name metadata. No existing public type or callable JVM descriptor was removed.
+- `@Incubating` marks experimental API, such as `TextureAtlasPolygonLayoutPlanner`, that may change or disappear and is excluded from the exact baselines. The SDK remains under a pre-stable policy, so an unannotated API is not by itself a frozen-SDK guarantee.
 
 ## Update checker
 
 - Turboism checks for stable updates against the deployed release API. The comparison uses the authoritative build number embedded in the installed package.
 - An available update is presented as a native Cubism hint over the drawing area. Clicking it opens the fixed first-party download page; no installer is downloaded or executed automatically.
 - The update checker is non-blocking and runs at most once per 24 hours, with a manual check always available. Automatic checks have their own persistent toggle in the Startup settings tab.
-- Plugins can show native Cubism hints over the drawing area through the canvas-hint UI capability (`turboism.ui.canvas.hint` permission), version-routed through verified host routes (5.2.03, 5.3.02, and 5.3.03 on Stable 0.44.0; 5.0.00–5.3.04 on Beta 0.67.0-beta.3; see [Compatibility](/docs/use/compatibility)).
+- Plugins can show native Cubism hints over the drawing area through the canvas-hint UI capability (`turboism.ui.canvas.hint` permission), version-routed through verified host routes (see [Compatibility](/docs/use/compatibility) for the versions on which it is available).
 
 ## First-party plugins
 
-The reviewed bundle contains seventeen plugins: texture-atlas packing, mesh mirror-axis editing, parameter batch transfer, physics editing, palette tab filters, PSD clip-mask import, history panel, recent preview thumbnails, WebDAV auto-backup sync, clip-mask viewer, texture-atlas statistics, performance statistics, UI themes, palette label styling, scene palette enhancer, protected export, and the loopback MCP server. The built-in Turboism menu, settings, plugin management, and update hints are provided by the runtime-owned framework shell, not by a plugin. See [First-Party Plugins](./use/first-party-plugins).
+The reviewed 0.67.4 bundle contains twenty-nine plugins: folder texture-atlas layout with the MaxRects-BSSF, Bitmask nesting, and Dalsoo polygon packing algorithms, texture-atlas statistics, 3D model import, frame animation import, PSD clip-mask import, external PSD editing, mesh mirror-axis editing, BoundingBox warp mirror, Warp Deformer Alt symmetry, selection brush, parameter batch transfer, parameter lock, physics editing, history panel, recent preview thumbnails, command palette, palette tab filters, palette label styling, scene palette enhancer, UI themes, clip-mask viewer, performance statistics, protected export, WebDAV auto-backup sync, the loopback MCP server, and the ACP agent bridge. The built-in Turboism menu, settings, plugin management, and update hints are provided by the runtime-owned framework shell, not by a plugin. See [First-Party Plugins](./use/first-party-plugins).
 
 ## Shared plugin services and UI
 
@@ -112,7 +124,7 @@ Host validation runs through a supervised local queue: build and prepare work ma
 
 ## Official Directory and Plugin Market status
 
-The in-Cubism Plugin Market client and UI are active for browsing and installing verified first-party and catalog plugins directly from the live signed directory at `turboism.dev/plugins`. First-party plugins support background automatic updates with signature verification and hot-reload.
+The in-Cubism Plugin Market client and UI are active for browsing and installing verified first-party and catalog plugins directly from the live signed directory at `turboism.dev/plugins`. First-party plugins support background automatic updates with signature verification and hot-reload, and the updates can be turned off in settings. Since 0.67.2, plugin management labels each plugin's SDK API range and its declared exact Cubism versions for available, full, and partial functionality; since 0.67.4 it also shows installed and marketplace plugin counts.
 
 ## In progress or version-limited
 
@@ -129,7 +141,7 @@ Turboism does not currently promise:
 - a signed or notarized public release channel for installer packages;
 - verified macOS Cubism host support;
 - automatic download and silent execution of framework installer packages (update checks and background plugin updates are available; automatic framework installer updates are not);
-- a production-enabled marketplace, publisher signing, or revocation;
+- publisher signing or revocation for Plugin Directory entries;
 - a complete user-facing install, repair, rollback, recovery, and purge UI;
 - global modification of Cubism launchers;
 - uniform feature readiness across every Cubism version;

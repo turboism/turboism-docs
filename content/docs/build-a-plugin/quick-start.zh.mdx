@@ -6,7 +6,7 @@ description: 基于公共 SDK 构建一个最小的 Java 17 Turboism 插件。
 Turboism 提供官方独立项目模板与脚手架工具。你可以直接从模板创建独立仓库，通过自动设置脚本拉取匹配的 SDK 与注解处理器进行开发。
 
 
-本示例对应当前开发中的 SDK。设置脚本下载最新**已发布**的 Beta SDK，可能早于本站参考版本。请核对 `gradle.properties` 和下载文件名，按实际 SDK 版本编译；生成参考页不代表该版本已经发布。
+本示例对应 Stable 0.67.4。设置脚本默认解析 stable 渠道，并从该发行版下载 `turboism-sdk-<version>.jar` 和 `turboism-event-processor-<version>.jar`。请核对 `gradle.properties`（`turboismSdkVersion`）和下载的文件名，确认实际编译所用的 SDK 版本。仅在有意针对其他发行版时才使用 `--channel beta` 或 `--version <version>`。
 
 ## 1. 使用官方独立模板（推荐）
 
@@ -21,10 +21,10 @@ cd my-plugin
 
 ```bash
 # Linux / macOS
-./scripts/setup.sh --channel beta
+./scripts/setup.sh --channel stable
 
 # Windows (PowerShell)
-.\scripts\setup.ps1 -Channel beta
+.\scripts\setup.ps1 -Channel stable
 ```
 
 根据终端交互提示输入插件 ID（如 `com.example.myplugin`）、显示名称、包名和作者信息。脚本会自动重构 Java 包名与类名，并在 `libs/` 中配置好依赖。
@@ -43,10 +43,10 @@ my-plugin/
 │   └── turboism-event-processor-*.jar
 ├── src/main/java/com/example/myplugin/MyPlugin.java
 ├── src/main/resources/META-INF/turboism/plugin.json
-└── src/test/java/com/example/myplugin/MyPluginTest.java
+└── src/main/resources/META-INF/turboism/cubism-versions.json
 ```
 
-其 `build.gradle.kts` 配置：
+其 `build.gradle.kts` 配置（设置脚本已将 JAR 放入 `libs/` 时；若没有这些 JAR，模板会根据 `turboismSdkVersion` 从 `mavenLocal()` 解析 `dev.turboism:sdk` 和 `dev.turboism:event-processor`）：
 
 ```kotlin
 plugins {
@@ -54,19 +54,19 @@ plugins {
 }
 
 java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 val sdkJars = fileTree("libs") { include("turboism-sdk-*.jar") }
-val processorJars = fileTree("libs") { include("turboism-event-processor-*.jar") }
+val eventProcessorJars = fileTree("libs") { include("turboism-event-processor-*.jar") }
 
 dependencies {
     compileOnly(sdkJars)
-    testImplementation(sdkJars)
-    annotationProcessor(processorJars)
-    annotationProcessor(sdkJars)
+    if (!eventProcessorJars.isEmpty) {
+        annotationProcessor(eventProcessorJars)
+        annotationProcessor(sdkJars)
+    }
 }
 ```
 
@@ -138,7 +138,7 @@ public final class MyPlugin implements TurboismPlugin {
   "entrypoints": [
     "com.example.myplugin.MyPlugin"
   ],
-  "turboismApi": "[0.1.0,0.2.0)",
+  "turboismApi": "[0.67.0,1.0.0)",
   "authors": [
     { "name": "Example Author" }
   ],
@@ -166,6 +166,7 @@ public final class MyPlugin implements TurboismPlugin {
 ```
 
 - `"lifecycle": { "hotReload": true }` 声明该插件支持热重载，在插件管理中启用、停用或更新时可立即生效而无需重启 Cubism。
+- `turboismApi` 是插件 SDK API 范围。`[0.67.0,1.0.0)` 接受从 0.67.0 起、不含 1.0.0 的所有框架 API；如使用后续版本新增的 SDK 成员，请提高下限。旧式 `[0.1.0,0.2.0)` 描述符会被拒绝。
 - 详细的权限、资源、本地化与 schema 规范请阅读[插件 Manifest 与打包](./manifest)。
 
 ## 5. 构建与验证
@@ -177,7 +178,7 @@ public final class MyPlugin implements TurboismPlugin {
 构建产物写入：
 
 ```text
-build/libs/com.example.myplugin-0.1.0.jar
+build/libs/myplugin-turboism-plugin-0.1.0.jar
 ```
 
 `build/libs/` 中的 JAR 就是分发产物；分发时请保持其内容完整。

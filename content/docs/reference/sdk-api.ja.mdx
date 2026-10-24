@@ -3,7 +3,7 @@ title: SDK API ガイド
 description: 現在の Turboism プラグイン SDK のエントリーポイント、サービス、オブジェクトモデル、ライフサイクル、機能境界。
 ---
 
-Turboism SDK は plugin にとって唯一の public dependency です。Turboism は単一の public SDK 階層を公開し、source repository のレビュー済みバイナリ API ベースライン（現在は **v17**）が compatibility gate です。利用可能性は、次の 4 つの事実に分かれます。
+Turboism SDK は plugin にとって唯一の public dependency です。Turboism は単一の public SDK 階層を公開し、source repository のレビュー済みバイナリ API ベースライン（現在は 0.67.4 の現行リリースゲートである **v23**。v2–v22 は過去の監査記録として保持）が compatibility gate です。利用可能性は、次の 4 つの事実に分かれます。
 
 1. SDK に API が存在する。
 2. plugin が必要な permission を宣言している。
@@ -11,6 +11,12 @@ Turboism SDK は plugin にとって唯一の public dependency です。Turbois
 4. active Cubism version と object generation がサポートされている。
 
 生成済み type と method の index については、[SDK HTML API リファレンス](https://turboism.dev/sdk/index.html) を開いてください。
+
+## SDK API 範囲と incubating API
+
+plugin は `"turboismApi": "[0.67.0,1.0.0)"` を宣言します。下限は plugin が必要とする最小のフレームワーク基底バージョンで、Runtime が API バージョンを算出する際は beta、nightly、SNAPSHOT のサフィックスを無視します。旧来の `[0.1.0,0.2.0)` plugin は拒否されます。後のリリースで追加された SDK メンバーを使う場合は、意図的に下限を引き上げてください。新しい SDK でコンパイルしても、その追加分が古い Runtime で動くわけではありません。たとえば公式 plugin の `atlas-folder-layout`、`atlas-bitmask-nesting`、`atlas-dalsoo-polygon`、`psd-clip-mask-import` は `0.67.4` を、`external-psd-edit` と `atlas-maxrects-bssf` は `0.67.2` を必要とします。
+
+`@Incubating`（`dev.turboism.sdk.Incubating`）は、破壊的なシグネチャ変更を含め、変更または削除される可能性がある実験的 API を示します。厳密な互換性ベースラインからは除外され、型への付与はそのメンバー全体に及びます。incubating API への依存はビルドに使った SDK バージョンに固定されたものとして扱い、SDK を更新するたびに見直してください。最初の安定 SDK リリースまでは破壊的変更が許容されるため、アノテーションがないことは最初の安定 SDK リリースが行われた証拠にはなりません。
 
 ## プラグインのライフサイクル
 
@@ -270,6 +276,19 @@ permission は operation validation を迂回せず、欠けている Provider �
 
 schema 4 を使用する plugin descriptor は、自身が export および import する public event type を宣言できます。それぞれは contract version と event type の ABI digest に結び付きます。Runtime はそれらの contract を ClassLoader delegation なしで解決し、duplicate export を拒否し、provider contract が認定されていない import を拒否します。event contract を宣言しても host への write 権限は付与されず、plugin が所有する event type を他の plugin から利用できるようになるだけです。詳細は[プラグインマニフェストとパッケージング](../build-a-plugin/manifest)を参照してください。
 
+## 0.67.2 と 0.67.4 の SDK 追加内容
+
+v22（0.67.2）と v23（0.67.4）のベースラインは API を追加するのみで、既存の公開型や呼び出し可能な JVM ディスクリプタは削除していません。
+
+- **テクスチャアトラスのページ別サイズ**: `TextureAtlasPageSize` と、ページごとに独立したサイズを持つ `TextureAtlasLayoutPlan` コンストラクタ。`TextureAtlasLayoutPlanner.supportsCompleteAtlas()` は default メソッドで、現在ページ専用のプランナーはこれをオーバーライドして `false` を返します。
+- **パッキング失敗**: プランナーは、入力が収まらないことを公開かつ拡張可能な `TextureAtlasPackingException` とその `Reason`（`PAGE_BUDGET_EXHAUSTED`、`ITEM_DOES_NOT_FIT`、`INVALID_RESERVED_SIZE`）で報告します。
+- **ポリゴン輪郭とポリゴンページ**（0.67.4）: `TextureAtlasLayoutItem` に任意のソース `outline`（4 引数コンストラクタとアクセサ。3 引数コンストラクタは維持）、`TextureAtlasLayoutPlan` に `polygonPages`（8 引数コンストラクタとアクセサ）が追加され、`TextureAtlasOutline` は値の等価性、`hashCode`、`toString` を持つようになりました。`TextureAtlasPolygonLayoutPlanner` は `@Incubating` です。
+- **PSD 編集**: `PsdEditFile.openInApplication(String)` は default メソッドです。
+- **`SettingsControl.FilePath`**: `SettingsControl` は sealed interface のため、新しいバリアントは網羅的な `switch` にとってソースレベルの変更です。現在の SDK で再コンパイルする際は `FilePath` の case を追加してください。
+- **`TurboismProgressDialog`**（`dev.turboism.sdk.ui.window`、0.67.4）: Cubism Editor の中央に表示される共有のモードレス進捗ウィンドウです。`(title, message)` コンストラクタと `show`、`focus`、`setMessage`、`setProgress`、`close` を持ち、`AutoCloseable` を実装します。
+
+コンポーネントが追加された record では、リフレクション上の形、`equals`、`hashCode`、`toString` が変わり、維持された旧 canonical コンストラクタはパラメータ名メタデータを失います。これらの record をリフレクションで調べるコードは対応が必要です。
+
 ## 非契約の公開型
 
 いくつかのクラスは、共有された内部ヘルパーが必要とするために public な SDK クラスとしてコンパイルされていますが、そのクラス自身のドキュメントは、安定プラグイン API 面に属さないと明記しています。現在の例は `dev.turboism.sdk.cubism.ActiveReadProjections` です。
@@ -283,11 +302,12 @@ schema 4 を使用する plugin descriptor は、自身が export および impo
 - **0.67 で追加された主要機能群**:
   - **統合モデルオブジェクトグラフ**（`CubismModel`、`Drawables`、`Deformers`、`Parts`、`Parameters`）
   - **メッシュモデリングおよびセッション**（`MeshEditService`、`MeshEditParticipation`、`MeshMirrorAxisService`）
-  - **テクスチャアトラス配置および統計**（`TextureAtlasLayoutService`、`TextureAtlasEditorSession`、`TextureAtlasStatistics`）
-  - **PSD およびクリップマスク操作**（`PsdClipMaskDocumentSnapshot`、`PsdEditFile`）
+  - **テクスチャアトラス配置および統計**（`TextureAtlasLayoutService`、`TextureAtlasEditorSession`、`TextureAtlasSummary`、`TextureAtlasLayoutPlanner`、`TextureAtlasPageSize`、`TextureAtlasPackingException`、`TextureAtlasOutline`。`TextureAtlasPolygonLayoutPlanner` は `@Incubating`）
+  - **PSD およびクリップマスク操作**（`PsdClipMaskDocumentSnapshot`、`PsdEditFile`。`openInApplication` を含む）
   - **パラメータ一括転送・変形操作**（`ParameterBindingBatchOperations`、`ParameterBindingTransferPlan`）
   - **3D モデルインポート連携**（`ModelObjectCreateRequest` 等）
-  - **専用プラグイン設定**（`SettingsRegistry`、`SettingsContribution`）
+  - **専用プラグイン設定**（`SettingsRegistry`、`SettingsContribution`、`SettingsControl` のバリアント `Choice`、`Toggle`、`Text`、`FilePath`、`Note`）
+  - **進捗ウィンドウ**（`TurboismProgressDialog`）
   - **描画領域ネイティブヒント通知**（`CanvasHintNotification`、`turboism.ui.canvas.hint`）
 - 各バージョンの詳細な機能境界と差分は [互換性ドキュメント](../use/compatibility) を参照してください。
 - History DTO（`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`）は、範囲が限定された immutable な semantic projection です。host への write 権限を与えることはありません。

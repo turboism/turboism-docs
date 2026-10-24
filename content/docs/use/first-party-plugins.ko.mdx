@@ -1,9 +1,9 @@
 ---
 title: 퍼스트 파티 플러그인
-description: Full 설치에 포함된 검토된 플러그인 번들.
+description: 모든 설치 프로그램 및 ZIP 패키지에 포함된 검토된 플러그인 번들.
 ---
 
-Full 설치에는 검토된 퍼스트 파티 플러그인 번들이 포함됩니다. 이 플러그인들은 서드파티 플러그인과 동일한 공개 SDK 경계를 사용합니다. Thin 설치에는 기본적으로 플러그인이 포함되지 않으며, Cubism 내 플러그인 마켓(**Turboism** 메뉴 → **플러그인 마켓…**) 또는 [turboism.dev/plugins](https://turboism.dev/plugins)에서 나중에 설치할 수 있습니다.
+모든 Turboism 패키지(`TurboismInstaller-<version>.exe` 및 `turboism-<version>.zip`)에는 검토된 퍼스트 파티 플러그인 번들이 포함됩니다. 이 플러그인들은 서드파티 플러그인과 동일한 공개 SDK 경계를 사용합니다. 플러그인은 Cubism 내 플러그인 마켓(**Turboism** 메뉴 → **플러그인 마켓…**) 또는 [turboism.dev/plugins](https://turboism.dev/plugins)에서 설치하거나 다시 설치할 수도 있습니다.
 
 개별 기능의 사용 가능 여부는 Cubism Editor 버전과 해당 버전이 노출하는 기능 Provider에 따라 달라집니다. 번들 플러그인이라고 해서 지원되는 모든 버전에서 모든 기능이 작동하는 것은 아닙니다. 플러그인별 버전 범위와 기능 차이는 [호환성](/docs/use/compatibility)을 참고하세요.
 
@@ -12,8 +12,11 @@ Full 설치에는 검토된 퍼스트 파티 플러그인 번들이 포함됩니
 | 플러그인 | 기능 |
 | --- | --- |
 | 3D Model Import | GLB, glTF, OBJ, ZIP에서 3D 메시, 텍스처, 지오메트리를 Cubism으로 직접 가져옵니다. |
+| Bitmask Nesting | 보수적인 비트마스크를 사용한 오목 형태 텍스처 아틀라스 네스팅. 폴리곤 서비스가 없는 버전에서는 사각형 배치를 사용. |
 | Bounding Box Warp Mirror | 바운딩 박스 조작 중 워프 디포머를 정렬 및 대칭 반전. |
 | DalSoo Polygon Layout Algorithm | 복잡하고 불규칙한 폴리곤에 최적화된 컴팩트 텍스처 아틀라스 배치 알고리즘. |
+| Folder Atlas Layout | 파트 폴더 계층에 따른 원클릭 텍스처 아틀라스 배치. 등록된 배치 알고리즘(Bitmask 및 Dalsoo 폴리곤 배치 포함)을 사용하고 폴더 간 페이지를 재사용하며, 새로 가져온 PSD에는 아틀라스를 자동 생성. |
+| Frame Animation Import | 스프라이트 시트나 이미지 목록에서 시퀀스 프레임 애니메이션을 가져와 키프레임 표시 여부로 파라미터에 바인딩. |
 | MaxRects-BSSF Layout Algorithm | 병렬 검색을 지원하는 MaxRects-BSSF 텍스처 아틀라스 배치 알고리즘 등록. |
 | Mesh Edit Mirror Axis Enhance | 메시 편집에 대칭축 회전과 호스트 완전 일치 대칭 도구 추가. |
 | Parameter Batch Transfer | ArtMesh 또는 Deformer의 파라미터 바인딩을 다른 파라미터로 일괄 이전(반전 옵션 지원). |
@@ -27,6 +30,7 @@ Full 설치에는 검토된 퍼스트 파티 플러그인 번들이 포함됩니
 | --- | --- |
 | Command Palette | Cubism 및 Turboism 명령을 즉시 검색하고 실행할 수 있는 IDE 스타일의 전역 명령 팔레트(Ctrl+K). |
 | Cubism Tab Filter | Parameter, Deformer, Scene, Log 팔레트 탭에 키워드 필터 상자 추가. |
+| Parameter Lock | Cubism 파라미터 값을 실수로 편집하지 않도록 잠금. 세션 간 유지되며 네이티브 잠금 아이콘 표시. |
 | External PSD Edit | 외부 이미지 편집기(Photoshop 등)와 연동하여 네이티브 PSD 내보내기, 편집 및 다시 로드 수행. |
 | PSD Clip Mask Import | 순서가 있는 PSD 클리핑 관계를 ArtMesh 클립 마스크 할당으로 가져오기(명시적 덮어쓰기 정책 지원). |
 | History Panel | 활성 문서의 네이티브 Undo 기록을 Photoshop 스타일 패널로 투영하여 스냅샷 기반 Undo/Redo 탐색 제공. |
@@ -57,15 +61,28 @@ Full 설치에는 검토된 퍼스트 파티 플러그인 번들이 포함됩니
 | ACP Agent Client | Agent Client Protocol에 연결하여 AI 보조 모델링 및 자연어 명령 실행을 위한 컨텍스트와 브리지를 제공. |
 | Turboism MCP Server | 타입이 지정된 Cubism 검사, 편집, 히스토리 및 Editor 명령 워크플로를 노출하는 루프백 Model Context Protocol 서버입니다. 베어러 인증이 필요합니다. [MCP](../build-a-plugin/mcp)를 참고하세요. |
 
+## 최소 Turboism API
+
+각 플러그인은 필요한 Turboism API 범위를 선언합니다. 대부분의 기본 제공 플러그인은 `[0.67.0,1.0.0)`을 요구합니다. 최신 SDK 추가 기능을 사용하는 플러그인은 하한이 더 높습니다:
+
+| 최소 API | 플러그인 |
+| --- | --- |
+| `0.67.4` | Folder Atlas Layout(`atlas-folder-layout`), Bitmask Nesting(`atlas-bitmask-nesting`), DalSoo Polygon Layout Algorithm(`atlas-dalsoo-polygon`), PSD Clip Mask Import(`psd-clip-mask-import`) |
+| `0.67.2` | External PSD Edit(`external-psd-edit`), MaxRects-BSSF Layout Algorithm(`atlas-maxrects-bssf`) |
+
+**Turboism → 플러그인 관리…**의 플러그인 세부 정보에는 각 플러그인의 API 범위와 선언된 Cubism Editor 버전이 표시됩니다.
+
+## 내장 프레임워크 셸
+
 내장된 Turboism 메뉴, 설정, 로그, 정보, 플러그인 관리 및 업데이트 힌트는 플러그인이 아닙니다. 이들은 예약된 `turboism.core` 식별자를 가진 런타임 소유 프레임워크 셸(`dev.turboism.shell`)에서 제공합니다. 플러그인 관리에는 내장된 제거 불가능한 행으로 표시되며 비활성화하거나 제거할 수 없습니다. Cubism Editor에서 상단 메뉴 이름은 **Turboism**(이전에는 "플러그인"/Plugins)이며, **플러그인 마켓…**, **플러그인 관리…**, **플러그인 설정…**(전용 2열 창), **업데이트 확인**, **Turboism 설정…**, **키 바인딩…**, **로그…**, 플러그인 액션, **정보** 항목을 포함합니다.
 
 ## 관리 방법
 
-- 설치 프로그램에는 더 이상 모드나 플러그인 선택 페이지가 없습니다: Full 설치 프로그램은 모든 퍼스트 파티 플러그인을 설치하며, Thin 설치 프로그램은 플러그인을 설치하지 않습니다.
-- Thin 환경이나 추가 플러그인 설치는 **Turboism → 플러그인 마켓…** 또는 [turboism.dev/plugins](https://turboism.dev/plugins)를 이용하세요.
+- 설치 프로그램과 ZIP에는 모드나 플러그인 선택 페이지가 없으며, 모든 기본 제공 퍼스트 파티 플러그인이 설치됩니다.
+- 플러그인을 추가하거나 제거한 플러그인을 다시 설치하려면 **Turboism → 플러그인 마켓…**을 열거나 [turboism.dev/plugins](https://turboism.dev/plugins)를 방문하세요.
 - 설치된 플러그인은 **Turboism → 플러그인 관리…**에서 언제든지 사용 여부를 변경할 수 있으며 변경 사항은 Cubism 재시작 후 적용됩니다.
 - 플러그인 세부 옵션은 전용 2열 창인 **Turboism → 플러그인 설정…**에서 구성할 수 있습니다.
 - 퍼스트 파티 플러그인은 서명 검증을 거쳐 백그라운드에서 자동 업데이트됩니다. 핫 리로드(hot-reload)로 표시된 플러그인은 즉시 적용되며 기타 업데이트는 Cubism 재시작 후 적용됩니다. 사용자는 설정에서 공식 플러그인 자동 업데이트를 끌 수 있습니다.
-- 안전한 업그레이드: Full 환경에 Thin을 덮어써도 기존 플러그인은 유지됩니다. Thin 환경에 Full을 덮어쓰면 기존 `disabledPlugins` 설정을 유지하면서 모든 퍼스트 파티 플러그인을 설치하거나 업데이트합니다.
+- 더 새로운 설치 프로그램을 다시 실행하면 모든 기본 제공 퍼스트 파티 플러그인이 설치 또는 업데이트되며, 비활성화된 플러그인은 비활성 상태로 유지됩니다.
 - [플러그인 관리](./plugin-management)는 설치, 교체, 사용/사용 안 함, 제거 및 각 플러그인이 보관하는 데이터를 다룹니다.
 - [업데이트 정책](./update-policy)은 새로운 프레임워크나 플러그인이 기존 설치본에 도달하는 방식을 다룹니다.

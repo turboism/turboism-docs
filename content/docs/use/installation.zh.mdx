@@ -5,29 +5,29 @@ description: 在不会修改 Cubism 安装的情况下，从已发布的发行�
 
 Turboism 通过 [GitHub Releases](https://github.com/turboism/Turboism/releases) 和官方下载镜像 [turboism.dev/download](https://turboism.dev/download) 分发。每个安装包都附有配对的 `.sha256` 校验和文件。从源代码构建 Turboism 属于开发者和维护者工作，普通使用无需这样做。
 
-任何安装包都不会修改 Cubism JAR、DLL、官方启动文件、许可状态或现有项目。
+任何安装包都不会修改 Cubism JAR、DLL、许可状态或现有项目。Cubism 官方启动 BAT 文件只会通过 Windows 安装器的官方 BAT 集成选项被修改；该选项默认勾选、经过哈希校验，并会在卸载时恢复。
 
 安装器目前未签名。运行下载的文件之前，请先对照其校验和进行验证。
 
 ## 选择安装包
 
-自 **0.67.0-beta.3** 起，Turboism 提供两种产品变体的四种正式发行产物：
+自 **0.67.0** 稳定版起，Turboism 只提供两种产品下载：
 
 | 安装包 | 平台 | 用途 |
 | --- | --- | --- |
-| `TurboismInstaller-<version>-full.exe` | Windows | 完整版 NSIS 引导式安装器。包含运行时框架以及全部随包第一方插件。 |
-| `TurboismInstaller-<version>-thin.exe` | Windows | 精简版 NSIS 引导式安装器。仅包含运行时框架，不带任何第一方插件。 |
-| `turboism-<version>-full.zip` | Windows、macOS、Linux（手动） | 完整版便携式归档。包含运行时以及全部随包第一方插件。 |
-| `turboism-<version>-thin.zip` | Windows、macOS、Linux（手动） | 精简版便携式归档。仅包含运行时框架，不带插件。 |
+| `TurboismInstaller-<version>.exe` | Windows | NSIS 引导式安装器。Windows 上的推荐方式。 |
+| `turboism-<version>.zip` | Windows（手动配置）、macOS、Linux | 用于手动配置的便携式归档。 |
 
-**0.67.0-beta.3** 之前的历史版本采用旧版构件：单一 Windows 安装器（`TurboismInstaller-<version>.exe`）、跨平台 Java 安装器（`TurboismInstaller-<version>.jar`）以及便携归档（`turboism-<version>-full.zip` 和 `turboism-<version>-lite.zip`）。Java 安装器 JAR 已退役；macOS 和 Linux 请使用便携 ZIP 归档。
+两种安装包均包含运行时、全部随包第一方插件以及完整的离线 GraalJS 引擎。GraalVM 运行时的安装仍是单独的可选步骤。两者的比较与安装器选项请参阅[安装器与便携 ZIP](./installer-modes)。
+
+0.67.0 的 Beta 版本（0.67.0-beta.3 至 0.67.0-beta.7）曾短暂采用 Full/Thin 四种下载的布局，该布局已退役。0.44.0 及更早版本采用旧版构件：单一 Windows 安装器（`TurboismInstaller-<version>.exe`）、跨平台 Java 安装器（`TurboismInstaller-<version>.jar`）以及便携归档（`turboism-<version>-full.zip` 和 `turboism-<version>-lite.zip`）。Java 安装器已不再发布；macOS 和 Linux 请使用便携 ZIP。
 
 所有格式带有相同的发行版本。请使用提供你所用构建的渠道：参见[发布渠道](./update-policy)以及 `api.turboism.dev` 下的三个 JSON 信息源。
 
 ## 受支持的环境
 
 - **Windows x64** 是受支持的 Cubism 宿主平台。
-- 受支持的 Cubism Editor 版本取决于所安装的 Turboism 发行版：Stable **0.44.0** 支持 **5.2.03**、**5.3.02** 和 **5.3.03**，Beta **0.67.0-beta.3** 支持 **5.0.00 至 5.3.04** 的全部 20 个已审核版本；请参阅[兼容性](/docs/use/compatibility)。未列出的 Editor 版本不被声称为兼容，不可用的 adapter 或功能会安全地失败关闭。
+- 当前稳定版 **0.67.4** 支持 **5.0.00 至 5.3.04** 的全部 20 个已审核 Cubism Editor 版本；请参阅[兼容性](/docs/use/compatibility)。未列出的 Editor 版本不被声称为兼容，不可用的 adapter 或功能会安全地失败关闭。
 - 受支持的 Editor 版本并不意味着每个插件功能在该版本上都可用。
 - macOS 打包仅处于预览阶段：尚未验证 macOS 的 Cubism 宿主支持，也不会安装 macOS 启动器。
 - Linux 只涵盖安装器和运行时文件部署行为；Linux 不是受支持的 Cubism 宿主。
@@ -40,18 +40,13 @@ Turboism 通过 [GitHub Releases](https://github.com/turboism/Turboism/releases)
 - 安装器语言的作用范围仅限于安装器界面本身，绝不会写入 `config.json`。
 - Turboism 在运行时使用的语言来自 `config.json` 中的 `locale` 设置，插件界面语言跟随 Cubism Editor 的 **File → Environment Settings → General → Language**。
 
-## 安装变体（Full 与 Thin）
+## 随包插件
 
-Turboism 提供两种变体，兼顾开箱即用与轻量需求：
-
-- **完整版（Full）**（`-full.exe`、`-full.zip`）— 核心运行时框架加上全部随包提供的第一方插件。
-- **精简版（Thin）**（`-thin.exe`、`-thin.zip`）— 仅包含运行时框架，不带任何第一方插件。插件后续可通过 Cubism 内的插件市场（**Turboism** 菜单 → **插件市场…**）或 [turboism.dev/plugins](https://turboism.dev/plugins) 安装。
-
-安装向导不再包含模式选择页或逐项插件勾选页。完整版安装器将安装全部第一方插件，无需逐项选择；精简版安装器不安装任何插件。用户后续可在 Cubism 启动后通过 **Turboism → 管理插件…** 自由启用或停用插件。
+每个安装包都会安装全部随包第一方插件；不存在模式选择页或逐项插件勾选页。用户后续可在 Cubism 中通过 **Turboism → 管理插件…** 启用或停用插件，更多插件可通过 Cubism 内的插件市场（**Turboism** 菜单 → **插件市场…**）或 [turboism.dev/plugins](https://turboism.dev/plugins) 获取。
 
 经签名验证的第一方插件会在后台自动更新。标记为热更新（hot-reload）的插件立即生效；其他插件在重启 Cubism 后生效。用户可在设置中关闭官方插件自动更新。
 
-仅用于开发的 Turboism with fx 插件及其托管的 fx runtime 字节不属于任何发行安装包。详情请参阅[Full 与 Thin 变体](./installer-modes)。
+仅用于开发的 Turboism with fx 插件及其托管的 fx runtime 字节不属于任何发行安装包。
 
 ## 必需确认
 
@@ -59,21 +54,23 @@ Turboism 提供两种变体，兼顾开箱即用与轻量需求：
 
 ## Windows `.exe` 安装器
 
-运行 `TurboismInstaller-<version>-full.exe`（完整版）或 `TurboismInstaller-<version>-thin.exe`（精简版），这是 Windows 上推荐的路径：
+运行 `TurboismInstaller-<version>.exe`，这是 Windows 上推荐的路径：
 
-- 按用户运行，不请求管理员提权。
+- 按用户运行。只有 Cubism 官方 BAT 集成这一步会通过 UAC 提权。
 - 默认安装到 `%LOCALAPPDATA%\Turboism`；你可以选择其他目录。
-- 添加按用户的开始菜单项，并在当前用户的“程序和功能”中注册卸载。
-- 变体间覆盖升级安全可靠：使用 Thin 升级 Full 安装时原样保留现有的 `plugins/` 目录；使用 Full 升级 Thin 安装时安装或更新全部第一方插件，并保留现有的 `disabledPlugins` 停用设置。
-- 安装后打开 `configure_turboism.ps1`，以便配置 Cubism 根目录和托管启动入口。
+- 提供可选的 Turboism 托管 GraalVM 运行时下载（立即安装或稍后安装）。
+- 扫描已安装的 Cubism Editor，并允许导入其他安装文件夹；即使未找到，Turboism 仍可安装并在之后配置。
+- 可选择开始菜单快捷方式、桌面快捷方式以及 Cubism 官方 BAT 集成。BAT 集成默认勾选且可以取消；它经过哈希校验、幂等，并会在卸载时恢复。
+- 在当前用户的“程序和功能”中注册卸载。
+- 可升级现有安装：重新运行新版安装器会安装当前的第一方插件，并保留现有的 `disabledPlugins` 停用设置。
 - 写入 `uninstall.exe` 以便日后移除。
-- 不会修改 Cubism 安装文件。
+- 不会修改 Cubism 的 JAR、DLL 或许可状态。
 
 ## 便携式 ZIP 安装包
 
 在 Windows（手动配置）、macOS 和 Linux 上：
 
-1. 选择 `turboism-<version>-full.zip` 获取随包第一方插件，或选择 `turboism-<version>-thin.zip` 获取仅运行时的精简包。
+1. 下载 `turboism-<version>.zip`，其中包含运行时以及全部随包第一方插件。
 2. 将**整个压缩包**解压到独立的 Turboism 文件夹中，绝不要解压到 Cubism 安装目录。
 3. 在 Windows 上，在解压出的文件夹中运行配置器：
 
@@ -91,24 +88,24 @@ ZIP 手动安装没有卸载器，也不启用官方启动 BAT 集成：关闭 C
 每个安装包都有一个 `.sha256` 伴随文件，文件名即在原文件名后加上 `.sha256`。例如，在 PowerShell 中：
 
 ```powershell
-Get-FileHash ".\TurboismInstaller-<version>-full.exe" -Algorithm SHA256
+Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
 ```
 
 将结果与已发布的值比较。SHA-256 校验和证明文件完整性，它不是代码签名证书。
 
 ## 安装之后
 
-1. 在 Windows 上，运行 Turboism home 中的 `configure_turboism.ps1`。它只列出该 Turboism 发行版确切支持的 Cubism Editor 安装，并为每个选中的根目录创建一个托管启动入口。保存 0 项安装会留下一个有效的仅框架安装。
-2. 可选地为选定的安装启用与官方 Cubism 启动 BAT 的集成。它会记录一份带哈希保护的备份，且绝不会被隐式应用；之后用户对这些文件的编辑会变成冲突，并保留状态以便重试。
-3. 通过所选 Cubism 根目录的托管启动器启动 Turboism（Windows 上为 `launch-cubism-turboism.bat`）。
+1. 在 Windows 上，使用 Turboism home 中的 `configure_turboism.ps1`（或开始菜单中的 **Turboism_Configurator**）添加或更改 Cubism 安装。它会为每个选中的根目录创建一个托管启动入口。保存 0 项安装会留下一个有效的仅框架安装。
+2. 除非你取消勾选，Windows 安装器会应用 Cubism 官方 BAT 集成。它会记录一份带哈希保护的备份；之后用户对这些文件的编辑会变成冲突，并保留状态以便重试。ZIP 手动安装不会启用该集成。
+3. 通过 Turboism 快捷方式、已应用 BAT 集成时的现有 Cubism 快捷方式，或所选 Cubism 根目录的托管启动器（Windows 上为 `launch-cubism-turboism.bat`）启动 Cubism。
 4. 确认 Turboism 正常启动，并在 Turboism home 中写入诊断日志。
 5. 在 Cubism 界面中，通过顶部 **Turboism** 菜单访问**插件市场…**、**管理插件…**、**插件设置…**、**检查更新**等功能。
 
 ## 卸载
 
-- **通过 `.exe` 安装器创建的 Windows 安装**：运行 Turboism home 目录中的 `uninstall.exe`。它只清理 Turboism 记录的托管快捷方式/状态与自有文件。卸载确认页包含“保留 config.json（用户配置）”复选框（默认勾选）。完整版卸载器仅删除安装器部署的第一方插件 JAR，未知文件和第三方插件 JAR 会被保留。精简版安装器不删除插件。
+- **通过 `.exe` 安装器创建的 Windows 安装**：运行 Turboism home 目录中的 `uninstall.exe`。它只清理 Turboism 记录的托管快捷方式/状态与自有文件。卸载确认页包含“保留 config.json（用户配置）”复选框（默认勾选）。它仅删除安装器部署的第一方插件 JAR，未知文件和第三方插件 JAR 会被保留。已应用的官方 BAT 集成会依据带哈希保护的备份恢复。
 - **ZIP 手动安装**：关闭 Cubism 并直接删除 Turboism 文件夹。
-- **历史安装（0.67.0-beta.3 之前）**：通过已退役的 Java 安装器创建的安装，Windows/Linux 上运行 `java -jar <home>\Uninstaller\uninstaller.jar`，macOS 上运行 `uninstall.command`。
+- **历史安装（0.44.0 及更早版本）**：通过已退役的 Java 安装器创建的安装，Windows/Linux 上运行 `java -jar <home>\Uninstaller\uninstaller.jar`，macOS 上运行 `uninstall.command`。
 
 ## 当前限制
 

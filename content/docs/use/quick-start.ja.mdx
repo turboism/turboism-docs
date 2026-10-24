@@ -7,8 +7,8 @@ description: 公開された Turboism パッケージをインストールし、
 
 ## 1. 安全に準備する
 
-- Windows x64 が対応する Cubism ホストプラットフォームです。対応する Editor バージョンは Turboism のリリースによって異なります（Stable 0.44.0 は 5.2.03、5.3.02、5.3.03、Beta 0.67.0-beta.3 は 5.0.00–5.3.04。[互換性](/docs/use/compatibility)を参照）。
-- 0.67.0-beta.3 以降、従来の Java インストーラー JAR は廃止されました。macOS および Linux ではポータブル ZIP パッケージを使用します。
+- Windows x64 が対応する Cubism ホストプラットフォームです。現在の安定版 0.67.4 は、5.0.00 から 5.3.04 までのレビュー済み全 20 の Cubism Editor バージョンに対応しています（[互換性](/docs/use/compatibility)を参照）。
+- 従来の Java インストーラーは現在公開されていません。macOS および Linux ではポータブル ZIP パッケージを使用します。
 - 開くプロジェクトをバックアップするか、使い捨てのコピーを使用します。
 - Turboism home を Cubism のインストール先から分離しておきます。
 - Cubism JAR、DLL、BAT ファイル、ライセンス状態を編集しないでください。
@@ -17,12 +17,14 @@ description: 公開された Turboism パッケージをインストールし、
 
 1. [turboism.dev/download](https://turboism.dev/download) を開き、**Stable**、**Beta**、**Nightly** のいずれかのチャンネルを選びます。
 2. パッケージを 1 つと、対応する `.sha256` ファイルをダウンロードします:
-   - `TurboismInstaller-<version>-full.exe` または `turboism-<version>-full.zip`: ランタイムフレームワークとすべてのファーストパーティプラグインを含む。
-   - `TurboismInstaller-<version>-thin.exe` または `turboism-<version>-thin.zip`: ランタイムフレームワークのみ。
+   - `TurboismInstaller-<version>.exe`: Windows インストーラー（Windows で推奨）。
+   - `turboism-<version>.zip`: Windows、macOS、Linux で手動セットアップするためのポータブルアーカイブ。
+
+   どちらのパッケージにも、ランタイムフレームワーク、すべての同梱ファーストパーティプラグイン、完全なオフライン GraalJS エンジンが含まれます。
 3. ファイルのハッシュを検証します。たとえば PowerShell では:
 
    ```powershell
-   Get-FileHash ".\TurboismInstaller-<version>-full.exe" -Algorithm SHA256
+   Get-FileHash ".\TurboismInstaller-<version>.exe" -Algorithm SHA256
    ```
 
 インストーラーは署名されていないため、チェックサムが自分で実行できる完全性の確認手段です。
@@ -31,21 +33,22 @@ description: 公開された Turboism パッケージをインストールし、
 
 ### Windows `.exe` インストーラー
 
-1. `TurboismInstaller-<version>-full.exe`（Full）または `TurboismInstaller-<version>-thin.exe`（Thin）を実行します。
+1. `TurboismInstaller-<version>.exe` を実行します。
 2. インストーラーの言語（英語、簡体字中国語、日本語、韓国語）を選択します。
 3. ライセンスを読み、4 つの必須の確認事項すべてを承諾します。
-4. インストールディレクトリ（既定では `%LOCALAPPDATA%\Turboism`）を選びます。インストーラーにモード選択やプラグイン選択画面はありません。Full はすべてのファーストパーティプラグインをインストールし、Thin はプラグインをインストールしません。
-5. オプションのマネージド GraalVM / JavaScript エンジンコンポーネントをダウンロードするかどうかを決めます。
-6. インストーラーが `configure_turboism.ps1` を開いたら、使用する Cubism インストールを選択して保存します。設定をキャンセルしても、フレームワークのみの有効なインストールが残ります。
-7. Cubism ルートの管理ランチャー（`launch-cubism-turboism.bat`）で Cubism を起動します。
+4. インストールディレクトリ（既定では `%LOCALAPPDATA%\Turboism`）を選びます。モード選択やプラグイン選択画面はなく、すべての同梱ファーストパーティプラグインがインストールされます。
+5. 任意の Turboism 管理 GraalVM ランタイムを今すぐダウンロードするか、後で設定ツールからインストールするかを選びます。
+6. インストーラーが見つけた Cubism インストールを確認するか、**バージョンを追加** で追加します。見つからない場合でも Turboism はインストールされ、後から `configure_turboism.ps1` で Cubism を設定できます。
+7. 起動オプションページで、スタートメニューのショートカット、デスクトップのショートカット、Cubism 公式 BAT 統合の選択を確認・変更します。BAT 統合は既定で選択されており、既存の Cubism ショートカットで Turboism が読み込まれます。解除すると公式 BAT ファイルは変更されません。
+8. Turboism のショートカット、既存の Cubism ショートカット（BAT 統合時）、または `launch-cubism-turboism.bat` で Cubism を起動します。
 
 ### ポータブル ZIP
 
-1. アーカイブ全体（`turboism-<version>-full.zip` または `turboism-<version>-thin.zip`）を専用のフォルダに展開します。
+1. アーカイブ全体（`turboism-<version>.zip`）を、Cubism のインストールディレクトリではない専用のフォルダに展開します。
 2. そのフォルダで `configure_turboism.ps1` を実行し、Cubism インストールを選択します。
 3. 生成されたショートカット、または `launch-cubism-turboism.bat` から Cubism を起動します。
 
-**0.67.0-beta.3** より前のリリースでは従来の配布資産（`TurboismInstaller-<version>.exe`、IzPack `.jar` インストーラー、`turboism-<version>-lite.zip`）が使用されていました。Java インストーラー JAR は廃止されました。
+インストーラーのオプションとパッケージ履歴（0.67.0 ベータ版で廃止された Full/Thin ダウンロードや 0.44.0 以前の従来の配布資産を含む）については、[インストーラーとポータブル ZIP](./installer-modes)を参照してください。
 
 インストーラーの言語はインストーラーにのみ影響します。Turboism が実行時に使用する言語は `config.json` の `locale` 設定から決まり、プラグインのインターフェース言語は Cubism Editor の **ファイル → 環境設定 → 一般 → 言語** に従います。
 
@@ -64,7 +67,7 @@ description: 公開された Turboism パッケージをインストールし、
 
 ## 5. プラグインの追加と管理
 
-Full 構成にはすべてのファーストパーティプラグインが含まれています。Thin 構成の場合や追加プラグインを導入する場合:
+どのパッケージにもすべての同梱ファーストパーティプラグインが含まれています。プラグインを追加・管理する場合:
 
 - Cubism を開き、**Turboism → プラグインマーケット…**（または [turboism.dev/plugins](https://turboism.dev/plugins)）からプラグインを導入します。
 - ファーストパーティプラグインは署名検証を経てバックグラウンドで自動更新されます。ホットリロード（hot-reload）対応プラグインは即座に反映され、その他の更新は Cubism 再起動後に反映されます。設定で公式プラグインの自動更新を無効化できます。

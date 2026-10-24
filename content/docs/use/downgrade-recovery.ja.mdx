@@ -26,10 +26,12 @@ Turboism は、以前の version へのサポートされた downgrade 経路を
 
 staged plugin replacement が失敗すると、直前の plugin file が内部的に復元されることがあります。これはユーザー向けの履歴 version 機能ではなく、一般的な plugin downgrade フローがあることを意味しません。
 
+プラグインは必要とする最小の Turboism API を宣言します。一部の公式プラグインは API `0.67.2` または `0.67.4` を必要とするため（[ファーストパーティプラグイン](./first-party-plugins)を参照）、古いフレームワークでは読み込まれません。
+
 ## 更新前に計画する
 
 - build または channel を変更する前に[更新ポリシー](./update-policy)を読んでください。
-- Full および Thin パッケージについては[Full / Thin バリアント](./installer-modes)で確認してください。
+- 2 つのパッケージ形式とアップグレード時のプラグインの扱いについては、[インストーラーとポータブル ZIP](./installer-modes)を参照してください。
 - プロジェクトのほか、`config.json` と plugin の `config/` および `data/` の内容を、独立したバックアップとして保持してください。
 
 自動復旧と完全な rollback interface は利用できません。

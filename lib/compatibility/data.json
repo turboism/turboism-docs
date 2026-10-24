@@ -1,7 +1,7 @@
 {
   "format": "turboism-docs.compatibility/v1",
-  "sourceCommit": "4a21b8b2b",
-  "sourceCommitFull": "4a21b8b2b5e4fabb8a5c9ba9fce9e85d3339c6e7",
+  "sourceCommit": "5e0f8b02c",
+  "sourceCommitFull": "5e0f8b02cf644d9f35e836d9d9712af21422434e",
   "matrixFormat": "turboism.compatibility-matrix/v1",
   "boundariesFormat": "turboism.version-boundaries/v1",
   "reviewedVersions": [
@@ -29,34 +29,8 @@
   "reviewedRange": "5.0.00–5.3.04",
   "releases": [
     {
-      "version": "0.44.0",
+      "version": "0.67.4",
       "channel": "stable",
-      "cubismVersions": [
-        "5.2.03",
-        "5.3.02",
-        "5.3.03"
-      ],
-      "cubismRange": "5.2.03, 5.3.02, 5.3.03",
-      "platforms": [
-        "windows-x64"
-      ]
-    },
-    {
-      "version": "0.44.1-0.nightly.11",
-      "channel": "nightly",
-      "cubismVersions": [
-        "5.2.03",
-        "5.3.02",
-        "5.3.03"
-      ],
-      "cubismRange": "5.2.03, 5.3.02, 5.3.03",
-      "platforms": [
-        "windows-x64"
-      ]
-    },
-    {
-      "version": "0.67.0-beta.1",
-      "channel": "beta",
       "cubismVersions": [
         "5.0.00",
         "5.0.01",
@@ -80,6 +54,19 @@
         "5.3.04"
       ],
       "cubismRange": "5.0.00–5.3.04",
+      "platforms": [
+        "windows-x64"
+      ]
+    },
+    {
+      "version": "0.44.0",
+      "channel": "stable",
+      "cubismVersions": [
+        "5.2.03",
+        "5.3.02",
+        "5.3.03"
+      ],
+      "cubismRange": "5.2.03, 5.3.02, 5.3.03",
       "platforms": [
         "windows-x64"
       ]
@@ -175,6 +162,34 @@
       }
     },
     {
+      "directory": "atlas-bitmask-nesting",
+      "id": "dev.turboism.plugin.texture-atlas-nesting",
+      "name": "Bitmask Nesting",
+      "requiresCubism": true,
+      "supportedRange": "all",
+      "supportedCount": 20,
+      "supportedBoundaryPrefix": false,
+      "fullFeatureSince": "5.2.00",
+      "partialFeatures": [
+        {
+          "key": "dev.turboism.sdk.cubism.textureatlas.TextureAtlasPolygonLayoutService",
+          "mode": "only",
+          "range": "5.2.00–5.3.04",
+          "boundaryPrefix": true,
+          "label": {
+            "en": "Polygon-aware atlas layout",
+            "zh": "多边形图集布局",
+            "ja": "ポリゴン対応アトラスレイアウト",
+            "ko": "폴리곤 인식 아틀라스 레이아웃"
+          }
+        }
+      ],
+      "hostValidation": {
+        "verified": null,
+        "boundary": null
+      }
+    },
+    {
       "directory": "atlas-dalsoo-polygon",
       "id": "dev.turboism.plugin.texture-atlas-dalsoo",
       "name": "Dalsoo Polygon Packing Algorithm",
@@ -182,6 +197,7 @@
       "supportedRange": "all",
       "supportedCount": 20,
       "supportedBoundaryPrefix": false,
+      "fullFeatureSince": "5.2.00",
       "partialFeatures": [
         {
           "key": "dev.turboism.sdk.cubism.textureatlas.TextureAtlasPolygonLayoutService",
@@ -202,6 +218,34 @@
       }
     },
     {
+      "directory": "atlas-folder-layout",
+      "id": "dev.turboism.plugin.texture-atlas-folders",
+      "name": "Folder Atlas Layout",
+      "requiresCubism": true,
+      "supportedRange": "all",
+      "supportedCount": 20,
+      "supportedBoundaryPrefix": false,
+      "fullFeatureSince": "5.1.00",
+      "partialFeatures": [
+        {
+          "key": "cubism.editor-ui.top-menu",
+          "mode": "not_on",
+          "range": "5.0.00–5.0.06",
+          "boundaryPrefix": true,
+          "label": {
+            "en": "Top menu integration",
+            "zh": "顶部菜单集成",
+            "ja": "トップメニュー統合",
+            "ko": "상단 메뉴 통합"
+          }
+        }
+      ],
+      "hostValidation": {
+        "verified": null,
+        "boundary": null
+      }
+    },
+    {
       "directory": "atlas-maxrects-bssf",
       "id": "dev.turboism.plugin.texture-atlas",
       "name": "MaxRects-BSSF Layout Algorithm",
@@ -212,20 +256,6 @@
       "partialFeatures": [],
       "hostValidation": {
         "verified": "5.2.03",
-        "boundary": null
-      }
-    },
-    {
-      "directory": "bounding-box",
-      "id": "dev.turboism.plugin.bounding-box",
-      "name": "Bounding Box Plugin",
-      "requiresCubism": false,
-      "supportedRange": "all",
-      "supportedCount": 20,
-      "supportedBoundaryPrefix": false,
-      "partialFeatures": [],
-      "hostValidation": {
-        "verified": null,
         "boundary": null
       }
     },
@@ -251,6 +281,7 @@
       "supportedRange": "all",
       "supportedCount": 20,
       "supportedBoundaryPrefix": false,
+      "fullFeatureSince": "5.1.00",
       "partialFeatures": [
         {
           "key": "cubism.editor-ui.top-menu",
@@ -298,20 +329,6 @@
       }
     },
     {
-      "directory": "context-menu",
-      "id": "dev.turboism.plugin.context-menu",
-      "name": "Context Menu Plugin",
-      "requiresCubism": true,
-      "supportedRange": "all",
-      "supportedCount": 20,
-      "supportedBoundaryPrefix": false,
-      "partialFeatures": [],
-      "hostValidation": {
-        "verified": null,
-        "boundary": null
-      }
-    },
-    {
       "directory": "cubism-tab-filter",
       "id": "dev.turboism.plugin.cubism-tab-filter",
       "name": "Cubism Tab Filter",
@@ -347,6 +364,7 @@
       "supportedRange": "all",
       "supportedCount": 20,
       "supportedBoundaryPrefix": false,
+      "fullFeatureSince": "5.2.00",
       "partialFeatures": [
         {
           "key": "dev.turboism.sdk.cubism.model.ModelTextures#exportRawImagePsd",
@@ -375,6 +393,34 @@
       ],
       "hostValidation": {
         "verified": "5.3.02",
+        "boundary": null
+      }
+    },
+    {
+      "directory": "frame-animation-import",
+      "id": "dev.turboism.plugin.frame-animation-import",
+      "name": "Frame Animation Import",
+      "requiresCubism": true,
+      "supportedRange": "all",
+      "supportedCount": 20,
+      "supportedBoundaryPrefix": false,
+      "fullFeatureSince": "5.3.00",
+      "partialFeatures": [
+        {
+          "key": "cubism.editor-ui.top-menu",
+          "mode": "not_on",
+          "range": "5.0.00–5.0.06",
+          "boundaryPrefix": true,
+          "label": {
+            "en": "Top menu integration",
+            "zh": "顶部菜单集成",
+            "ja": "トップメニュー統合",
+            "ko": "상단 메뉴 통합"
+          }
+        }
+      ],
+      "hostValidation": {
+        "verified": null,
         "boundary": null
       }
     },
@@ -529,6 +575,20 @@
       }
     },
     {
+      "directory": "parameter-lock",
+      "id": "dev.turboism.plugin.parameter-lock",
+      "name": "Parameter Lock Plugin",
+      "requiresCubism": true,
+      "supportedRange": "all",
+      "supportedCount": 20,
+      "supportedBoundaryPrefix": false,
+      "partialFeatures": [],
+      "hostValidation": {
+        "verified": null,
+        "boundary": null
+      }
+    },
+    {
       "directory": "perf-stats",
       "id": "dev.turboism.plugin.perf-stats",
       "name": "Performance Statistics",
@@ -561,20 +621,6 @@
       "id": "dev.turboism.plugin.project-inspector",
       "name": "Project Inspector",
       "requiresCubism": true,
-      "supportedRange": "all",
-      "supportedCount": 20,
-      "supportedBoundaryPrefix": false,
-      "partialFeatures": [],
-      "hostValidation": {
-        "verified": null,
-        "boundary": null
-      }
-    },
-    {
-      "directory": "project-panel",
-      "id": "dev.turboism.plugin.project-panel",
-      "name": "Project Panel Plugin",
-      "requiresCubism": false,
       "supportedRange": "all",
       "supportedCount": 20,
       "supportedBoundaryPrefix": false,
@@ -635,20 +681,6 @@
       "hostValidation": {
         "verified": "5.0.00–5.2.00, 5.2.03–5.3.00, 5.3.02–5.3.04",
         "boundary": "5.2.01–5.2.02, 5.3.01"
-      }
-    },
-    {
-      "directory": "psd-import",
-      "id": "dev.turboism.plugin.psd-import",
-      "name": "PSD Import Plugin",
-      "requiresCubism": false,
-      "supportedRange": "all",
-      "supportedCount": 20,
-      "supportedBoundaryPrefix": false,
-      "partialFeatures": [],
-      "hostValidation": {
-        "verified": null,
-        "boundary": null
       }
     },
     {
@@ -721,6 +753,7 @@
       "supportedRange": "all",
       "supportedCount": 20,
       "supportedBoundaryPrefix": false,
+      "fullFeatureSince": "5.2.00",
       "partialFeatures": [
         {
           "key": "dev.turboism.sdk.cubism.textureatlas.TextureAtlasEditorPanel",
@@ -800,6 +833,7 @@
       "supportedRange": "all",
       "supportedCount": 20,
       "supportedBoundaryPrefix": false,
+      "fullFeatureSince": "5.1.00",
       "partialFeatures": [
         {
           "key": "dev.turboism.sdk.cubism.backup.EditorAutoBackupService",

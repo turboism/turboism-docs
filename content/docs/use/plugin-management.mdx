@@ -10,7 +10,7 @@ Turboism provides several complementary ways to manage plugins:
 - **Manage Plugins…** to enable, disable, uninstall, or stage local plugin JARs;
 - **Plugin Settings…** in a dedicated two-pane window to configure plugin options.
 
-A Full installation already ships the reviewed [first-party plugin bundle](./first-party-plugins). In Thin installations, plugins are installed on demand from the Plugin Market.
+Every installer and ZIP package already ships the reviewed [first-party plugin bundle](./first-party-plugins). Additional plugins, or bundled plugins you removed, can be installed from the Plugin Market.
 
 All plugin lifecycle and file changes are staged and applied safely. Staged updates apply after Cubism restarts, while plugins marked with hot-reload support can update immediately.
 
@@ -30,13 +30,26 @@ In Cubism Editor, all framework and plugin controls are centralized under the to
 
 ## Plugin Market and automatic updates
 
-Starting with 0.67.0-beta.3, first-party plugins can be installed and kept up-to-date without reinstalling the framework:
+Since 0.67.0, first-party plugins can be installed and kept up-to-date without reinstalling the framework:
 
 - Open **Turboism → Plugin Market…** or visit [turboism.dev/plugins](https://turboism.dev/plugins) to browse available plugins.
 - First-party plugins auto-update in the background after signature verification.
 - Plugins marked **hot-reload** apply immediately without interrupting your modeling workflow.
 - Other plugin updates apply the next time Cubism restarts.
 - Users can disable automatic plugin updates anytime in framework settings.
+- Since 0.67.4, the plugin management windows show how many plugins are installed and how many are available in the market.
+- Plugins whose declared API range does not include the running Turboism API are marked as incompatible in the market.
+
+## Plugin details: API range and Cubism versions
+
+In **Turboism → Manage Plugins…**, double-click a plugin or press Enter to view its details. Since 0.67.2, the details show:
+
+- the plugin's **SDK API compatibility range**, for example `[0.67.0,1.0.0)`;
+- the exact Cubism Editor versions the plugin declares, listed separately as versions with **available features**, versions with **full functionality**, and versions with **partial functionality**. Missing or invalid declarations are shown as **Not declared**.
+
+First-party plugin JARs carry these declarations in `META-INF/turboism/cubism-versions.json`, generated from reviewed capability requirements. See [Compatibility](./compatibility) for the per-plugin ranges.
+
+Plugin API ranges start at the minimum Turboism framework version the plugin needs and end before `1.0.0`. Most official plugins require `0.67.0`; some require `0.67.2` or `0.67.4` because they use newer SDK additions (see [First-Party Plugins](./first-party-plugins)). Legacy plugins declaring `[0.1.0,0.2.0)` are rejected.
 
 ## Plugin Settings
 
@@ -84,7 +97,7 @@ In **Turboism → Manage Plugins…**, toggle the active state for any installed
 - The desired state is persisted in `config.json` under `disabledPlugins` and applies after Cubism restarts.
 - The Runtime-owned `turboism.core` shell is built-in framework code and cannot be disabled.
 - Disabled plugins are skipped during the next startup discovery.
-- Upgrading across variants preserves your `disabledPlugins` list: installing Full over Thin will never silently re-enable plugins you previously disabled.
+- Rerunning or upgrading the installer preserves your `disabledPlugins` list: it never silently re-enables plugins you previously disabled.
 
 ## Uninstall a plugin
 

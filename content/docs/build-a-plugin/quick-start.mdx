@@ -6,7 +6,7 @@ description: Build a minimal Java 17 Turboism plugin against the public SDK.
 Turboism provides an official standalone project template and scaffolding tools. You can create a new standalone repository from the template and run an automated setup script to fetch the matching SDK and annotation processor.
 
 
-This example targets the current development SDK. The setup script downloads the latest **published** Beta SDK, which may be older than the hosted reference. Check `gradle.properties` and the downloaded filenames; use the matching SDK version when compiling. The generated reference is not a release announcement.
+This example targets Stable 0.67.4. The setup script resolves the stable channel by default and downloads `turboism-sdk-<version>.jar` and `turboism-event-processor-<version>.jar` from that release. Check `gradle.properties` (`turboismSdkVersion`) and the downloaded filenames to confirm the SDK version you compile against. Use `--channel beta` or `--version <version>` only when you deliberately target another release.
 
 ## 1. Use the standalone template (Recommended)
 
@@ -21,10 +21,10 @@ Run the scaffolding setup script (which downloads the matching SDK and event ann
 
 ```bash
 # Linux / macOS
-./scripts/setup.sh --channel beta
+./scripts/setup.sh --channel stable
 
 # Windows (PowerShell)
-.\scripts\setup.ps1 -Channel beta
+.\scripts\setup.ps1 -Channel stable
 ```
 
 Follow the interactive prompts to enter your plugin ID (e.g. `com.example.myplugin`), display name, package name, and author. The script refactors Java packages and classes and sets up dependencies under `libs/`.
@@ -43,10 +43,10 @@ my-plugin/
 │   └── turboism-event-processor-*.jar
 ├── src/main/java/com/example/myplugin/MyPlugin.java
 ├── src/main/resources/META-INF/turboism/plugin.json
-└── src/test/java/com/example/myplugin/MyPluginTest.java
+└── src/main/resources/META-INF/turboism/cubism-versions.json
 ```
 
-Its `build.gradle.kts` configuration:
+Its `build.gradle.kts` configuration when the setup script has placed the JARs in `libs/` (without them, the template resolves `dev.turboism:sdk` and `dev.turboism:event-processor` from `mavenLocal()` using `turboismSdkVersion`):
 
 ```kotlin
 plugins {
@@ -54,19 +54,19 @@ plugins {
 }
 
 java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 val sdkJars = fileTree("libs") { include("turboism-sdk-*.jar") }
-val processorJars = fileTree("libs") { include("turboism-event-processor-*.jar") }
+val eventProcessorJars = fileTree("libs") { include("turboism-event-processor-*.jar") }
 
 dependencies {
     compileOnly(sdkJars)
-    testImplementation(sdkJars)
-    annotationProcessor(processorJars)
-    annotationProcessor(sdkJars)
+    if (!eventProcessorJars.isEmpty) {
+        annotationProcessor(eventProcessorJars)
+        annotationProcessor(sdkJars)
+    }
 }
 ```
 
@@ -138,7 +138,7 @@ Edit `src/main/resources/META-INF/turboism/plugin.json`:
   "entrypoints": [
     "com.example.myplugin.MyPlugin"
   ],
-  "turboismApi": "[0.1.0,0.2.0)",
+  "turboismApi": "[0.67.0,1.0.0)",
   "authors": [
     { "name": "Example Author" }
   ],
@@ -166,6 +166,7 @@ Edit `src/main/resources/META-INF/turboism/plugin.json`:
 ```
 
 - `"lifecycle": { "hotReload": true }` declares that the plugin supports hot reloading, allowing enable, disable, and update actions to take effect immediately without restarting Cubism.
+- `turboismApi` is the plugin SDK API range. `[0.67.0,1.0.0)` accepts every framework API from 0.67.0 up to, but excluding, 1.0.0; raise the lower bound if you use SDK members added in a later release. Legacy `[0.1.0,0.2.0)` descriptors are rejected.
 - For permissions, resources, i18n, and schema details, see [Plugin Manifest and Packaging](./manifest).
 
 ## 5. Build and verify
@@ -177,7 +178,7 @@ Edit `src/main/resources/META-INF/turboism/plugin.json`:
 The output artifact is written to:
 
 ```text
-build/libs/com.example.myplugin-0.1.0.jar
+build/libs/myplugin-turboism-plugin-0.1.0.jar
 ```
 
 The JAR in `build/libs/` is your distribution artifact.

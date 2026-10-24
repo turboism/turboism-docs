@@ -15,7 +15,8 @@ Turboism은 세 가지 채널에서 제품 버전을 게시하고 기계 판독 
 
 - 채널이 정당하게 `status: not_published`를 보고할 수 있습니다. 이는 오류가 아니라 빈 채널을 나타냅니다.
 - nightly 빌드는 개발 빌드입니다. 사용 전에 프로젝트를 백업하세요.
-- **0.67.0-beta.3**부터 모든 채널은 정확히 4개의 패키지 자산(`TurboismInstaller-<version>-full.exe`, `TurboismInstaller-<version>-thin.exe`, `turboism-<version>-full.zip`, `turboism-<version>-thin.zip`)과 일치하는 `.sha256` 체크섬을 생성합니다. 0.67.0-beta.3 이전 릴리스에서는 기존 레거시 자산(`TurboismInstaller-<version>.exe`, Java 설치 프로그램 `TurboismInstaller-<version>.jar`, `turboism-<version>-lite.zip`)을 사용했습니다. Java 설치 프로그램 JAR은 폐지되었습니다.
+- **0.67.0** 안정판부터 각 릴리스는 정확히 두 가지 제품 다운로드 `TurboismInstaller-<version>.exe`와 `turboism-<version>.zip`을 일치하는 `.sha256` 체크섬과 함께 제공합니다. 두 패키지 모두 모든 기본 제공 퍼스트 파티 플러그인과 완전한 오프라인 GraalJS 엔진을 포함합니다. 개발자 자산(`turboism-sdk-<version>.jar` 및 `turboism-event-processor-<version>.jar`)도 함께 게시됩니다.
+- 현재 안정판은 **0.67.4**입니다. 0.67.0 베타 릴리스(0.67.0-beta.3 ~ 0.67.0-beta.7)는 일시적으로 4개 다운로드의 Full/Thin 구성을 사용했으며, 이 구성은 폐지되었습니다. 0.44.0 이하 릴리스는 레거시 자산(`TurboismInstaller-<version>.exe`, Java 설치 프로그램 `TurboismInstaller-<version>.jar`, `turboism-<version>-full.zip` / `turboism-<version>-lite.zip`)을 사용했습니다. Java 설치 프로그램은 더 이상 게시되지 않습니다.
 
 ## 기계 판독 가능한 피드
 
@@ -36,7 +37,7 @@ https://api.turboism.dev/v1/releases/nightly.json
 1. `config.json`과 중요한 영구 플러그인 `config/` 및 `data/` 내용을 백업하세요.
 2. 사용 중인 플랫폼과 채널에 맞는 더 새로운 패키지를 다운로드하고 SHA-256 체크섬을 검증하세요.
 3. 더 새로운 설치 프로그램을 실행하고 같은 Turboism home 디렉터리를 대상으로 지정하거나, 직접 압축을 푼 이식 가능한 아카이브의 파일을 교체하세요.
-4. 변형 간 업그레이드는 안전합니다: 설치 프로그램에는 더 이상 모드나 플러그인 선택 페이지가 없습니다. Full 환경에 Thin을 덮어쓰면 기존 `plugins/` 디렉터리가 유지되며, Thin 환경에 Full을 덮어쓰면 기존 `disabledPlugins` 설정을 유지하면서 모든 기본 제공 퍼스트 파티 플러그인이 설치되거나 업데이트됩니다.
+4. 설치 프로그램에는 모드나 플러그인 선택 페이지가 없습니다. 모든 기본 제공 퍼스트 파티 플러그인을 설치하거나 업데이트하고, 폐지된 공식 플러그인 JAR를 정리하며, 기존 `disabledPlugins` 항목은 비활성 상태로 유지합니다. 폐지된 0.67.0 베타 Thin 설치 프로그램으로 설치한 환경도 같은 방식으로 기본 제공 플러그인을 받습니다.
 5. 업데이트 후 시작, 플러그인 검색, 호스트 기능 상태 및 로그를 확인하세요.
 
 설치 프로그램을 다시 실행하면 관련 없는 구성을 무분별하게 덮어쓰지 않고 같은 home을 업데이트합니다. Cubism 설치 파일을 업데이트 수단으로 덮어쓰거나 재작성하지 마세요.
@@ -45,13 +46,14 @@ https://api.turboism.dev/v1/releases/nightly.json
 
 ### 퍼스트 파티 플러그인 자동 업데이트
 
-0.67.0-beta.3부터 퍼스트 파티 플러그인은 백그라운드에서 자동 업데이트됩니다:
+0.67.0부터 퍼스트 파티 플러그인은 백그라운드에서 자동 업데이트됩니다:
 
 - 런타임이 공식 카탈로그와 대조하여 퍼스트 파티 플러그인 업데이트를 확인합니다.
 - 다운로드된 업데이트는 스테이징 전에 엄격한 디지털 서명 및 파일 무결성 검증을 거칩니다.
 - **핫 리로드**(hot-reload)로 표시된 플러그인은 Cubism을 재시작하지 않고도 현재 세션에 즉시 적용됩니다.
 - 기타 플러그인 업데이트는 다음 Cubism 재시작 시 적용됩니다.
-- 사용자는 설정(`settings.plugins.automatic-updates`)에서 공식 플러그인 자동 업데이트를 언제든지 끌 수 있습니다.
+- 사용자는 프레임워크 설정(**공식 플러그인 자동 업데이트**, `settings.plugins.automatic-updates`)에서 공식 플러그인 자동 업데이트를 언제든지 끌 수 있습니다.
+- 업데이트는 선언된 Turboism API 범위에 실행 중인 프레임워크가 포함될 때만 설치됩니다. 일부 공식 플러그인은 API `0.67.2` 또는 `0.67.4`를 요구하므로([퍼스트 파티 플러그인](./first-party-plugins) 참고), 이를 받으려면 프레임워크를 업데이트하세요.
 - **Turboism → 플러그인 마켓…** 또는 [turboism.dev/plugins](https://turboism.dev/plugins)에서 수동으로 플러그인을 탐색하고 업데이트할 수도 있습니다.
 
 ### 커스텀 및 서드파티 플러그인
@@ -70,8 +72,10 @@ https://api.turboism.dev/v1/releases/nightly.json
 - Turboism은 하나의 공개 SDK 등급을 제공합니다. 소스 저장소의 검토된 바이너리 API 기준선이 호환성 게이트입니다.
 - API가 존재한다고 해서 모든 Cubism 버전에 프로바이더가 있다는 것이 보장되지는 않습니다.
 - 호스트에 민감한 작업은 지원되지 않거나 검증되지 않은 버전에서 사용할 수 없을 수 있습니다.
+- 플러그인 API 범위는 플러그인에 필요한 최소 Turboism 프레임워크 버전에서 시작하여 `1.0.0` 전에 끝납니다(예: `[0.67.0,1.0.0)`). `[0.1.0,0.2.0)`을 선언한 레거시 플러그인은 거부됩니다.
 - 플러그인 작성자는 선언된 Turboism API 범위를 사용하고 사용할 수 없는 동작을 테스트해야 합니다.
-- 지원되는 Cubism Editor 버전은 Turboism 릴리스에 따라 다르며(Stable 0.44.0은 5.2.03, 5.3.02, 5.3.03, Beta 0.67.0-beta.3은 5.0.00–5.3.04. [호환성](/docs/use/compatibility) 참고), Windows x64가 지원되는 호스트 플랫폼입니다.
+- 플러그인 관리에는 각 플러그인의 API 범위와 선언된 정확한 Cubism Editor 버전이 표시됩니다(0.67.2부터).
+- 현재 안정판 0.67.4는 5.0.00부터 5.3.04까지 검토된 Cubism Editor 20개 버전 전체를 지원하며([호환성](/docs/use/compatibility) 참고), Windows x64가 지원되는 호스트 플랫폼입니다.
 
 ## 업데이트 검사기
 

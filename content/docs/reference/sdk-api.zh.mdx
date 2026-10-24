@@ -3,7 +3,7 @@ title: SDK API 指南
 description: 当前 Turboism 插件 SDK 的入口点、服务、对象模型、生命周期与能力边界。
 ---
 
-Turboism SDK 是插件唯一的公开依赖项。Turboism 发布单一的公共 SDK 层级，源代码仓库中已审查的二进制 API 基线（当前为 **v17**）是兼容性门禁。其可用性取决于四项彼此独立的事实：
+Turboism SDK 是插件唯一的公开依赖项。Turboism 发布单一的公共 SDK 层级，源代码仓库中已审查的二进制 API 基线（当前为 **v23**，即 0.67.4 的现行发布门禁；v2–v22 作为历史审计保留）是兼容性门禁。其可用性取决于四项彼此独立的事实：
 
 1. API 存在于 SDK 中；
 2. 插件声明了所需权限；
@@ -11,6 +11,12 @@ Turboism SDK 是插件唯一的公开依赖项。Turboism 发布单一的公共 
 4. 支持当前启用的 Cubism 版本和对象世代。
 
 如需查看生成的类型和方法索引，请打开 [SDK HTML API 文档](https://turboism.dev/sdk/index.html)。
+
+## SDK API 范围与孵化中 API
+
+插件声明 `"turboismApi": "[0.67.0,1.0.0)"`。下限是插件所需的最低框架基础版本；Runtime 计算其 API 版本时忽略 beta、nightly 和 SNAPSHOT 后缀。旧式 `[0.1.0,0.2.0)` 插件会被拒绝。使用后续版本新增的 SDK 成员时，请有意提高下限：针对较新的 SDK 编译，并不会让这些新增内容在较旧的 Runtime 上可用。例如，官方插件 `atlas-folder-layout`、`atlas-bitmask-nesting`、`atlas-dalsoo-polygon` 和 `psd-clip-mask-import` 要求 `0.67.4`，`external-psd-edit` 和 `atlas-maxrects-bssf` 要求 `0.67.2`。
+
+`@Incubating`（`dev.turboism.sdk.Incubating`）标记可能变更或消失的实验性 API，包括破坏性的签名变更。它不纳入精确兼容性基线；标注在类型上时覆盖其所有成员。对孵化中 API 的依赖应视为绑定于构建时所用的 SDK 版本，并在每次 SDK 更新时复查。在首个稳定 SDK 版本发布之前仍允许破坏性变更，因此未标注的 API 并不能证明首个稳定 SDK 版本已经发布。
 
 ## 插件生命周期
 
@@ -270,6 +276,19 @@ UI API 使用 SDK DTO，而不是 Swing/AWT 或主机小部件。当前族包括
 
 使用 schema 4 的插件描述符可以声明其导出和导入的公共事件类型，每个类型都绑定一个契约版本和事件类型的 ABI 摘要。Runtime 无需 ClassLoader 委托即可解析这些契约，拒绝重复的导出，并拒绝提供程序契约未被接纳的导入。声明事件契约不授予任何主机写入权限；它只是让插件自有的事件类型可供其他插件使用。请参阅[插件 Manifest 与打包](../build-a-plugin/manifest)。
 
+## 0.67.2 与 0.67.4 的 SDK 新增内容
+
+v22（0.67.2）和 v23（0.67.4）基线只新增 API，未移除任何现有公共类型或可调用的 JVM 描述符：
+
+- **纹理集逐页尺寸**：`TextureAtlasPageSize`，以及支持各页独立尺寸的 `TextureAtlasLayoutPlan` 构造器；`TextureAtlasLayoutPlanner.supportsCompleteAtlas()` 是默认方法，仅支持当前页的规划器应覆盖它并返回 `false`。
+- **打包失败**：规划器通过公开、可扩展的 `TextureAtlasPackingException` 及其 `Reason`（`PAGE_BUDGET_EXHAUSTED`、`ITEM_DOES_NOT_FIT`、`INVALID_RESERVED_SIZE`）报告输入无法放入。
+- **多边形轮廓与多边形页面**（0.67.4）：`TextureAtlasLayoutItem` 新增可选的源 `outline`（四参数构造器及访问器；保留三参数构造器），`TextureAtlasLayoutPlan` 新增 `polygonPages`（八参数构造器及访问器），`TextureAtlasOutline` 新增值相等、`hashCode` 和 `toString`。`TextureAtlasPolygonLayoutPlanner` 标注为 `@Incubating`。
+- **PSD 编辑**：`PsdEditFile.openInApplication(String)` 是默认方法。
+- **`SettingsControl.FilePath`**：`SettingsControl` 是密封接口，因此新变体对穷举式 `switch` 而言是源码层面的变更。针对当前 SDK 重新编译时，请补充 `FilePath` 分支。
+- **`TurboismProgressDialog`**（`dev.turboism.sdk.ui.window`，0.67.4）：在 Cubism Editor 上居中显示的共享非模态进度窗口，提供 `(title, message)` 构造器以及 `show`、`focus`、`setMessage`、`setProgress` 和 `close`，并实现 `AutoCloseable`。
+
+新增了组件的 record 会改变其反射形态、`equals`、`hashCode` 和 `toString`，保留下来的原规范构造器会丢失参数名元数据。以反射方式检查这些 record 的代码必须相应调整。
+
 ## 非契约的公共类型
 
 少数类会因为共享的内部辅助方法而编译为 public 的 SDK 类，但它们自身的说明明确指出其不属于稳定插件 API 面。当前的例子是 `dev.turboism.sdk.cubism.ActiveReadProjections`。
@@ -283,11 +302,12 @@ UI API 使用 SDK DTO，而不是 Swing/AWT 或主机小部件。当前族包括
 - **0.67 新增的核心能力族**：
   - **统一模型对象图**（`CubismModel`、`Drawables`、`Deformers`、`Parts`、`Parameters`）；
   - **网格建模与会话**（`MeshEditService`、`MeshEditParticipation`、`MeshMirrorAxisService`）；
-  - **纹理集排版与统计**（`TextureAtlasLayoutService`、`TextureAtlasEditorSession`、`TextureAtlasStatistics`）；
-  - **PSD 与剪贴蒙版**（`PsdClipMaskDocumentSnapshot`、`PsdEditFile`）；
+  - **纹理集排版与统计**（`TextureAtlasLayoutService`、`TextureAtlasEditorSession`、`TextureAtlasSummary`、`TextureAtlasLayoutPlanner`、`TextureAtlasPageSize`、`TextureAtlasPackingException`、`TextureAtlasOutline`；`TextureAtlasPolygonLayoutPlanner` 标注为 `@Incubating`）；
+  - **PSD 与剪贴蒙版**（`PsdClipMaskDocumentSnapshot`、`PsdEditFile`，包括 `openInApplication`）；
   - **参数批量操作**（`ParameterBindingBatchOperations`、`ParameterBindingTransferPlan`）；
   - **3D 模型导入挂钩**（`ModelObjectCreateRequest` 等）；
-  - **独立插件设置**（`SettingsRegistry`、`SettingsContribution`）；
+  - **独立插件设置**（`SettingsRegistry`、`SettingsContribution`，`SettingsControl` 变体 `Choice`、`Toggle`、`Text`、`FilePath` 和 `Note`）；
+  - **进度窗口**（`TurboismProgressDialog`）；
   - **绘图区原生提示**（`CanvasHintNotification`、`turboism.ui.canvas.hint`）。
 - 确切的版本边界与能力差异已在[兼容性文档](../use/compatibility)中完整列出。
 - History DTO（`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`）是有界的不可变语义投影。它们绝不授予主机写入权限。

@@ -5,7 +5,7 @@ description: 当前 Turboism 代码库已实现的内容、仍受版本限制的
 
 Turboism 是面向 Live2D Cubism Editor 的 Java 17 Runtime 增强工具和插件框架。开发围绕可用的框架与产品能力组织，而非已废弃的 M1–M16 迁移序列。
 
-本页面是当前开发分支中由源代码支持的快照，并非发布公告；已发布的版本请使用[发布信息源](./update-policy)。
+本页面是当前 Stable 发行版 **0.67.4**（标签 `v0.67.4`，发布于 2026-10-24）由源代码支持的快照，并非发布公告；已发布的版本请使用[发布信息源](./use/update-policy)。
 
 ## 当前架构
 
@@ -18,13 +18,16 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 ## 受支持的宿主版本
 
 - Windows x64 是受支持的 Cubism 宿主平台。
-- 受支持的 Cubism Editor 版本取决于发行版：Stable **0.44.0** 接纳 **5.2.03**、**5.3.02** 和 **5.3.03**，Beta **0.67.0-beta.3** 与当前开发分支接纳 **5.0.00 至 5.3.04** 的全部 20 个已审核版本，并配有按版本路由的 adapter 和 Provider（请参阅[兼容性](/docs/use/compatibility)）。
+- 当前 Stable 发行版 **0.67.4** 与所有 0.67.x Stable 一样，支持 **5.0.00 至 5.3.04** 的全部 20 个已审核 Cubism Editor 版本，并配有按版本路由的 adapter 和 Provider（请参阅[兼容性](/docs/use/compatibility)）。上一个 Stable 0.44.0 仅接纳 5.2.03、5.3.02 和 5.3.03。
+- 版本支持不等于功能完全一致：143 项能力中有 129 项在每个版本上都被接纳，覆盖率在 5.3.x 上为 100%，5.2.x 上为 97.9%，5.1.x 上最高 95.1%，5.0.x 上为 90.2%。每一项排除都是有证据支持的版本边界。
 - 未列出的 Editor 版本不被声称为兼容，不支持或未经验证的能力会安全地失败关闭。
-- macOS 打包仅处于 preview，没有经验证的宿主支持；Linux 仅限于安装器和 payload 行为。
+- macOS 打包仅处于 preview，没有经验证的宿主支持；Linux 只涵盖运行时行为，不是受支持的 Cubism 宿主。
 
 ## 发布与交付
 
-- 一个产品身份，三个渠道：`stable`、`beta` 和 `nightly`。每个渠道产出相同的四种包格式。
+- 一个产品身份，三个渠道：`stable`、`beta` 和 `nightly`。
+- 0.67 系列的 Stable 发行版为 0.67.0（2026-10-19）、0.67.1（2026-10-20）、0.67.2（2026-10-23）和 0.67.4（2026-10-24）；不存在 0.67.3 发行版。上一个 Stable 是 0.44.0（2026-09-11）。
+- 每个发行版发布两个产品下载 `TurboismInstaller-<version>.exe` 和 `turboism-<version>.zip`，以及开发者资产 `turboism-sdk-<version>.jar` 和 `turboism-event-processor-<version>.jar`，每个文件都附带 `.sha256` 文件。
 - 产品发布分为只读候选构建和显式受保护的 GitHub 提升步骤。失败的候选会复用既定版本；只有提升步骤才会创建附注标签，并在不重新构建的情况下发布已验证的字节。
 - 每次构建都会嵌入全局构建身份：版本、渠道、构建号、源修订和 dirty 标记（`FrameworkBuildInfo`）。
 - `api.turboism.dev` 上的发布 API 镜像每个渠道，提供每个资产的 SHA-256 和校验和文件，解析官方镜像与 GitHub 来源，并报告每次发布的下载请求。
@@ -34,26 +37,27 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 ## 框架基础
 
 - Java Agent bootstrap、Runtime、SDK、第一方插件、测试框架和集成测试模块。
+- 插件 SDK API 范围从 `0.67.0` 开始，在 `1.0.0` 之前结束。下界是最低框架基础版本（忽略 beta、nightly 和 SNAPSHOT 后缀），旧版 `[0.1.0,0.2.0)` 插件会被拒绝。
 - 插件元数据 schema 版本 **2**、**3**（新增必需的 `category` 和有界的 `tags`）以及 **4**（新增声明式事件导入与导出），并按版本严格校验。
 - 本地插件 JAR 发现、manifest 和 API 范围验证、依赖解析、每个插件一个 ClassLoader、生命周期执行、逆序关闭以及 scope/ClassLoader 清理。
 - 每个 JAR 支持有序的多个入口点，并支持整个 JAR 的启动回滚。
 - `PluginContext` 服务涵盖日志、路径、本地化、任务、配置、存储、用户文件、事件、操作、UI 贡献项、Cubism 访问和诊断。
-- 托管本地 JAR 安装、替换、启用、禁用和卸载。变更会写入 journal 暂存，并在 Cubism 重启后应用；内置框架 shell 是 Runtime 自有的框架代码，不是插件，无法被禁用或卸载。
+- 托管本地 JAR 安装、替换、启用、禁用和卸载。变更会写入 journal 暂存，并在 Cubism 重启后应用；内置框架 shell（`dev.turboism.shell`，在 0.67.0 中取代了独立的 core 插件）是 Runtime 自有的框架代码，不是插件，无法被禁用或卸载。
 - 启动 preflight 会在应用前重新验证暂存载荷的身份（SHA-256、大小、描述符哈希），私有 backup/restore 保护失败的替换应用。
 - 框架消息 catalog 与第一方插件遵循相同的 locale 矩阵，因此缺失的 catalog 会使构建门禁失败，而不是静默降级为英文。
 
 ## 安装器与交付
 
-自 0.67.0-beta.3 起，Turboism 提供两种产品变体的四种正式发行产物：
+自 0.67.0 起，每个发行版只提供两个产品下载：
 
-- Windows 原生的 NSIS 安装器（`TurboismInstaller-<version>-full.exe` 与 `TurboismInstaller-<version>-thin.exe`），提供可选的托管 GraalVM 组件与变体间的安全升级；
-- 便携式 `turboism-<version>-full.zip` 和 `turboism-<version>-thin.zip` 归档。
+- Windows 原生的 NSIS 安装器 `TurboismInstaller-<version>.exe`，提供可选的托管 GraalVM 组件与安全升级；
+- 便携式 `turboism-<version>.zip` 归档。
 
-0.67.0-beta.3 之前的历史版本采用旧版构件（`TurboismInstaller-<version>.exe`、Java 17 IzPack 安装器 `TurboismInstaller-<version>.jar` 以及 `turboism-<version>-lite.zip`）。Java 安装器 JAR 已退役。
+两者都包含全部内置第一方插件和完整的离线 GraalJS 引擎；GraalVM 运行时仍需单独安装。Full/Thin 四下载布局（`-full` 与 `-thin` 安装器及 ZIP）仅存在于 0.67.0 Beta 版本中，现已退役。0.44.0 及更早的版本采用旧版构件（`TurboismInstaller-<version>.exe`、Java 17 IzPack 安装器 `TurboismInstaller-<version>.jar` 以及 `turboism-<version>-full.zip` / `turboism-<version>-lite.zip`）。Java 安装器已不再发布。
 
-安装器不再包含模式选择页或插件勾选页：完整版安装全部第一方插件，精简版不安装插件。在 Cubism Editor 中，顶部菜单更名为 **Turboism**（原为“插件”/Plugins 菜单），提供应用内**插件市场…**、**管理插件…**、**插件设置…**（专用双栏窗口）、**检查更新**，以及经签名验证的第一方插件后台自动更新。
+安装器没有模式选择页或插件勾选页。自 0.67.4 起，Windows 安装器使用 Turboism 品牌，并隐藏提权后的配置控制台。在 Cubism Editor 中，顶部菜单更名为 **Turboism**（原为“插件”/Plugins 菜单），提供应用内**插件市场…**、**管理插件…**、**插件设置…**（专用双栏窗口）、**检查更新**，以及经签名验证的第一方插件后台自动更新。
 
-安装器在通过四项必需确认和完整的本地化运行时声明之后才进行安装。它绝不会修改 Cubism 安装文件。`config.json` 有明确的更新归属：在现有有效配置上安装时保留用户设置，且 Full 与 Thin 之间的升级安全受控（Thin 覆盖 Full 原样保留 `plugins/`，Full 覆盖 Thin 尊重现有 `disabledPlugins`）。Windows 配置器只列出确切受支持的 Cubism 安装，并将 Turboism 自有的快捷方式与可选的、带哈希保护的官方 BAT 集成分开。
+安装器在通过四项必需确认和完整的本地化运行时声明之后才进行安装。`config.json` 有明确的更新归属：在现有有效配置上安装时保留用户设置。Windows 配置器只列出确切受支持的 Cubism 安装，并将 Turboism 自有的快捷方式与官方 BAT 集成分开。自 0.67.0 起，安装器默认勾选官方 Cubism BAT 集成：它会备份并修改所选的 `CubismEditor5.bat` 启动器，使现有的 Cubism 快捷方式和文件关联加载 Turboism。该选项可在启动选项页取消勾选，带哈希保护且幂等，卸载时会还原，静默安装时同样生效，并且是唯一通过 UAC 提权的步骤。
 
 ## Cubism 和 Editor API 进展
 
@@ -64,18 +68,26 @@ Plugin -> SDK -> Runtime policy -> versioned Adapter/Provider -> Cubism/Editor
 - 确切版本的静态验证记录、选择器契约和 profile 现已覆盖 5.0.00 至 5.3.04 的全部 20 个已审核构建；逐插件和逐能力的版本边界生成在[兼容性](/docs/use/compatibility)页面。
 - Parameter 生命周期 hooks 支持有序的同步 `before` 重写、仅变更时的 `on`、正常完成后的 `after`、递归拒绝、有界的观察工作和卸载清理。
 - History 现在会投影不可变的语义细节：`HistoryEntry`、`HistoryChange`、`HistoryEditContext`、`HistoryGroup`、`HistoryOrigin`、`HistoryTarget`，并对目标、坐标和分组进行有界验证。这些值不授予任何主机写入权限。
-- 当前页面的 texture-atlas layout 契约被绑定为已审查的 SDK 兼容性基线（v10），并对保留的构造函数设有链接门禁。
+- 动画工作区 SDK（文档、时间轴、轨道、关键帧、场景和播放）在 Cubism 5.2.00–5.3.04 上可用。
+- texture-atlas SDK 支持每页尺寸、打包失败诊断和 planner 协商（0.67.2），以及源轮廓和多边形输出页（0.67.4），并对保留的构造函数设有链接门禁。
+
+## SDK 兼容性基线
+
+- 已审查的二进制 API 基线 **v23** 是 0.67.4 的现行发布门禁；v2–v22 作为历史审计保留（v21 是 0.67.0 的基线，v22 是 0.67.2 的基线）。
+- v22 新增了 `TextureAtlasPageSize`、按页的 `TextureAtlasLayoutPlan` 构造函数、`TextureAtlasLayoutPlanner.supportsCompleteAtlas()`、带 `Reason` 的 `TextureAtlasPackingException`、`PsdEditFile.openInApplication(String)` 以及 `SettingsControl.FilePath` 变体。对 `SettingsControl` 的穷举 switch 在重新编译时必须添加一个 case。
+- v23 新增了 `TextureAtlasLayoutItem` 的可选源 `outline`、`TextureAtlasLayoutPlan.polygonPages`、`TextureAtlasOutline` 的值相等性以及 `TurboismProgressDialog`。现有构造函数签名仍然保留，但新增组件的 record 会改变反射、相等性、`hashCode` 和 `toString`，且保留的原规范构造函数不再提供参数名元数据。没有移除任何现有公开类型或可调用的 JVM 描述符。
+- `@Incubating` 标记实验性 API（例如 `TextureAtlasPolygonLayoutPlanner`），这些 API 可能会改变或消失，并被排除在确切基线之外。SDK 仍处于 pre-stable 策略之下，因此未加注解的 API 本身并不代表 SDK 已冻结。
 
 ## 更新检查
 
 - Turboism 会针对已部署的发布 API 检查稳定版更新。比较使用安装包内嵌的权威构建号。
 - 可用更新以绘图区上的原生 Cubism 提示呈现。点击提示会打开固定的官方下载页；不会自动下载或执行安装程序。
 - 更新检查不阻塞界面，最多每 24 小时运行一次，并始终提供手动检查。自动检查在「启动」设置页有独立的持久开关。
-- 插件可以通过 canvas-hint UI 能力（`turboism.ui.canvas.hint` 权限）在绘图区显示原生 Cubism 提示，按版本路由到已验证的宿主路径（Stable 0.44.0 为 5.2.03、5.3.02 和 5.3.03；Beta 0.67.0-beta.3 为 5.0.00–5.3.04；请参阅[兼容性](/docs/use/compatibility)）。
+- 插件可以通过 canvas-hint UI 能力（`turboism.ui.canvas.hint` 权限）在绘图区显示原生 Cubism 提示，按版本路由到已验证的宿主路径（可用版本请参阅[兼容性](/docs/use/compatibility)）。
 
 ## 第一方插件
 
-已审查的捆绑包包含十七个插件：texture-atlas 打包、mesh 镜像轴编辑、parameter 批量传输、physics 编辑、调色板标签页过滤器、PSD 剪贴蒙版导入、历史面板、最近预览缩略图、WebDAV 自动备份同步、剪贴蒙版查看器、texture-atlas 统计、性能统计、UI 主题、调色板标签样式、场景调色板增强器、protected export 和 loopback MCP server。内置的 Turboism 菜单、设置、插件管理和更新提示由 Runtime 自有的框架 shell 提供，而不是插件。请参阅[第一方插件](./use/first-party-plugins)。
+已审查的 0.67.4 捆绑包包含二十九个插件：文件夹 texture-atlas 布局及 MaxRects-BSSF、Bitmask 嵌套与 Dalsoo 多边形打包算法、texture-atlas 统计、3D 模型导入、帧动画导入、PSD 剪贴蒙版导入、外部 PSD 编辑、mesh 镜像轴编辑、BoundingBox 弯曲变形器镜像、弯曲变形器 Alt 对称、选区画笔、parameter 批量传输、parameter 锁定、physics 编辑、历史面板、最近预览缩略图、命令面板、调色板标签页过滤器、调色板标签样式、场景调色板增强器、UI 主题、剪贴蒙版查看器、性能统计、protected export、WebDAV 自动备份同步、loopback MCP server 和 ACP 代理桥接。内置的 Turboism 菜单、设置、插件管理和更新提示由 Runtime 自有的框架 shell 提供，而不是插件。请参阅[第一方插件](./use/first-party-plugins)。
 
 ## 共享插件服务和 UI
 
@@ -112,7 +124,7 @@ host validation           explicit exact-version Cubism execution for the affect
 
 ## 官方目录与插件市场状态
 
-Cubism 内置的“插件市场”客户端与 UI 已就绪，可直接浏览并安装来自 `turboism.dev/plugins` 签名目录的第一方与精选插件。第一方插件支持经过数字签名验证的后台自动更新与热更新（hot-reload）。
+Cubism 内置的“插件市场”客户端与 UI 已就绪，可直接浏览并安装来自 `turboism.dev/plugins` 签名目录的第一方与精选插件。第一方插件支持经过数字签名验证的后台自动更新与热更新（hot-reload），后台更新可在设置中关闭。自 0.67.2 起，插件管理会标注每个插件的 SDK API 范围，并分别显示其为可用、完整和部分功能声明的确切 Cubism 版本；自 0.67.4 起还会显示已安装插件和市场插件的数量。
 
 ## 进行中或受版本限制
 
@@ -129,7 +141,7 @@ Turboism 当前不承诺：
 - 安装包的签名或公证公开发布渠道；
 - 经过验证的 macOS Cubism 宿主支持；
 - 框架安装包的自动下载与静默执行（更新检查与后台插件更新已可用；自动框架安装器更新尚不可用）；
-- 生产可用的 marketplace、发布者签名或撤销；
+- 插件目录条目的发布者签名或撤销；
 - 完整的用户面向安装、修复、回滚、恢复和清除 UI；
 - 对 Cubism launcher 的全局修改；
 - 在每个 Cubism 版本上具有一致的功能就绪度；

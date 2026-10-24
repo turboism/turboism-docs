@@ -7,7 +7,7 @@ description: 诊断启动、安装器、插件 JAR、生命周期、权限和 Pr
 
 - 确认安装包与你的平台匹配，并且是从已发布的发行版或官方镜像下载的。
 - 使用配对的 `.sha256` 文件验证 SHA-256 校验和。不匹配意味着下载不完整或已被改动；请重新下载。
-- 在 Windows 上使用 `TurboismInstaller-<version>-full.exe` 或 `TurboismInstaller-<version>-thin.exe`。在 macOS 和 Linux 上解压便携 ZIP 归档。原 Java `.jar` 安装器自 0.67.0-beta.3 起已退役（0.67.0-beta.3 之前的历史版本使用 `.jar` 安装器且需要 Java 17 或更新版本）。
+- 在 Windows 上使用 `TurboismInstaller-<version>.exe`，或将便携版 `turboism-<version>.zip` 完整解压到单独的文件夹（不要放在 Cubism 目录中）并运行 `configure_turboism.ps1`。在 macOS 和 Linux 上解压便携 ZIP 归档。自 0.67.0 起只有这两个产品下载；以 `-full` 或 `-thin` 结尾的文件来自已退役的 0.67.0 Beta 布局。原 Java `.jar` 安装器已不再发布（0.44.0 及更早版本还提供需要 Java 17 或更新版本的 `.jar` 安装器）。
 - 安装器要求接受全部四项确认和完整的运行时声明，之后才会更改任何文件。
 - 安装器未签名，因此 Windows 或 macOS 可能显示未知发布者提示。不要禁用操作系统保护；请改为核对校验和。
 
@@ -15,7 +15,7 @@ description: 诊断启动、安装器、插件 JAR、生命周期、权限和 Pr
 
 - 确认使用的是预期的 Turboism home，以及针对正确 Cubism 安装的托管启动器。
 - 检查 Turboism home 的 `logs/` 目录中的运行时日志，包括配置器产生的 `logs/installer/` 输出。
-- 确认当前 Cubism 安装符合所用 Turboism 发行版在 Windows x64 上的支持范围（Stable 0.44.0 为 Editor 5.2.03、5.3.02 或 5.3.03；Beta 0.67.0-beta.3 为 5.0.00–5.3.04；请参阅[兼容性](/docs/use/compatibility)）。
+- 确认当前 Cubism 安装符合所用 Turboism 发行版在 Windows x64 上的支持范围（当前 Stable 发行版 0.67.4 支持 Editor 5.0.00–5.3.04；0.44.0 仅支持 5.2.03、5.3.02 和 5.3.03；请参阅[兼容性](/docs/use/compatibility)）。受支持的版本仍可能缺少个别功能。
 - 不要替换 Cubism JAR、DLL、BAT 文件或许可组件来绕过身份验证失败。
 
 ## 插件未出现
