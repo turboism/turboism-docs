@@ -1,0 +1,130 @@
+---
+title: "Step 1: Set up the project"
+description: Create a plugin project from the official template, run the setup script, understand what it generated, and build it once.
+---
+
+In this step you create the project, let the setup script fetch the SDK, and build an empty-but-valid plugin JAR. Nothing here is Parameter Peek specific yet, and everything you generate is reused in every later step.
+
+## 1. Check your tools
+
+You need JDK 17 or newer. The Gradle wrapper (Gradle 8.10.2) is bundled in the template, so you do not install Gradle yourself.
+
+```bash
+java -version
+```
+
+The setup script also needs `curl` and `python3` on Linux and macOS, or PowerShell 5.1 or newer on Windows.
+
+## 2. Create the project from the template
+
+Open [`turboism/turboism-plugin-template`](https://github.com/turboism/turboism-plugin-template) and choose **Use this template** to create your own repository, or clone it directly:
+
+```bash
+git clone https://github.com/turboism/turboism-plugin-template.git parameter-peek
+cd parameter-peek
+```
+
+## 3. Run the setup script
+
+The script resolves the stable release, downloads the SDK and the event annotation processor, verifies their SHA-256 checksums, and rewrites the template to use your plugin's identity.
+
+```bash title="Linux / macOS"
+./scripts/setup.sh --channel stable \
+  --id com.example.parameterpeek \
+  --name "Parameter Peek" \
+  --package com.example.parameterpeek \
+  --class-name ParameterPeekPlugin \
+  --author "Your Name" \
+  --requires-cubism true \
+  --yes
+```
+
+```powershell title="Windows PowerShell"
+.\scripts\setup.ps1 -Channel stable `
+  -Id com.example.parameterpeek `
+  -Name "Parameter Peek" `
+  -Package com.example.parameterpeek `
+  -ClassName ParameterPeekPlugin `
+  -Author "Your Name" `
+  -RequiresCubism true `
+  -Yes
+```
+
+Run the script without flags to be prompted for the same values interactively. Replace `com.example` with a reverse-domain name you control.
+
+`--requires-cubism true` records that this plugin needs a live Cubism Editor, because later steps read model data. A plugin that never touches Cubism can leave it `false`.
+
+The script reports the resolved SDK version and the Cubism Editor versions it recorded. For Stable 0.67.4 that is SDK `0.67.4`. Re-running the script is safe: it replaces stale JARs only after the new downloads pass verification.
+
+### Choose the plugin ID carefully
+
+The plugin ID, here `com.example.parameterpeek`, is the plugin's identity. Runtime uses it to detect duplicates and to name the plugin's own folders, such as `config/<pluginId>/` and `data/<pluginId>/`. Changing it later makes Runtime treat the result as a different plugin, so existing user settings do not follow. IDs use reverse-domain syntax with at least one dot.
+
+## 4. Tour the generated project
+
+```text
+parameter-peek/
+├── build.gradle.kts
+├── gradle.properties                     SDK version recorded by setup
+├── settings.gradle.kts
+├── libs/
+│   ├── turboism-sdk-0.67.4.jar           compile-time SDK (not shipped)
+│   └── turboism-event-processor-0.67.4.jar
+└── src/main/
+    ├── java/com/example/parameterpeek/
+    │   └── ParameterPeekPlugin.java      your entrypoint class
+    └── resources/META-INF/turboism/
+        ├── plugin.json                   the plugin descriptor
+        ├── cubism-versions.json          supported Cubism Editor versions
+        └── i18n/
+            ├── messages.properties       base text catalog
+            └── messages_en.properties
+```
+
+| File | Role |
+| --- | --- |
+| `ParameterPeekPlugin.java` | The entrypoint. Runtime constructs it and calls its lifecycle methods. |
+| `plugin.json` | The descriptor: identity, entrypoints, SDK API range, declared permissions, localization. See [Plugin Manifest and Packaging](/docs/build-a-plugin/manifest). |
+| `cubism-versions.json` | Which exact Cubism Editor versions you claim to support. You will review it in [step 4](/docs/build-a-plugin/first-plugin/read-the-model#4-declare-the-cubism-versions-you-support). |
+| `i18n/messages*.properties` | User-visible text, looked up by key. |
+| `libs/*.jar` | The SDK and annotation processor used by the compiler. |
+
+### Key mechanism: the SDK is compile-only
+
+Open `build.gradle.kts`. The SDK is on `compileOnly`, and the event processor is on `annotationProcessor`:
+
+```kotlin
+dependencies {
+    compileOnly(sdkJars)
+    annotationProcessor(eventProcessorJars)
+    annotationProcessor(sdkJars)
+}
+```
+
+This is intentional. At run time Turboism provides the SDK, so your JAR must not contain `dev/turboism/sdk/**` classes. Runtime rejects a JAR that copies SDK, Runtime, or Live2D classes. The annotation processor runs only at compile time: it indexes your `@SubscribeEvent` methods, as you will see in [step 4](/docs/build-a-plugin/first-plugin/read-the-model).
+
+Your code may depend on the public SDK and nothing else from Turboism. Do not reach into Runtime, Bootstrap, `com.live2d.*` classes, another plugin's private implementation, or native handles. See [Designing Plugins](/docs/build-a-plugin/designing-plugins).
+
+## 5. Build once
+
+```bash
+./gradlew build
+```
+
+The first run downloads Gradle itself, so it needs network access. On success the plugin JAR is written to:
+
+```text
+build/libs/parameterpeek-turboism-plugin-0.1.0.jar
+```
+
+The name comes from the last segment of your plugin ID plus the version in `build.gradle.kts`. That JAR is the only artifact you will ever distribute: there is no wrapper archive and no separate packaging step.
+
+## Checkpoint
+
+- `java -version` reports 17 or newer.
+- `libs/` contains `turboism-sdk-0.67.4.jar` and `turboism-event-processor-0.67.4.jar`.
+- `./gradlew build` succeeds and produces `build/libs/parameterpeek-turboism-plugin-0.1.0.jar`.
+
+The template still contains its sample `hello` action and event. Next, you replace them with your own.
+
+**Next:** [Step 2: Say hello](/docs/build-a-plugin/first-plugin/hello-action)

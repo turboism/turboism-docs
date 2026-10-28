@@ -1,0 +1,74 @@
+---
+title: Build Your First Plugin
+description: A six-step hands-on tutorial from an empty folder to an installed Turboism plugin with a menu command, live Cubism data, a saved setting, and tests.
+---
+
+This series walks you through building one small but complete Turboism plugin, **Parameter Peek**. By the end you will have written, built, installed, and tested a real plugin, and you will know which mechanisms made it work.
+
+## What you will build
+
+Parameter Peek adds a **Parameter Peek: Report** command to the Cubism Editor. When you run it, the plugin:
+
+- counts the parameters of the model you have open;
+- reports how many parameter value changes it has seen since it was enabled;
+- writes the result to the Turboism log, and shows it in the status bar when a setting you can change in **Plugin Settings** allows it.
+
+The plugin is deliberately small. It only reads the model, so it is safe to experiment with, yet it touches every part of a typical plugin: lifecycle, actions and menus, permissions, localization, Cubism data, events, saved settings, and tests.
+
+## Before you start
+
+- **Java.** You should be comfortable with classes, interfaces, lambdas, and records. You do not need to know Cubism internals or the Turboism runtime.
+- **JDK 17 or newer** on your `PATH` (run `java -version` to check). Plugins are compiled to Java 17 bytecode.
+- **Turboism installed** with a supported Cubism Editor, to run the plugin in step 3 and after. See [Installation](/docs/use/installation) and [Compatibility](/docs/use/compatibility). You can complete steps 1 and 2, and the unit tests in step 6, without Cubism.
+- **A disposable test model** to open in the Editor. Parameter Peek only reads, but test plugins on data you can afford to lose.
+
+This tutorial is written for **Stable 0.67.4**. The project template downloads the matching SDK for you, and a plugin built this way declares the SDK API range `[0.67.0,1.0.0)`.
+
+## The six steps
+
+| Step | You do | Mechanism you meet |
+| --- | --- | --- |
+| 1. [Set up the project](/docs/build-a-plugin/first-plugin/setup) | Create a project from the official template and build it. | The SDK is `compileOnly`; the plugin ID; project layout. |
+| 2. [Say hello](/docs/build-a-plugin/first-plugin/hello-action) | Add a menu command that logs and shows a message. | Lifecycle, actions and menus, declared permissions, localization. |
+| 3. [Build and install](/docs/build-a-plugin/first-plugin/build-and-install) | Install the JAR in Cubism and run the command. | Managed install and restart, strict JAR validation, logs. |
+| 4. [Read the model](/docs/build-a-plugin/first-plugin/read-the-model) | Count parameters and observe changes. | Cubism snapshots, events, fail-closed availability, Cubism version support. |
+| 5. [Add a setting](/docs/build-a-plugin/first-plugin/settings) | Save a preference and expose it in Plugin Settings. | Typed configuration, plugin-owned storage, graceful degradation. |
+| 6. [Test and ship](/docs/build-a-plugin/first-plugin/test-and-ship) | Write unit tests, polish the metadata, and share the JAR. | Testing without a host, versioning, distribution. |
+
+Every step ends in a working plugin and a short checkpoint, so you can stop and resume at any step boundary.
+
+## How the tutorial is organized
+
+The steps stay on the shortest path to a working plugin. When a mechanism deserves more than a paragraph, the step gives you what you need to keep going and links to a standalone page in [Key Mechanisms](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup):
+
+- [Lifecycle and cleanup](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup) — what Runtime calls, in what order, and how registrations are withdrawn.
+- [Permissions and availability](/docs/build-a-plugin/key-mechanisms/permissions-and-availability) — why a declared permission is not the same as a working feature.
+- [Threads and tasks](/docs/build-a-plugin/key-mechanisms/threads-and-tasks) — where your code runs and how to do background work safely.
+- [When a plugin does not load](/docs/build-a-plugin/key-mechanisms/load-failures) — a symptom-driven diagnosis guide.
+
+## The big picture
+
+```text
+Your plugin JAR
+├── META-INF/turboism/plugin.json   who you are and what you ask for
+├── your Java classes               what you do
+└── resources                       localized text, Cubism version list
+        │
+        │  Runtime validates the JAR and admits only what you declared
+        ▼
+PluginContext                       the only door to the host
+├── actions(), menus()              commands and menu entries
+├── eventBus()                      typed events
+├── cubism()                        snapshots and the Cubism object model
+├── config(), storage()             settings and plugin-owned data
+└── logger(), localization() ...    plugin-private helpers
+```
+
+Everything your plugin does goes through `PluginContext`. Runtime checks each call against the permissions you declared, the services the host provides, and the active Cubism version. If you remember one idea from this series, make it that one.
+
+## Reference and alternatives
+
+- Need only the minimum? The condensed [Developer Quick Start](/docs/build-a-plugin/quick-start) covers the same build path in one page.
+- Looking up a field or service? Use [Plugin Manifest and Packaging](/docs/build-a-plugin/manifest), [Plugin Interfaces](/docs/build-a-plugin/plugin-interfaces), and the [SDK API Guide](/docs/reference/sdk-api).
+- Not sure a Java plugin is the right tool? Compare [GraalJS Scripts](/docs/build-a-plugin/graaljs-scripts) and [MCP](/docs/build-a-plugin/mcp).
+- Building with an AI coding assistant? Read [Developing with LLMs](/docs/build-a-plugin/llm-coding-context) first. You remain responsible for reviewing and testing the result.

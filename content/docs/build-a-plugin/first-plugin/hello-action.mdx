@@ -1,0 +1,188 @@
+---
+title: "Step 2: Say hello"
+description: Replace the template sample with your own plugin class that registers an action and a menu entry, and declare exactly the permissions it needs.
+---
+
+In this step Parameter Peek becomes a real plugin: it registers a command, puts it in a menu, and shows a greeting. It does not touch Cubism data yet. Along the way you meet the plugin lifecycle, actions and menus, declared permissions, and localization.
+
+## 1. Write the entrypoint
+
+Replace the contents of `src/main/java/com/example/parameterpeek/ParameterPeekPlugin.java` with:
+
+```java title="ParameterPeekPlugin.java"
+package com.example.parameterpeek;
+
+import dev.turboism.sdk.action.ActionRegistry;
+import dev.turboism.sdk.menu.MenuRegistry;
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.PluginLogger;
+import dev.turboism.sdk.plugin.Registration;
+import dev.turboism.sdk.plugin.TurboismPlugin;
+import dev.turboism.sdk.ui.StatusNotification;
+import dev.turboism.sdk.ui.UiHostCapabilityService;
+
+public final class ParameterPeekPlugin implements TurboismPlugin {
+
+    private PluginContext context;
+    private PluginLogger logger;
+
+    @Override
+    public void init(final PluginContext context) throws Exception {
+        this.context = context;
+        this.logger = context.logger();
+        logger.info("Parameter Peek initialized");
+    }
+
+    @Override
+    public void enable() throws Exception {
+        Registration action = context.actions().register(
+                "parameterpeek.report",
+                ActionRegistry.Action.of(
+                        "parameterpeek.report",
+                        context.localization().text("parameterpeek.action.report"),
+                        ignored -> report()));
+        context.disposableScope().register(action);
+
+        Registration menu = context.menus().contribute(MenuRegistry.MenuContribution.of(
+                context.localization().text("parameterpeek.menu"), "parameterpeek.report", 100));
+        context.disposableScope().register(menu);
+
+        logger.info("Parameter Peek enabled");
+    }
+
+    private void report() {
+        final String message = context.localization().text("parameterpeek.hello");
+        logger.info(message);
+        context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", message)));
+    }
+
+    @Override
+    public void disable() throws Exception {
+        logger.info("Parameter Peek disabled");
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+        logger.info("Parameter Peek shutdown");
+        context = null;
+    }
+}
+```
+
+The class must be `public`, implement `TurboismPlugin` (or a subinterface), and have a public no-argument constructor. The implicit one is enough. Runtime constructs the class for you, so never call `new ParameterPeekPlugin()` yourself.
+
+### Key mechanism: the four lifecycle methods
+
+| Method | Runtime calls it | Use it to |
+| --- | --- | --- |
+| `init(context)` | Once, with your permission-scoped `PluginContext`. | Keep the context and prepare private state. |
+| `enable()` | When the plugin becomes active. | Register actions, menus, subscriptions, and other visible behavior. |
+| `disable()` | When the plugin is turned off. | Stop active behavior. |
+| `shutdown()` | After disablement settles. | Release private resources. |
+
+If construction, `init`, or `enable` throws, Runtime rolls back the whole JAR. A failed `init` prevents `enable` from running. This is why `enable()` is the right place for registrations: it is where Runtime expects them, and it is where failure is handled safely.
+
+The other half of the rule is cleanup. Every `Registration` you receive is an `AutoCloseable` handle. Passing it to `context.disposableScope().register(...)` means Runtime closes it, in reverse order, when the plugin is disabled. You wrote no cleanup code, and the command and menu entry still disappear when the plugin is disabled. If you forget the scope, a registration can outlive the plugin and stop Runtime from releasing the plugin's ClassLoader safely. Read [Lifecycle and cleanup](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup) for the full model, including multiple entrypoints and hot reload.
+
+### Key mechanism: actions and menus are separate
+
+Behavior and placement are registered separately:
+
+- An **action** has a stable ID (`parameterpeek.report`), a label, and a handler. It is the unit of behavior and can be bound to keyboard shortcuts, menus, toolbars, and context menus.
+- A **menu contribution** binds a slash-delimited menu path to an action ID plus an order number.
+
+Treat the action ID as a stable identifier and keep it constant across releases; renaming it makes it a different action. Here the menu path `Tools/Parameter Peek` comes from the localization catalog, so the menu text can be translated. See [Plugin Interfaces](/docs/build-a-plugin/plugin-interfaces) for toolbars, context menus, and settings pages.
+
+The handler uses `context.services().find(...)` rather than assuming the status-bar service exists. `find` returns an `Optional`, so the plugin degrades quietly if a host does not offer it. [Permissions and availability](/docs/build-a-plugin/key-mechanisms/permissions-and-availability) explains why that matters.
+
+## 2. Add the text catalog
+
+User-visible text lives in the catalogs, never in Java strings. Replace `src/main/resources/META-INF/turboism/i18n/messages.properties` with:
+
+```properties title="messages.properties"
+plugin.name=Parameter Peek
+plugin.description=Reports how many parameters the active model has and how often they change.
+parameterpeek.action.report=Parameter Peek: Report
+parameterpeek.menu=Tools/Parameter Peek
+parameterpeek.hello=Hello from Parameter Peek!
+```
+
+Then copy the same content into `messages_en.properties` next to it. The descriptor declares which catalogs exist (`"locales": ["en"]`), and Runtime requires every declared catalog to be present in the JAR. The base `messages.properties` is always the final fallback when a key is missing in a locale. To add a language later, add `messages_<locale>.properties` and list the locale; see [Plugin Manifest and Packaging](/docs/build-a-plugin/manifest) for locale IDs.
+
+## 3. Declare the permissions
+
+Open `src/main/resources/META-INF/turboism/plugin.json`. The template declares permissions for its own sample (`publish`, `subscribe`, `register`). Replace the `description`, `category`, `permissions`, and `lifecycle` parts so they describe Parameter Peek:
+
+```json title="plugin.json"
+{
+  "format": "turboism.plugin.meta",
+  "schemaVersion": 3,
+  "id": "com.example.parameterpeek",
+  "name": "Parameter Peek",
+  "version": "0.1.0",
+  "description": "Reports how many parameters the active model has and how often they change.",
+  "category": "analysis",
+  "tags": ["example", "parameters"],
+  "entrypoints": [
+    "com.example.parameterpeek.ParameterPeekPlugin"
+  ],
+  "turboismApi": "[0.67.0,1.0.0)",
+  "authors": [
+    { "name": "Your Name" }
+  ],
+  "license": "MIT",
+  "website": "https://example.com/parameter-peek",
+  "resources": [],
+  "i18n": {
+    "baseName": "META-INF/turboism/i18n/messages",
+    "locales": ["en"]
+  },
+  "dependencies": [],
+  "permissions": [
+    { "id": "turboism.action.register", "scope": "application", "reason": "Registers the Parameter Peek report action." },
+    { "id": "turboism.ui.menu.contribute", "scope": "application", "reason": "Adds the report command to the Tools menu." },
+    { "id": "turboism.ui.status.notify", "scope": "application", "reason": "Shows the report in the status bar." }
+  ],
+  "capabilities": [],
+  "lifecycle": {
+    "hotReload": true
+  },
+  "environment": {
+    "requiresCubism": true,
+    "ui": "none"
+  }
+}
+```
+
+Keep the `authors`, `license`, and `website` values truthful for your own project; they are shown to users. Change anything with `example` in it before you share the plugin.
+
+### Key mechanism: you only get what you declared
+
+Each permission names one risk boundary you want to cross, and carries a `reason` shown to people reviewing the plugin:
+
+| Permission | Why this plugin needs it |
+| --- | --- |
+| `turboism.action.register` | `context.actions().register(...)` |
+| `turboism.ui.menu.contribute` | `context.menus().contribute(...)` |
+| `turboism.ui.status.notify` | `ui.notifyStatus(...)` |
+
+Undeclared access is refused at the call, not silently allowed, so a missing permission shows up as an error the first time you run the command. Declare the minimum, and do not copy permissions from a larger plugin. The catalog of permission IDs is the SDK's `PermissionIds` class, documented in the [SDK HTML API reference](https://turboism.dev/sdk/dev/turboism/sdk/permission/PermissionIds.html). Also keep the `category` a lowercase kebab-case token such as `analysis`; the reviewed first-party categories are listed in [Plugin Manifest and Packaging](/docs/build-a-plugin/manifest#category-and-tags).
+
+`lifecycle.hotReload` is `true` here because Parameter Peek only uses ordinary SDK services and cleans up through the disposable scope. A plugin that registers bytecode transformers or native hooks must declare `false`.
+
+## 4. Build
+
+```bash
+./gradlew build
+```
+
+If the build fails on a missing import, check that you replaced the whole file, including the imports. Leftover references to `HelloEvent` or `hello.action.label` from the template are the usual cause.
+
+## Checkpoint
+
+- The project builds and `build/libs/parameterpeek-turboism-plugin-0.1.0.jar` exists.
+- `plugin.json` declares exactly three permissions, and every one is used by a line you can point to.
+- Both `messages.properties` and `messages_en.properties` contain the same five keys.
+
+**Next:** [Step 3: Build and install](/docs/build-a-plugin/first-plugin/build-and-install)

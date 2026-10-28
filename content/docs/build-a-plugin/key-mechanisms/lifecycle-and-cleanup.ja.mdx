@@ -1,0 +1,92 @@
+---
+title: ライフサイクルとクリーンアップ
+description: Runtime が何をどの順序で呼び出すか、プラグインがどのようにアトミックに開始されるか、登録がどのように安全に取り消されるか。
+---
+
+このページでは、[ステップ 2](/docs/build-a-plugin/first-plugin/hello-action)で使ったライフサイクルモデルを説明します。1 つのアクションを超えるもの、たとえば複数のエントリポイント、長寿命のリソース、ホットリロードを追加する場合に読んでください。
+
+## 4 つのメソッド
+
+```java
+public interface TurboismPlugin {
+    default void init(PluginContext context) throws Exception {}
+    default void enable() throws Exception {}
+    default void disable() throws Exception {}
+    default void shutdown() throws Exception {}
+}
+```
+
+4 つとも、任意の default メソッドです。必要なものを実装してください。
+
+| メソッド | 目的 | 典型的な内容 |
+| --- | --- | --- |
+| `init` | permission スコープ付きの `PluginContext` を受け取り、プラグインのプライベートな状態を構築する。 | context を保持し、configuration スキーマを登録する。 |
+| `enable` | アクティブな挙動を開始する。 | アクション、メニュー、UI、イベント購読、タスクを登録する。 |
+| `disable` | Runtime がプラグインのスコープをクローズする前に、アクティブな挙動を停止する。 | 自分で開始した処理を停止する。 |
+| `shutdown` | スコープが所有していないプラグインのプライベートなリソースを解放する。 | 参照を破棄し、プライベートなファイルをクローズする。 |
+
+メソッドが特定のスレッドで実行されること、あるいは 2 回の呼び出しが同じスレッドで実行されることを前提にしないでください。[スレッドとタスク](/docs/build-a-plugin/key-mechanisms/threads-and-tasks)を参照してください。
+
+## 起動はアトミック
+
+JAR は複数のエントリポイントを宣言できます。それらは、1 つのプラグイン ID、1 つの記述子、1 つの ClassLoader、1 つの `PluginContext`、1 つの `DisposableScope`、1 つの permission セット、1 つの configuration と storage の名前空間を共有します。
+
+```text
+construct / init / enable:  manifest order
+disable / shutdown:         reverse manifest order
+```
+
+いずれかのエントリポイントが、構築、`init`、`enable` の間に失敗すると、Runtime は **JAR 全体**をロールバックします。`init` が失敗すれば、`enable` は実行されません。`init` は素早く、副作用を小さくなるよう設計し、目に見える挙動は `enable` に置いてください。
+
+失敗するとすべてがロールバックされるため、「開始できない」ことを伝える正しい方法は例外です。例外を握りつぶして、半分だけ初期化された状態で続行してはいけません。
+
+## 登録と disposable scope
+
+ほぼすべてのレジストリ呼び出しは、`AutoCloseable` なハンドルである `Registration` を返します。これをクローズすると、登録したものが取り消されます。
+
+```java
+Registration action = context.actions().register("example.refresh", example);
+context.disposableScope().register(action);
+```
+
+プラグインが無効化されると、スコープは渡されたすべてのものを**逆順で**クローズします。これがクリーンアップに関する最も重要な唯一のルールです。
+
+> 返されたすべての登録またはハンドルのうち、現在のメソッドより長く存続しうるものは、明示的にクローズするか、`context.disposableScope()` に登録しなければならない。
+
+登録すべきものは、アクション、メニューとツールバーの contribution、設定の contribution、イベント購読、タスクハンドル、およびその他 SDK がクローズ可能なものとして返すものすべてです。これらを登録することで、Runtime はプラグインの ClassLoader を安全に解放できます。
+
+### 無効化してから、再び有効化する
+
+無効化すると、登録が取り消されます。再び有効化するときは、登録をもう一度行う必要があるため、登録は `init()` ではなく `enable()` に置いてください。Parameter Peek の `enable()` が毎回アクションとメニュー項目を作成し、`init()` が context を保持して configuration スキーマを登録するだけなのは、そのためです。
+
+再有効化後に残してはいけない状態もリセットしてください。Parameter Peek が `enable()` で `observedEdits.set(0)` を呼ぶのは、この理由からです。
+
+### スコープが把握していないものをクリーンアップする
+
+スコープがクローズするのは、渡されたハンドルだけです。他の方法で何かを開始した場合は、それを停止する必要があります。重いオブジェクトを保持するフィールド、開いた接続、長寿命のキャッシュなどです。それは `disable()` または `shutdown()` で行ってください。スレッド、executor、タイマーを自分で作成してはいけません。ハンドルを登録できる、管理された[タスクスケジューラー](/docs/build-a-plugin/key-mechanisms/threads-and-tasks)を使ってください。
+
+## ホットリロード
+
+記述子の `lifecycle.hotReload: true` は、Cubism を再起動せずに、メモリ上でプラグインを有効化、無効化、更新できることを宣言します。これが正当なのは、次の条件を満たす場合のみです。
+
+- プラグインが標準の SDK サービスだけを使用している。
+- クローズ可能なものがすべて、disposable scope または `disable()` を通じて解放される。
+- プラグインが**バイトコードトランスフォーマーやネイティブフックを登録しない**。
+
+ホストのバイトコードを変換するプラグインは、Runtime が次回の Cubism 起動時に変更を適用するよう、`false` を宣言する必要があります。`true` を宣言することは、無効化すれば本当に何も残らないという約束です。その約束は、[ステップ 6](/docs/build-a-plugin/first-plugin/test-and-ship) の 2 つ目のユニットテストで確かめてください。
+
+## よくある間違い
+
+| 間違い | 影響 | 修正 |
+| --- | --- | --- |
+| `init()` でアクションを登録する | 無効化時に取り消され、再有効化しても `init` が再び実行されるとは限らない。 | `enable()` で登録する。 |
+| `disposableScope().register(...)` を忘れる | 無効化後も登録が残り、プラグインの ClassLoader を固定してしまう可能性がある。 | すべてのハンドルを登録する。 |
+| `enable()` で例外を握りつぶす | プラグインは有効に見えるが、機能の半分が欠けている。 | Runtime がロールバックできるよう、例外を伝播させる。 |
+| `Parameter` などのモデルオブジェクトをフィールドに保持する | ドキュメントの切り替え後に fail closed になる。 | 毎回 `context.cubism()` から解決し直す。 |
+| 独自のスレッドやタイマーを開始する | Runtime の制御外にあり、無効化後も残る。 | `context.tasks()` を使い、ハンドルを登録する。 |
+
+## 関連項目
+
+- ライフサイクルのスニペットとサービスファミリーについては[プラグインインターフェース](/docs/build-a-plugin/plugin-interfaces#lifecycle)。
+- エントリポイントのルールについては[プラグインマニフェストとパッケージング](/docs/build-a-plugin/manifest#entrypoint-のルール)。
+- ライフサイクルの設計指針については[プラグインの設計](/docs/build-a-plugin/designing-plugins#lifecycle-を計画する)。

@@ -1,0 +1,70 @@
+---
+title: 스레드와 작업
+description: 플러그인 코드가 실행되는 위치, 플러그인 상태가 동시성을 견뎌야 하는 이유, 스레드를 직접 소유하지 않고 UI 및 백그라운드 작업을 스케줄링하는 방법을 설명합니다.
+---
+
+Parameter Peek는 `AtomicInteger`를 사용했고 "플러그인을 동시성 환경으로 취급하라"고 말했습니다. 이 페이지는 그 조언의 근거가 되는 규칙을 설명합니다.
+
+## 코드는 하나의 스레드에서 실행되지 않습니다
+
+여러 종류의 호출자가 플러그인에 접근하며, 이들은 스레드를 공유하지 않습니다:
+
+- **수명 주기 호출**(`init`, `enable`, `disable`, `shutdown`)은 Swing 이벤트 디스패치 스레드(EDT)가 **아니라** Runtime 워커 레인에서 실행됩니다. 연속된 전환이 서로 다른 워커를 사용할 수 있습니다.
+- **액션 핸들러와 기타 UI 콜백**은 호스트 UI가 호출하며, 다른 모든 것과 동시에 실행될 수 있습니다.
+- **일반 이벤트 관찰**은 비동기로 전달됩니다.
+- **백그라운드 작업**은 Runtime이 관리하는 워커에서 실행됩니다.
+
+이들은 겹칠 수 있으므로, 둘 이상이 접근하는 플러그인 상태는 동시 접근에 안전해야 합니다. 원자 변수, 동시성 컬렉션, 변경 불가능한 스냅샷 또는 명시적 동기화를 사용하세요. 플러그인 스레드가 하나라고 가정하지 마세요.
+
+## 동기식 `Before` 이벤트는 다릅니다
+
+`ParameterValueEvent.Before`처럼 `Before` 상태의 이벤트는 동기식이며, 구독자가 값을 검증하거나 다시 쓸 수 있도록 존재합니다. 페이로드는 이를 연 스레드의 콜백 안에서만 변경할 수 있습니다. 이벤트를 보관하지 말고, 그 변경을 작업이나 다른 스레드에 넘기지 말고, 작업을 짧게 유지하세요. 관찰 이벤트(`On`, `After`)는 변경 불가능하며 비동기입니다.
+
+## UI 작업은 UI 스케줄러에서 수행하세요
+
+호스트 UI는 단일 스레드입니다. `UiScheduler`를 통해 UI 업데이트를 명시적으로 스케줄링하고, UI 콜백은 짧게 유지하세요:
+
+```java
+Registration pending = context.uiScheduler().runOnUiThread(() -> {
+    // Update UI state here. No blocking I/O, no waiting on futures.
+});
+context.disposableScope().register(pending);
+```
+
+EDT에서는 절대로 퓨처를 기다리거나 블로킹 I/O를 수행하지 마세요. 그러면 모든 사용자의 Editor가 멈춥니다.
+
+## 백그라운드 작업에는 관리형 작업 스케줄러를 사용하세요
+
+스레드, 실행기, 타이머를 직접 만들지 마세요. Runtime이 스케줄링을 소유하므로 작업을 제한하고, 취소하고, 정리할 수 있습니다. 대신 `context.tasks()`(`PluginTaskScheduler`)를 사용하세요:
+
+- 일회성 작업에는 `submit(PluginTaskRequest)`;
+- 반복 작업에는 `scheduleWithFixedDelay(FixedDelayTaskRequest)`.
+
+세 가지 습관이 작업을 신뢰할 수 있게 합니다:
+
+1. **제출 결과를 확인하세요.** 제출은 거부될 수 있으며(예: 백프레셔 상황), 결과가 그 사실을 알려 줍니다. 이를 정상적인 결과로 처리하세요.
+2. **알맞은 `PluginTaskKind`를 선택하세요.** 연산, 저빈도 새로 고침, 장기 실행 작업 중 하나를 선택합니다.
+3. **협력적으로 취소하세요.** 취소는 작업에 중지를 요청하는 것이며 강제로 종료하지 않습니다. 취소 토큰을 관찰하고 신속히 반환하세요. 현재 메서드보다 오래 살아남을 수 있는 작업 핸들은 disposable 스코프에 속합니다.
+
+다른 선택적 서비스와 마찬가지로, 플러그인이 작업 서비스 없이도 실행될 수 있다면 `context.tasks().isAvailable()`을 확인하세요.
+
+## 작업 워커는 호스트 오브젝트를 건드릴 수 없습니다
+
+작업 워커에서 실행된다고 해서 Cubism 오브젝트를 읽거나 변경할 권한이 생기는 것은 아닙니다. 범위가 제한된 비동기 호스트 읽기에는 `context.hostReads()`(`AsyncHostReadService`)를 사용하고, 쓰기에는 해당 편집 API에 문서화된 스레드 및 콜백 범위를 따르세요. 비동기 작업이 끝나면 UI 업데이트는 `UiScheduler`를 통해 다시 스케줄링하세요.
+
+타입 지정 구성 읽기처럼 `CompletionStage`로 도착하는 결과에도 같은 원칙이 적용됩니다. Parameter Peek의 `report()`에서 `thenAccept` 콜백은 UI 스레드가 아니라 구성 서비스가 소유한 스레드에서 실행됩니다. 그래서 상태 표시줄 알림을 직접 호출하지 않고 `context.uiScheduler().runOnUiThread(...)`로 감쌉니다.
+
+## 체크리스트
+
+- [ ] 공유되는 플러그인 상태가 스레드 안전합니다.
+- [ ] 플러그인 코드에 `new Thread`, `Executors`, `Timer`, `parallelStream`이 없습니다.
+- [ ] UI 콜백에서 블로킹 I/O나 `future.get()`을 하지 않습니다.
+- [ ] 백그라운드 작업은 `context.tasks()`를 사용하고, 제출 거부를 처리하며, 취소를 관찰합니다.
+- [ ] 반환된 모든 핸들을 닫거나 disposable 스코프에 등록합니다.
+- [ ] UI를 건드리는 비동기 결과는 `UiScheduler`로 스케줄링합니다.
+
+## 참고
+
+- 스코프와 핸들 규칙은 [수명 주기 및 정리](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup)를 참고하세요.
+- `PluginContext`의 `tasks()`, `hostReads()`, `uiScheduler()` 항목은 [SDK API 가이드](/docs/reference/sdk-api)를 참고하세요.
+- `PluginTaskScheduler`, `PluginTaskKind`, 작업 요청 타입은 [SDK HTML API 레퍼런스](https://turboism.dev/sdk/index.html)를 참고하세요.

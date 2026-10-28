@@ -1,0 +1,89 @@
+---
+title: "Step 3: Build and install"
+description: Install your plugin JAR through Plugin Management, restart Cubism, run the command, find your log lines, and learn the edit-build-install loop.
+---
+
+Now you run the plugin for real. You install the JAR into Turboism, restart Cubism, run the command, and find your output in the log.
+
+## 1. Check the JAR
+
+```bash
+./gradlew build
+```
+
+List the archive to confirm what Runtime will see:
+
+```bash
+unzip -l build/libs/parameterpeek-turboism-plugin-0.1.0.jar
+```
+
+You should see your class, `META-INF/turboism/plugin.json`, `META-INF/turboism/cubism-versions.json`, and the `i18n` catalogs. You should **not** see any `dev/turboism/sdk/` classes. The generated `ParameterPeekPlugin__TurboismSubscriberCatalog.class` and a `META-INF/services/...GeneratedSubscriberCatalog` entry are produced by the annotation processor and are expected.
+
+## 2. Install the JAR
+
+1. Close any Cubism Editor session you care about, or save your work. Installation takes effect after a restart.
+2. Start Cubism Editor through your Turboism launcher and open the **Turboism** menu.
+3. Choose **Manage Plugins…**, then **Install from JAR…**, and select `parameterpeek-turboism-plugin-0.1.0.jar`.
+4. Confirm the dialog that marks the JAR as a **local/unverified source**. Turboism cannot vouch for a JAR you built yourself, and this dialog says so.
+5. Confirm that the operation is listed as **pending**.
+6. Close Cubism fully, then start it again through the **same** Turboism home.
+7. Open **Turboism → Manage Plugins…** again and check that **Parameter Peek** is listed and enabled. Double-click it to see its details, including the SDK API range and the Cubism versions it declares.
+
+Installation is staged, not immediate: Turboism treats the file as untrusted input, validates it, snapshots it into pending state, and applies it at the next startup. See [Plugin Management](/docs/use/plugin-management) for the full flow, including replacement and uninstall.
+
+### Key mechanism: what Runtime checks in your JAR
+
+Before it stages the JAR, and again at startup, Runtime verifies that:
+
+- the JAR is a regular file within size, entry-count, expansion, and compression-ratio limits;
+- it holds exactly one `META-INF/turboism/plugin.json`, and the descriptor's ID, version, and API range are consistent;
+- your declared entrypoints exist, are public, implement `TurboismPlugin`, and have a public no-argument constructor;
+- every declared resource root and i18n catalog exists, and no undeclared ordinary resource is present;
+- it contains no copied SDK, Runtime, test, or Live2D classes, no native binaries or installer payloads, and no nested JARs.
+
+This is why you always distribute the JAR your Gradle build produced. Renaming an arbitrary ZIP will not work. The full list is in [Plugin Manifest and Packaging](/docs/build-a-plugin/manifest#strict-jar-validation).
+
+## 3. Run the command
+
+1. Open any model document in the Editor.
+2. Look for **Parameter Peek: Report** under **Tools → Parameter Peek**. The path comes from the `parameterpeek.menu` text you registered.
+3. Run it. The greeting from `parameterpeek.hello` appears in the status bar.
+
+If you do not see it, work through [When a plugin does not load](/docs/build-a-plugin/key-mechanisms/load-failures).
+
+## 4. Find your log lines
+
+Your plugin's `logger()` writes to Turboism's own logs, with the plugin ID attached to each line. Choose **Turboism → Logs…** to open the log directories, open the current session log, and search for `com.example.parameterpeek`. You should find:
+
+```text
+Parameter Peek initialized
+Parameter Peek enabled
+Hello from Parameter Peek!
+```
+
+The order matters. `initialized` comes first, then `enabled`, then your message each time you run the command.
+
+Use `context.logger()` for diagnostics rather than `System.out` or a log file of your own. The logger is plugin-scoped and its output is collected together with the host's logs, which is where a user or maintainer will look first.
+
+## 5. The edit-build-install loop
+
+For ordinary development the loop is:
+
+1. Edit code.
+2. `./gradlew build`.
+3. **Manage Plugins… → Install from JAR…** with the new JAR. A JAR with the same plugin ID stages a replacement.
+4. Restart Cubism and re-test.
+
+Back up any plugin data you care about before replacing a plugin; a failed apply restores the previous plugin files, but your own data is your responsibility.
+
+For quicker local iteration you can instead copy a trusted JAR directly into the root of `<turboism.home>/plugins/` (not a subdirectory) and restart. This skips the managed preflight checks above, so use it only for your own builds, and prefer **Install from JAR…** when you want to see exactly the rejection a user would see. Remove any older JAR with the same plugin ID first: a duplicate ID fails with `DUPLICATE_PLUGIN_ID`.
+
+`lifecycle.hotReload: true` in the descriptor declares that the plugin can be enabled, disabled, and updated in memory without a Cubism restart. Whether and when Runtime applies a particular change in memory is decided by the update path (for example, background updates from the Plugin Market); for your local loop, plan on restarting.
+
+## Checkpoint
+
+- **Parameter Peek** appears in **Turboism → Manage Plugins…** and is enabled.
+- **Tools → Parameter Peek** runs, and the greeting appears in the status bar.
+- The log shows `initialized`, `enabled`, and your message, tagged with your plugin ID.
+
+**Next:** [Step 4: Read the model](/docs/build-a-plugin/first-plugin/read-the-model)

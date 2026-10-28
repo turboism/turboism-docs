@@ -1,0 +1,92 @@
+---
+title: Lifecycle and Cleanup
+description: What Runtime calls and in what order, how a plugin starts atomically, and how registrations are withdrawn safely.
+---
+
+This page explains the lifecycle model that [Step 2](/docs/build-a-plugin/first-plugin/hello-action) used. Read it when you add anything beyond one action, such as several entrypoints, long-lived resources, or hot reload.
+
+## The four methods
+
+```java
+public interface TurboismPlugin {
+    default void init(PluginContext context) throws Exception {}
+    default void enable() throws Exception {}
+    default void disable() throws Exception {}
+    default void shutdown() throws Exception {}
+}
+```
+
+All four are optional defaults. Implement the ones you need.
+
+| Method | Purpose | Typical content |
+| --- | --- | --- |
+| `init` | Receive the permission-scoped `PluginContext`; build plugin-private state. | Keep the context, register configuration schemas. |
+| `enable` | Start active behavior. | Register actions, menus, UI, event subscriptions, and tasks. |
+| `disable` | Stop active behavior before Runtime closes the plugin scope. | Stop work you started yourself. |
+| `shutdown` | Release plugin-private resources that the scope does not own. | Drop references, close private files. |
+
+Do not assume a method runs on a particular thread, or that two calls run on the same one. See [Threads and tasks](/docs/build-a-plugin/key-mechanisms/threads-and-tasks).
+
+## Startup is atomic
+
+A JAR can declare several entrypoints. They share one plugin identity, one descriptor, one ClassLoader, one `PluginContext`, one `DisposableScope`, one permission set, and one configuration and storage namespace.
+
+```text
+construct / init / enable:  manifest order
+disable / shutdown:         reverse manifest order
+```
+
+If any entrypoint fails during construction, `init`, or `enable`, Runtime rolls back the **whole JAR**. A failed `init` means `enable` never runs. Design `init` to be quick and side-effect-light, and put visible behavior in `enable`.
+
+Because a failure rolls everything back, an exception is the right way to signal "I cannot start". Swallowing it and carrying on half-initialized is not.
+
+## Registrations and the disposable scope
+
+Almost every registry call returns a `Registration`, an `AutoCloseable` handle. Closing it withdraws what you registered.
+
+```java
+Registration action = context.actions().register("example.refresh", example);
+context.disposableScope().register(action);
+```
+
+The scope closes everything you gave it **in reverse order** when the plugin is disabled. This is the single most important cleanup rule:
+
+> Every returned registration or handle that can outlive the current method must be closed explicitly or enrolled in `context.disposableScope()`.
+
+The things to enroll are actions, menu and toolbar contributions, settings contributions, event subscriptions, task handles, and anything else the SDK hands back as closeable. Enrolling them is what lets Runtime release the plugin's ClassLoader safely.
+
+### Disable, then enable again
+
+Disabling withdraws your registrations. Enabling again must register them again, so keep registrations in `enable()`, not in `init()`. That is why Parameter Peek's `enable()` creates the action and menu entry each time, while `init()` only keeps the context and registers its configuration schema.
+
+Also reset any state that should not survive a re-enable. Parameter Peek calls `observedEdits.set(0)` in `enable()` for this reason.
+
+### Cleaning up what the scope does not know about
+
+The scope only closes handles it was given. If you start something by other means, you must stop it: a field that holds a heavy object, a connection you opened, or a long-lived cache. Do that in `disable()` or `shutdown()`. Do not create threads, executors, or timers yourself; use the managed [task scheduler](/docs/build-a-plugin/key-mechanisms/threads-and-tasks), whose handles you can enroll.
+
+## Hot reload
+
+`lifecycle.hotReload: true` in the descriptor declares that the plugin can be enabled, disabled, and updated in memory without restarting Cubism. It is only honest when:
+
+- the plugin uses standard SDK services only;
+- every closeable is released through the disposable scope or `disable()`; and
+- the plugin registers **no bytecode transformers or native hooks**.
+
+A plugin that transforms host bytecode must declare `false` so that Runtime applies its changes on the next Cubism start. Declaring `true` is a promise that disabling really leaves nothing behind. Test that promise with the second unit test in [Step 6](/docs/build-a-plugin/first-plugin/test-and-ship).
+
+## Common mistakes
+
+| Mistake | Effect | Fix |
+| --- | --- | --- |
+| Registering an action in `init()` | It is withdrawn on disable, and re-enabling does not necessarily run `init` again. | Register in `enable()`. |
+| Forgetting `disposableScope().register(...)` | The registration lingers after disable and can pin the plugin's ClassLoader. | Enroll every handle. |
+| Swallowing an exception in `enable()` | The plugin looks enabled but half the features are missing. | Let it propagate so Runtime can roll back. |
+| Holding a `Parameter` or other model object in a field | It fails closed after a document switch. | Re-resolve from `context.cubism()` each time. |
+| Starting your own thread or timer | It is outside Runtime's control and survives disable. | Use `context.tasks()` and enroll the handle. |
+
+## See also
+
+- [Plugin Interfaces](/docs/build-a-plugin/plugin-interfaces#lifecycle) for the lifecycle snippet and service families.
+- [Plugin Manifest and Packaging](/docs/build-a-plugin/manifest#entrypoint-rules) for entrypoint rules.
+- [Designing Plugins](/docs/build-a-plugin/designing-plugins#plan-the-lifecycle) for lifecycle design guidance.

@@ -1,0 +1,70 @@
+---
+title: Threads and Tasks
+description: Where plugin code runs, why plugin state must tolerate concurrency, and how to schedule UI and background work without owning threads.
+---
+
+Parameter Peek used an `AtomicInteger` and said "treat your plugin as concurrent". This page gives the rules behind that advice.
+
+## Your code does not run on one thread
+
+Several kinds of callers reach your plugin, and they do not share a thread:
+
+- **Lifecycle calls** (`init`, `enable`, `disable`, `shutdown`) run on a Runtime worker lane, **not** on Swing's event dispatch thread (EDT). Successive transitions may use different workers.
+- **Action handlers and other UI callbacks** are invoked by the host UI, and can run concurrently with everything else.
+- **Ordinary event observations** are delivered asynchronously.
+- **Background tasks** run on Runtime-managed workers.
+
+Because these can overlap, plugin state that more than one of them touches must be safe for concurrent access: use atomics, concurrent collections, immutable snapshots, or explicit synchronization. Do not assume there is one plugin thread.
+
+## Synchronous `Before` events are different
+
+Events in the `Before` state, such as `ParameterValueEvent.Before`, are synchronous and exist so subscribers can validate or rewrite a value. Their payload is mutable only inside the callback on the opening thread. Do not retain the event, do not hand its mutation to a task or another thread, and keep the work short. Observation events (`On`, `After`) are immutable and asynchronous.
+
+## Keep UI work on the UI scheduler
+
+Host UI is single-threaded. Schedule UI updates explicitly through `UiScheduler`, and keep UI callbacks short:
+
+```java
+Registration pending = context.uiScheduler().runOnUiThread(() -> {
+    // Update UI state here. No blocking I/O, no waiting on futures.
+});
+context.disposableScope().register(pending);
+```
+
+On the EDT, never wait on a future or perform blocking I/O. That freezes the Editor for everyone.
+
+## Use the managed task scheduler for background work
+
+Do not create your own threads, executors, or timers. Runtime owns scheduling so it can bound, cancel, and clean up your work. Use `context.tasks()` (`PluginTaskScheduler`) instead:
+
+- `submit(PluginTaskRequest)` for one-shot work;
+- `scheduleWithFixedDelay(FixedDelayTaskRequest)` for recurring work.
+
+Three habits make tasks reliable:
+
+1. **Check the submission result.** A submission can be rejected (for example under backpressure), and the result says so. Handle that as a normal outcome.
+2. **Choose the right `PluginTaskKind`.** It selects compute, low-frequency refresh, or long-running work.
+3. **Cancel cooperatively.** Cancellation asks your task to stop; it does not kill it. Observe the cancellation token and return promptly. A task handle that can outlive the current method belongs in the disposable scope.
+
+As with any optional service, probe `context.tasks().isAvailable()` when your plugin can run without it.
+
+## A task worker may not touch host objects
+
+Running on a task worker does not give you permission to read or mutate Cubism objects. Use `context.hostReads()` (`AsyncHostReadService`) for bounded asynchronous host reads, and the relevant editing API's documented thread and callback scope for writes. When asynchronous work finishes, schedule any UI update back through `UiScheduler`.
+
+The same applies to results that arrive as a `CompletionStage`, such as typed configuration reads. In Parameter Peek's `report()`, the `thenAccept` callback runs on a thread owned by the configuration service, not necessarily the UI thread. That is why the status-bar notice is wrapped in `context.uiScheduler().runOnUiThread(...)` instead of being called directly.
+
+## Checklist
+
+- [ ] Shared plugin state is thread-safe.
+- [ ] No `new Thread`, `Executors`, `Timer`, or `parallelStream` appears in plugin code.
+- [ ] No blocking I/O or `future.get()` on a UI callback.
+- [ ] Background work uses `context.tasks()`; submission rejection is handled; cancellation is observed.
+- [ ] Every returned handle is closed or enrolled in the disposable scope.
+- [ ] Asynchronous results that touch UI are scheduled with `UiScheduler`.
+
+## See also
+
+- [Lifecycle and cleanup](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup) for scope and handle rules.
+- [SDK API Guide](/docs/reference/sdk-api) for the `tasks()`, `hostReads()`, and `uiScheduler()` entries on `PluginContext`.
+- The [SDK HTML API reference](https://turboism.dev/sdk/index.html) for `PluginTaskScheduler`, `PluginTaskKind`, and the task request types.

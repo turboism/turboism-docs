@@ -1,0 +1,112 @@
+---
+title: 권한과 가용성
+description: 선언된 권한이 곧 동작하는 기능을 뜻하지 않는 이유와, 작업에 의존하기 전에 각 계층을 확인하는 방법을 설명합니다.
+---
+
+호출은 네 가지 서로 다른 이유로 실패할 수 있으며, 이들은 쉽게 혼동됩니다. 이 페이지는 이를 구분하여 어떤 경우인지, 어떤 도구로 해결하는지 알 수 있게 합니다.
+
+## 네 가지 독립적인 검사
+
+SDK 작업은 다음이 모두 충족될 때만 동작합니다:
+
+1. **API가 SDK에 존재합니다.** 컴파일에 사용하는 SDK와 플러그인을 실행하는 Runtime 모두에 있어야 합니다.
+2. **플러그인이 필요한 권한을 선언했습니다.** `plugin.json`에 선언되어 있어야 합니다.
+3. **Runtime에 해당 작업에 맞는 capability 프로바이더가 있습니다.**
+4. **활성 Cubism 버전과 오브젝트 세대가 지원됩니다.**
+
+한 검사를 통과해도 나머지에 대해서는 아무것도 알 수 없습니다. 권한은 "이 플러그인이 이 위험 경계를 넘어도 되는가?"에 답합니다. "호스트가 지금 여기서 이를 수행할 수 있는가?"에는 답하지 않습니다.
+
+| 질문 | 답하는 것 | 실패 형태 |
+| --- | --- | --- |
+| 대상으로 하는 SDK에 해당 멤버가 있는가? | 빌드에 사용한 SDK 버전과 `turboismApi` | 컴파일 오류 또는 검색 시 `TURBOISM_API_INCOMPATIBLE` |
+| 사용해도 되는가? | `plugin.json`의 `permissions` | 거부된 호출(권한 오류) |
+| Runtime이 제공하는가? | 서비스 디렉터리와 그 뒤의 프로바이더 | 서비스 없음, `UnsupportedOperationException`, 또는 `unavailable()` 결과 |
+| 활성 Cubism 버전이 지원하는가? | API의 `@CubismEditor`와 런타임 검사 | `CubismEditorApiUnavailableException` 또는 구조화된 거부 결과 |
+
+## 권한 선언
+
+각 항목에는 알려진 `id`, `application` 또는 `user`인 `scope`, 비어 있지 않은 `reason`이 있습니다:
+
+```json
+{
+  "id": "turboism.cubism.model.read",
+  "scope": "application",
+  "reason": "Counts the parameters of the active model."
+}
+```
+
+원칙:
+
+- **최소한만 선언하세요.** SDK 호출에 필요한 것만 요청하세요. 더 큰 플러그인의 긴 목록을 복사하지 마세요.
+- **`reason`은 사람을 위해 쓰세요.** 사용자와 검토자가 읽습니다.
+- **선언하지 않은 접근은 거부됩니다.** 암묵적 부여는 없으며, 설치된 서비스가 자신의 권한을 부여하지도 않습니다.
+- **관찰과 가로채기는 별개입니다.** `ParameterValueEvent.On`을 받으려면 관찰 권한이, `Before` 이벤트에서 값을 다시 쓰려면 가로채기 권한이 필요합니다.
+- **쓰기에는 별도의 권한이 필요합니다.** 읽기 권한은 쓰기 권한을 의미하지 않습니다.
+
+Parameter Peek가 최종적으로 가지는 권한과 각각이 제어하는 대상:
+
+| 권한 | 제어 대상 |
+| --- | --- |
+| `turboism.action.register` | `context.actions().register(...)` |
+| `turboism.ui.menu.contribute` | `context.menus().contribute(...)` |
+| `turboism.ui.status.notify` | `UiHostCapabilityService.notifyStatus(...)` |
+| `turboism.cubism.model.read` | 파라미터 같은 모델 오브젝트 읽기 |
+| `turboism.cubism.model.observe` | 파라미터 변경 이벤트 수신 |
+| `turboism.event.subscribe` | 모든 이벤트 구독 |
+| `turboism.config.plugin.read` / `.write` | 타입 지정 구성 읽기, 그리고 등록 또는 쓰기 |
+
+전체 ID 목록은 [`PermissionIds`](https://turboism.dev/sdk/dev/turboism/sdk/permission/PermissionIds.html)에 있습니다.
+
+## 사용 불가 상태 처리
+
+"여기서는 사용할 수 없음"을 정상적인 결과로 취급하고 미리 계획하세요. SDK에는 이를 위한 세 가지 형태가 있습니다.
+
+**디렉터리를 통한 선택적 서비스.** `find`는 `Optional`을 반환하고, `require`는 `PluginServiceUnavailableException`을 던집니다.
+
+```java
+context.services().find(UiHostCapabilityService.class).ifPresent(ui -> {
+    // Use the service. Each operation still checks permission, version and generation.
+});
+```
+
+서비스가 있더라도 개별 작업은 여전히 거부될 수 있습니다. 서비스가 존재한다고 해서 버전별로 라우팅되는 모든 호출이 동작한다는 약속은 아닙니다.
+
+**`unavailable()` 센티널.** 많은 서비스에는 자신이 사용 불가임을 보고하는 기본 구현이 있습니다. 사용 전에 `isAvailable()`을 확인하세요. 일부 센티널은 쓰기 성격의 호출에 `UnsupportedOperationException`을 던지고, 다른 센티널은 빈 결과나 거부된 결과를 반환하므로 예외뿐 아니라 결과도 확인하세요.
+
+```java
+if (context.config().isAvailable()) {
+    // Safe to register a schema.
+}
+```
+
+**Cubism 버전 게이트.** `@CubismEditor`가 붙은 API는 이를 허용하지 않는 버전에서 `CubismEditorApiUnavailableException`으로 안전하게 실패(fail closed)하며, 예외의 `supportedVersions()`가 어떤 버전이 지원되는지 알려 줍니다. 기능 경계에서 이를 잡아 메뉴 항목을 숨기거나, 액션을 비활성화하거나, 지원되는 API로 폴백하세요. 버전 문자열을 직접 비교하지 마세요.
+
+```java
+try {
+    // ... call a version-gated API
+} catch (CubismEditorApiUnavailableException unavailable) {
+    logger.info("Unavailable API: " + unavailable.apiId());
+}
+```
+
+리플렉션, 내부 클래스, 원시 호스트 오브젝트로 거부를 우회하지 마세요. 거부는 시스템이 제대로 동작하고 있다는 뜻입니다. 실제 공백은 [피드백 및 요청](/docs/report-a-bug)로 알리고 [문제 해결 및 피드백](/docs/troubleshooting#호스트-기능을-사용할-수-없음)을 참고하세요.
+
+## `capabilities`는 어떤가요?
+
+디스크립터에는 Parameter Peek가 비워 두는 `capabilities` 배열이 있습니다. 이는 소수의 게이트된 훅처럼 호스트가 플러그인별로 허용하는 기능을 위한 선언입니다. 권한 및 `@CubismEditor` 버전 어노테이션과는 별개입니다. 사용하는 기능의 문서가 지시할 때만 capability를 선언하세요. Turboism 소스 저장소에 있는 퍼스트 파티 플러그인의 README에는 각 플러그인이 선언하는 capability가 나열되어 있어 좋은 예시가 됩니다.
+
+## 자신의 코드에서도 안전하게 실패하기
+
+플러그인 자체의 동작에도 같은 원칙을 적용하세요:
+
+- 읽기가 오래되었거나, 거부되었거나, 시간 초과되었다면 그에 기반해 아무것도 쓰지 마세요.
+- 쓰기를 안전하게 수행할 수 없다면 다른 경로로 재시도하지 말고 호스트를 변경하지 않은 채 그 사실을 알리세요.
+- `PluginLogger`로 컨텍스트를 기록하고, 예상되는 실패는 기능 경계에서 처리하세요.
+
+쓰기 안전성과 실행 취소(Undo)를 포함해 이 내용을 더 자세히 다루는 곳은 [플러그인 설계](/docs/build-a-plugin/designing-plugins#권한과-가용성-분리하기)입니다.
+
+## 참고
+
+- SDK 자체의 표현으로 된 네 가지 검사 모델은 [SDK API 가이드](/docs/reference/sdk-api)를 참고하세요.
+- 버전별 capability 경계는 [호환성](/docs/use/compatibility#런타임-capability-조회)을 참고하세요.
+- 권한 레코드 형식은 [플러그인 매니페스트 및 패키징](/docs/build-a-plugin/manifest#권한)을 참고하세요.

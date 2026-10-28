@@ -1,0 +1,12 @@
+{
+  "title": "最初のプラグインを作る",
+  "pages": [
+    "index",
+    "setup",
+    "hello-action",
+    "build-and-install",
+    "read-the-model",
+    "settings",
+    "test-and-ship"
+  ]
+}

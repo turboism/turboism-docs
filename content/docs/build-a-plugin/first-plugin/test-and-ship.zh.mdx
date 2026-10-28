@@ -1,0 +1,210 @@
+---
+title: "第 6 步：测试与发布"
+description: 在没有 Cubism 宿主的情况下对生命周期和清理做单元测试，运行实机检查清单，完善元数据，并分享你的插件 JAR。
+---
+
+插件已经能工作了。这最后一步让它值得信赖：测试不需要 Cubism 的那部分契约，在真实宿主中手动检查其余部分，整理元数据，然后把 JAR 交给别人。
+
+## 1. 无宿主时测什么
+
+单元测试可以证明你的插件注册了该注册的东西，并且能把它们撤销。但它无法证明 Cubism 的行为。前一类用测试覆盖，后一类用实机运行覆盖。
+
+适合在没有宿主时测试的内容：
+
+- `enable()` 所做的注册，以及作用域关闭时它们的移除；
+- 可选服务不可用时的行为（这里是裸 context 上的 `config()` 和 `localization()`）；
+- 你提取出来的任何纯逻辑，例如解析或格式化。
+
+把 JUnit 添加到 `build.gradle.kts`。SDK 是 `compileOnly`，不会进入测试类路径，所以要为测试显式添加：
+
+```kotlin title="build.gradle.kts"
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    // ... existing compileOnly and annotationProcessor entries
+    testImplementation(sdkJars)
+    testImplementation(platform("org.junit:junit-bom:5.11.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+```
+
+## 2. 编写一个假的 `PluginContext`
+
+`PluginContext` 是接口，所以测试可以提供自己的实现。只实现插件会用到的部分。可选服务默认已经是无动作的“不可用”实现，这正是本测试中 `config()` 应有的状态。
+
+```java title="src/test/java/com/example/parameterpeek/ParameterPeekPluginTest.java"
+package com.example.parameterpeek;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import dev.turboism.sdk.action.ActionRegistry;
+import dev.turboism.sdk.cubism.CubismFacade;
+import dev.turboism.sdk.diagnostics.DiagnosticReport;
+import dev.turboism.sdk.event.EventBus;
+import dev.turboism.sdk.i18n.PluginLocalization;
+import dev.turboism.sdk.menu.MenuRegistry;
+import dev.turboism.sdk.permission.PluginPermission;
+import dev.turboism.sdk.plugin.DisposableScope;
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.PluginDescriptor;
+import dev.turboism.sdk.plugin.PluginLogger;
+import dev.turboism.sdk.plugin.PluginPaths;
+import dev.turboism.sdk.ui.UiScheduler;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import org.junit.jupiter.api.Test;
+
+class ParameterPeekPluginTest {
+
+    @Test
+    void enableRegistersOneActionAndOneMenuEntry() throws Exception {
+        final FakeContext context = new FakeContext();
+        final ParameterPeekPlugin plugin = new ParameterPeekPlugin();
+
+        plugin.init(context);
+        plugin.enable();
+
+        assertEquals(List.of("parameterpeek.report"), context.actionIds);
+        assertEquals(1, context.menuCount);
+    }
+
+    @Test
+    void closingTheScopeWithdrawsEveryRegistration() throws Exception {
+        final FakeContext context = new FakeContext();
+        final ParameterPeekPlugin plugin = new ParameterPeekPlugin();
+        plugin.init(context);
+        plugin.enable();
+
+        plugin.disable();
+        context.scope.close();
+
+        assertTrue(context.actionIds.isEmpty());
+        assertEquals(0, context.menuCount);
+    }
+
+    /** Implements only what the plugin touches; everything else is deliberately inert. */
+    private static final class FakeContext implements PluginContext {
+        final DisposableScope scope = new DisposableScope();
+        final List<String> actionIds = new ArrayList<>();
+        int menuCount;
+
+        @Override public ActionRegistry actions() {
+            return (id, action) -> {
+                actionIds.add(id);
+                return () -> actionIds.remove(id);
+            };
+        }
+
+        @Override public MenuRegistry menus() {
+            return contribution -> {
+                menuCount++;
+                return () -> menuCount--;
+            };
+        }
+
+        @Override public PluginLocalization localization() { return new KeyEchoLocalization(); }
+        @Override public DisposableScope disposableScope() { return scope; }
+        @Override public PluginLogger logger() { return new SilentLogger(); }
+        @Override public List<PluginPermission> permissions() { return List.of(); }
+        @Override public PluginDescriptor descriptor() { return null; }
+        @Override public PluginPaths paths() { return null; }
+        @Override public CubismFacade cubism() { return null; }
+        @Override public EventBus eventBus() { return null; }
+        @Override public UiScheduler uiScheduler() { return null; }
+        @Override public DiagnosticReport diagnostics() { return null; }
+    }
+
+    /** Returns each message key unchanged, so tests do not depend on catalog wording. */
+    private static final class KeyEchoLocalization implements PluginLocalization {
+        @Override public Locale locale() { return Locale.ENGLISH; }
+        @Override public String text(final String key) { return key; }
+        @Override public String format(final String key, final Object... arguments) { return key; }
+        @Override public boolean contains(final String key) { return true; }
+    }
+
+    private static final class SilentLogger implements PluginLogger {
+        @Override public void debug(final String message) {}
+        @Override public void info(final String message) {}
+        @Override public void warn(final String message) {}
+        @Override public void error(final String message) {}
+        @Override public void error(final String message, final Throwable throwable) {}
+    }
+}
+```
+
+运行它：
+
+```bash
+./gradlew test
+```
+
+这个测试里有两点值得理解：
+
+- 假对象没有提供 `config()`。默认值是“不可用”哨兵，所以 `init` 会走你在第 5 步写的 `isAvailable()` 分支。如果 `init` 无保护地调用 `registerUserEditableSchema`，这个测试就会因 `UnsupportedOperationException` 失败。这类 bug 在这里几毫秒就能发现，否则就要靠一份让人困惑的用户反馈。
+- 第二个测试对生命周期缺陷最关键。如果你忘了把某个操作放进 `disposableScope()`，`actionIds` 就不会为空。请把这个模式推广到你添加的每个注册项。
+
+这里只演练了插件自己的逻辑。单元测试通过并不能说明插件在任何 Cubism 版本上可用。
+
+## 3. 在真实宿主中测试
+
+编译和假对象无法告诉你 Editor 的行为，而 Editor 才是用户运行插件的地方。分享构建之前，请用一个可随意处置的模型把它安装进 Editor，并走完下面的检查清单：
+
+- [ ] 能安装、重启，并在**管理插件…**中显示为已启用。
+- [ ] 在**没有打开模型**时命令会出现并能运行，不报错。
+- [ ] 打开模型以及编辑参数之后，报告的计数正确。
+- [ ] 设置会出现、会生效，并在重启后保留。
+- [ ] 禁用插件会移除菜单项；重新启用会恢复。
+- [ ] 卸载并重启后，除了你选择保留的数据外，没有任何残留。
+- [ ] `cubism-versions.json` 中列出的每个 Cubism 版本都确实运行过。把没运行过的删掉。
+
+请记录你使用的 Turboism 版本、Cubism 版本和步骤。如果某个版本无法运行，请明说，而不是声称它可用。同样的标准应用于 AI 辅助工作的情形，请参见[使用 LLM 进行开发](/docs/build-a-plugin/llm-coding-context#开发者要求)。
+
+## 4. 完善元数据
+
+以用户的视角审查 `plugin.json`：
+
+| 字段 | 检查 |
+| --- | --- |
+| `id` | 反向域名、唯一且已定稿。之后更改它会创建另一个插件。 |
+| `version` | 每次分发的发布都要提高它，并与 `build.gradle.kts` 中的 `version` 保持一致，使文件名匹配。 |
+| `turboismApi` | 最小值应是提供你所用全部 SDK 成员的最早框架 API。针对较新的 SDK 编译，并不会让它的新增内容在较旧的 Runtime 上可用。`[min,max)` 的上界保持在 `1.0.0` 以下。 |
+| `description`、`authors`、`license`、`website` | 真实、最新，且不是模板的占位值。 |
+| `permissions` | 每一个都被用到，并且有审查者能接受的 `reason`。移除试验期间添加的多余权限。 |
+| `category`、`tags` | 有合适的就用经审查的分类；tags 为小写 kebab-case，最多 12 个。 |
+| `environment.requiresCubism` | 需要运行中的 Editor 就填 `true`，如本例。 |
+| `lifecycle.hotReload` | 仅当满足[插件 Manifest 与打包](/docs/build-a-plugin/manifest#lifecycle-与热重载)中的条件时才填 `true`。 |
+
+同时检查 `cubism-versions.json`（只含测试过的版本，且 `fullFeatureVersions` 是 `supportedVersions` 的子集），并确认 `i18n.locales` 中列出的每个 locale 都有对应的目录文件。
+
+## 5. 分享 JAR
+
+`build/libs/` 中的文件就是可分发物。没有安装器，也没有包装压缩包。要把它交给别人：
+
+1. 用 `./gradlew clean build` 从干净状态构建。
+2. 把 JAR 连同版本号、你测试过的 Turboism 与 Cubism 版本，以及一段说明它请求哪些权限及原因的简短文字发给对方。
+3. 对方通过 **管理插件… → 从 JAR 安装…** 安装，确认本地/未验证来源对话框，然后重启。参见[插件管理](/docs/use/plugin-management)。
+
+请说明这是本地安装：Turboism 不会审查或认证以这种方式安装的 JAR。
+
+### 插件目录是经过精选的
+
+[插件目录](https://turboism.dev/plugins)是由 Turboism 团队维护的精选目录，不是自助式市场。第三方条目尚未上线，能够构建并不意味着符合收录条件。请在设计时就考虑分发，并通过 [Turboism GitHub 组织](https://github.com/turboism)讨论候选插件。当前状态请参见[参与贡献](/docs/build-a-plugin/contributing)。
+
+## 接下来去哪里
+
+你现在拥有完整的闭环：创建、构建、安装、观察、响应、持久化、测试和发布。想深入的话：
+
+- 按顺序阅读[关键机制](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup)页面。它们解释了你在第 2 到 5 步中用到却未深究的内容。
+- 学习[设计插件](/docs/build-a-plugin/designing-plugins)中的设计检查清单，尤其是在修改模型之前要了解的写入安全规则。
+- 浏览[第一方插件](/docs/use/first-party-plugins)，以及 [SDK API 指南](/docs/reference/sdk-api)中你尚未用到的服务：工具栏、上下文菜单、任务、存储和用户文件。
+- 扩展 Parameter Peek：为同一个操作添加工具栏按钮，用 `storage()` 持久化变化次数，或添加 `messages_zh_Hans.properties` 和第二个 locale。

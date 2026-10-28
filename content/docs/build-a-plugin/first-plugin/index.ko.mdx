@@ -1,0 +1,74 @@
+---
+title: 첫 플러그인 만들기
+description: 빈 폴더에서 시작하여 메뉴 명령, 실시간 Cubism 데이터, 저장된 설정, 테스트를 갖춘 설치형 Turboism 플러그인을 완성하는 6단계 실습 튜토리얼입니다.
+---
+
+이 시리즈는 작지만 완전한 Turboism 플러그인 **Parameter Peek**를 만드는 과정을 안내합니다. 끝까지 따라 하면 실제 플러그인을 작성, 빌드, 설치, 테스트하게 되며, 어떤 메커니즘이 플러그인을 동작시켰는지 알게 됩니다.
+
+## 만들 플러그인
+
+Parameter Peek는 Cubism Editor에 **Parameter Peek: Report** 명령을 추가합니다. 이 명령을 실행하면 플러그인은 다음을 수행합니다:
+
+- 열려 있는 모델의 파라미터 수를 셉니다;
+- 활성화된 이후 감지한 파라미터 값 변경 횟수를 보고합니다;
+- 결과를 Turboism 로그에 기록하고, **플러그인 설정**에서 변경할 수 있는 설정이 허용하면 상태 표시줄에도 표시합니다.
+
+이 플러그인은 의도적으로 작게 만듭니다. 모델을 읽기만 하므로 실험해도 안전하지만, 일반적인 플러그인의 모든 부분(수명 주기, 액션과 메뉴, 권한, 현지화, Cubism 데이터, 이벤트, 저장된 설정, 테스트)을 다룹니다.
+
+## 시작하기 전에
+
+- **Java.** 클래스, 인터페이스, 람다, 레코드에 익숙해야 합니다. Cubism 내부 구조나 Turboism 런타임을 알 필요는 없습니다.
+- `PATH`에 **JDK 17 이상**이 있어야 합니다(`java -version`으로 확인하세요). 플러그인은 Java 17 바이트코드로 컴파일됩니다.
+- 3단계 이후에 플러그인을 실행하려면 지원되는 Cubism Editor와 함께 **Turboism이 설치**되어 있어야 합니다. [설치](/docs/use/installation)와 [호환성](/docs/use/compatibility)을 참고하세요. 1~2단계와 6단계의 단위 테스트는 Cubism 없이 완료할 수 있습니다.
+- Editor에서 열어 볼 **연습용 테스트 모델**. Parameter Peek는 읽기만 하지만, 잃어도 되는 데이터로 플러그인을 테스트하세요.
+
+이 튜토리얼은 **Stable 0.67.4**를 기준으로 작성되었습니다. 프로젝트 템플릿이 일치하는 SDK를 내려받아 주며, 이렇게 빌드한 플러그인은 SDK API 범위 `[0.67.0,1.0.0)`를 선언합니다.
+
+## 6단계
+
+| 단계 | 할 일 | 만나게 되는 메커니즘 |
+| --- | --- | --- |
+| 1. [프로젝트 설정](/docs/build-a-plugin/first-plugin/setup) | 공식 템플릿에서 프로젝트를 만들고 빌드합니다. | SDK는 `compileOnly`; 플러그인 ID; 프로젝트 레이아웃. |
+| 2. [인사하기](/docs/build-a-plugin/first-plugin/hello-action) | 메시지를 로그에 남기고 표시하는 메뉴 명령을 추가합니다. | 수명 주기, 액션과 메뉴, 선언된 권한, 현지화. |
+| 3. [빌드 및 설치](/docs/build-a-plugin/first-plugin/build-and-install) | Cubism에 JAR를 설치하고 명령을 실행합니다. | 관리형 설치와 재시작, 엄격한 JAR 검증, 로그. |
+| 4. [모델 읽기](/docs/build-a-plugin/first-plugin/read-the-model) | 파라미터를 세고 변경을 관찰합니다. | Cubism 스냅샷, 이벤트, 안전하게 실패하는(fail-closed) 가용성, Cubism 버전 지원. |
+| 5. [설정 추가](/docs/build-a-plugin/first-plugin/settings) | 환경설정을 저장하고 플러그인 설정에 노출합니다. | 타입 지정 구성, 플러그인 소유 저장소, 점진적 기능 축소(graceful degradation). |
+| 6. [테스트 및 배포](/docs/build-a-plugin/first-plugin/test-and-ship) | 단위 테스트를 작성하고 메타데이터를 다듬은 뒤 JAR를 공유합니다. | 호스트 없이 테스트하기, 버전 관리, 배포. |
+
+모든 단계는 동작하는 플러그인과 짧은 체크포인트로 끝나므로, 어느 단계 경계에서든 멈췄다가 다시 시작할 수 있습니다.
+
+## 튜토리얼 구성 방식
+
+각 단계는 동작하는 플러그인까지 가장 짧은 경로를 따릅니다. 한 단락 이상이 필요한 메커니즘은 계속 진행하는 데 필요한 내용만 알려 주고 [핵심 메커니즘](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup)의 독립 페이지로 연결합니다:
+
+- [수명 주기 및 정리](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup) — Runtime이 무엇을 어떤 순서로 호출하며 등록이 어떻게 철회되는지 설명합니다.
+- [권한과 가용성](/docs/build-a-plugin/key-mechanisms/permissions-and-availability) — 선언된 권한이 곧 동작하는 기능을 뜻하지 않는 이유를 설명합니다.
+- [스레드와 작업](/docs/build-a-plugin/key-mechanisms/threads-and-tasks) — 코드가 어디에서 실행되며 백그라운드 작업을 안전하게 수행하는 방법을 설명합니다.
+- [플러그인이 로드되지 않을 때](/docs/build-a-plugin/key-mechanisms/load-failures) — 증상에서 출발하는 진단 가이드입니다.
+
+## 전체 그림
+
+```text
+Your plugin JAR
+├── META-INF/turboism/plugin.json   who you are and what you ask for
+├── your Java classes               what you do
+└── resources                       localized text, Cubism version list
+        │
+        │  Runtime validates the JAR and admits only what you declared
+        ▼
+PluginContext                       the only door to the host
+├── actions(), menus()              commands and menu entries
+├── eventBus()                      typed events
+├── cubism()                        snapshots and the Cubism object model
+├── config(), storage()             settings and plugin-owned data
+└── logger(), localization() ...    plugin-private helpers
+```
+
+플러그인이 하는 모든 일은 `PluginContext`를 거칩니다. Runtime은 모든 호출을 선언한 권한, 호스트가 제공하는 서비스, 활성 Cubism 버전에 대해 검사합니다. 이 시리즈에서 한 가지만 기억한다면 이 점을 기억하세요.
+
+## 레퍼런스와 대안
+
+- 최소한의 내용만 필요하신가요? 간추린 [개발자 빠른 시작](/docs/build-a-plugin/quick-start)이 같은 빌드 경로를 한 페이지에 담고 있습니다.
+- 필드나 서비스를 찾아보려면 [플러그인 매니페스트 및 패키징](/docs/build-a-plugin/manifest), [플러그인 인터페이스](/docs/build-a-plugin/plugin-interfaces), [SDK API 가이드](/docs/reference/sdk-api)를 사용하세요.
+- Java 플러그인이 적합한 도구인지 확신이 없다면 [GraalJS 스크립트](/docs/build-a-plugin/graaljs-scripts)와 [MCP](/docs/build-a-plugin/mcp)를 비교해 보세요.
+- AI 코딩 어시스턴트로 개발하고 있나요? 먼저 [LLM으로 개발하기](/docs/build-a-plugin/llm-coding-context)를 읽으세요. 결과를 검토하고 테스트할 책임은 여전히 사용자에게 있습니다.

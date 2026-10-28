@@ -1,0 +1,70 @@
+---
+title: 线程与任务
+description: 插件代码在哪里运行，为什么插件状态必须容忍并发，以及如何在不自己持有线程的情况下调度 UI 和后台工作。
+---
+
+Parameter Peek 使用了 `AtomicInteger`，并说“请把你的插件视为并发的”。本页给出这条建议背后的规则。
+
+## 你的代码并不运行在同一个线程上
+
+有几类调用方会到达你的插件，它们并不共享线程：
+
+- **生命周期调用**（`init`、`enable`、`disable`、`shutdown`）运行在 Runtime 的 worker 通道上，**而不是** Swing 的事件分派线程（EDT）。相继的转换可能使用不同的 worker。
+- **操作处理器和其他 UI 回调**由宿主 UI 调用，并可能与其他一切并发运行。
+- **普通事件观察**是异步投递的。
+- **后台任务**运行在 Runtime 管理的 worker 上。
+
+由于这些调用可能重叠，被多个调用方触及的插件状态必须对并发访问是安全的：使用原子类型、并发集合、不可变快照或显式同步。不要假定存在唯一的插件线程。
+
+## 同步的 `Before` 事件不同
+
+处于 `Before` 状态的事件（例如 `ParameterValueEvent.Before`）是同步的，其存在是为了让订阅者验证或改写某个值。它们的载荷只能在回调内、在打开它的线程上修改。不要保留该事件，不要把对它的修改交给任务或其他线程，并保持工作简短。观察类事件（`On`、`After`）是不可变且异步的。
+
+## 让 UI 工作留在 UI 调度器上
+
+宿主 UI 是单线程的。请通过 `UiScheduler` 显式调度 UI 更新，并保持 UI 回调简短：
+
+```java
+Registration pending = context.uiScheduler().runOnUiThread(() -> {
+    // Update UI state here. No blocking I/O, no waiting on futures.
+});
+context.disposableScope().register(pending);
+```
+
+在 EDT 上，永远不要等待 future 或执行阻塞 I/O。那会让所有人的 Editor 都卡住。
+
+## 后台工作使用受管的任务调度器
+
+不要创建自己的线程、执行器或定时器。调度由 Runtime 掌管，这样它才能对你的工作设限、取消和清理。请改用 `context.tasks()`（`PluginTaskScheduler`）：
+
+- `submit(PluginTaskRequest)` 用于一次性工作；
+- `scheduleWithFixedDelay(FixedDelayTaskRequest)` 用于周期性工作。
+
+三个习惯能让任务更可靠：
+
+1. **检查提交结果。**提交可能被拒绝（例如在背压下），结果会告诉你。请把它当作正常结果处理。
+2. **选择合适的 `PluginTaskKind`。**它用于区分计算、低频刷新或长时间运行的工作。
+3. **协作式取消。**取消只是请求你的任务停止，并不会强杀它。请观察取消令牌并尽快返回。可能比当前方法存活更久的任务句柄应放入可处置作用域。
+
+与任何可选服务一样，当你的插件在没有它时也能运行，请探测 `context.tasks().isAvailable()`。
+
+## 任务 worker 不得触碰宿主对象
+
+在任务 worker 上运行，并不意味着你获准读取或修改 Cubism 对象。有界的异步宿主读取请用 `context.hostReads()`（`AsyncHostReadService`），写入则遵循相应编辑 API 文档中说明的线程与回调范围。异步工作完成后，请把任何 UI 更新通过 `UiScheduler` 调度回去。
+
+以 `CompletionStage` 形式到达的结果也是如此，例如类型化配置的读取。在 Parameter Peek 的 `report()` 中，`thenAccept` 回调运行在配置服务所拥有的线程上，不一定是 UI 线程。这就是状态栏提示被包在 `context.uiScheduler().runOnUiThread(...)` 中，而不是直接调用的原因。
+
+## 检查清单
+
+- [ ] 共享的插件状态是线程安全的。
+- [ ] 插件代码中没有出现 `new Thread`、`Executors`、`Timer` 或 `parallelStream`。
+- [ ] UI 回调上没有阻塞 I/O 或 `future.get()`。
+- [ ] 后台工作使用 `context.tasks()`；处理了提交被拒；观察了取消。
+- [ ] 每个返回的句柄都已关闭或放入可处置作用域。
+- [ ] 涉及 UI 的异步结果通过 `UiScheduler` 调度。
+
+## 另请参阅
+
+- [生命周期与清理](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup)：作用域与句柄规则。
+- [SDK API 指南](/docs/reference/sdk-api)：`PluginContext` 上的 `tasks()`、`hostReads()` 和 `uiScheduler()` 条目。
+- [SDK HTML API 参考](https://turboism.dev/sdk/index.html)：`PluginTaskScheduler`、`PluginTaskKind` 以及任务请求类型。

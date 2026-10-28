@@ -1,0 +1,112 @@
+---
+title: 权限与可用性
+description: 为什么声明了权限不等于功能可用，以及在依赖某个操作之前如何逐层检查。
+---
+
+一次调用可能因四种不同原因失败，而它们很容易混淆。本页把它们区分开，让你知道自己面对的是哪一种，以及该用哪种手段修复。
+
+## 四项相互独立的检查
+
+只有当下面所有条件都成立时，SDK 操作才会生效：
+
+1. **该 API 存在于**你编译所用的 SDK，以及运行你插件的 Runtime 中。
+2. **插件已在 `plugin.json` 中声明所需权限。**
+3. **Runtime 为该操作提供了匹配的 capability provider。**
+4. **当前 Cubism 版本和对象代际受到支持。**
+
+通过其中一项，并不说明其他几项。权限回答的是“这个插件是否可以跨越这条风险边界？”，它不回答“宿主此时此地能否做到？”。
+
+| 问题 | 由谁回答 | 失败的表现 |
+| --- | --- | --- |
+| 该成员是否存在于我所面向的 SDK 中？ | 你构建所用的 SDK 版本与 `turboismApi` | 编译错误，或发现阶段出现 `TURBOISM_API_INCOMPATIBLE` |
+| 我是否被允许使用它？ | `plugin.json` 中的 `permissions` | 调用被拒绝（权限错误） |
+| Runtime 是否提供它？ | 服务目录及其背后的 provider | 服务缺失、`UnsupportedOperationException`，或 `unavailable()` 结果 |
+| 当前 Cubism 版本是否支持它？ | API 上的 `@CubismEditor` 与运行时检查 | `CubismEditorApiUnavailableException`，或结构化的拒绝结果 |
+
+## 声明权限
+
+每个条目包含一个已知的 `id`、`application` 或 `user` 的 `scope`，以及非空的 `reason`：
+
+```json
+{
+  "id": "turboism.cubism.model.read",
+  "scope": "application",
+  "reason": "Counts the parameters of the active model."
+}
+```
+
+原则：
+
+- **声明最小集合。**只请求你所做的 SDK 调用所需的权限。不要从更大的插件里复制一长串。
+- **把 `reason` 写给人看。**用户和审查者会阅读它。
+- **未声明的访问会被拒绝。**没有隐式授权，已安装的服务也不会授予自身的权限。
+- **观察与拦截是分开的。**接收 `ParameterValueEvent.On` 需要观察权限；在 `Before` 事件中改写值需要拦截权限。
+- **写入需要独立的权限。**读权限从不意味着写权限。
+
+Parameter Peek 最终的权限，以及每个权限所管控的内容：
+
+| 权限 | 管控 |
+| --- | --- |
+| `turboism.action.register` | `context.actions().register(...)` |
+| `turboism.ui.menu.contribute` | `context.menus().contribute(...)` |
+| `turboism.ui.status.notify` | `UiHostCapabilityService.notifyStatus(...)` |
+| `turboism.cubism.model.read` | 读取参数等模型对象 |
+| `turboism.cubism.model.observe` | 接收参数变化事件 |
+| `turboism.event.subscribe` | 订阅任何事件 |
+| `turboism.config.plugin.read` / `.write` | 读取，以及注册或写入类型化配置 |
+
+完整的 ID 列表见 [`PermissionIds`](https://turboism.dev/sdk/dev/turboism/sdk/permission/PermissionIds.html)。
+
+## 处理不可用
+
+把“此处不可用”当作正常结果并提前规划。SDK 用三种形式表达它。
+
+**通过服务目录获取的可选服务。**`find` 返回 `Optional`；`require` 抛出 `PluginServiceUnavailableException`。
+
+```java
+context.services().find(UiHostCapabilityService.class).ifPresent(ui -> {
+    // Use the service. Each operation still checks permission, version and generation.
+});
+```
+
+即使服务存在，单个操作仍可能被拒绝。服务存在并不保证每个按版本路由的调用都可用。
+
+**`unavailable()` 哨兵。**许多服务有一个报告自身不可用的默认实现。使用前请探测 `isAvailable()`。有些哨兵对写入类调用抛出 `UnsupportedOperationException`，另一些返回空结果或被拒绝的结果，所以除了异常，也要检查结果。
+
+```java
+if (context.config().isAvailable()) {
+    // Safe to register a schema.
+}
+```
+
+**Cubism 版本门控。**带有 `@CubismEditor` 注解的 API 在不接纳它的版本上会以 `CubismEditorApiUnavailableException` 默认拒绝，该异常的 `supportedVersions()` 会告诉你哪些版本支持。请在功能边界处捕获它，并隐藏菜单项、禁用操作，或回退到受支持的 API。不要自己比较版本字符串。
+
+```java
+try {
+    // ... call a version-gated API
+} catch (CubismEditorApiUnavailableException unavailable) {
+    logger.info("Unavailable API: " + unavailable.apiId());
+}
+```
+
+绝不要用反射、内部类或原始宿主对象绕过拒绝。拒绝说明系统在正常工作。真正的缺口请通过[报告 Bug](/docs/report-a-bug)反馈，并参见[故障排除](/docs/troubleshooting#宿主-capability-不可用)。
+
+## `capabilities` 是什么？
+
+描述符中有一个 `capabilities` 数组，Parameter Peek 将其留空。它用于声明宿主按插件准入的功能，例如少数受门控的钩子。它与权限以及 `@CubismEditor` 版本注解是分开的。只有当你所用功能的文档告诉你需要时，才声明某个 capability。Turboism 源码仓库中第一方插件的 README 列出了各自声明的 capability，可作为有用的示例。
+
+## 在你自己的代码中默认拒绝
+
+对插件自身的行为应用同样的纪律：
+
+- 如果一次读取已过期、被拒绝或超时，不要基于它写入任何东西。
+- 如果某次写入无法安全完成，让宿主保持不变并如实说明，而不是通过另一条路径重试。
+- 通过 `PluginLogger` 记录上下文，并在功能边界处理预期的失败。
+
+[设计插件](/docs/build-a-plugin/designing-plugins#将权限与可用性分开)对此作了进一步展开，包括写入安全和 Undo。
+
+## 另请参阅
+
+- [SDK API 指南](/docs/reference/sdk-api)：SDK 自己对四项检查模型的表述。
+- [兼容性](/docs/use/compatibility#运行时能力查询)：按版本的能力边界。
+- [插件 Manifest 与打包](/docs/build-a-plugin/manifest#权限)：权限记录格式。

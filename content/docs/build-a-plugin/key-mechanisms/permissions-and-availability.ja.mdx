@@ -1,0 +1,112 @@
+---
+title: permission と可用性
+description: 宣言した permission が、機能が動作することと同じではない理由と、操作に依存する前に各層を確認する方法。
+---
+
+呼び出しは 4 つの異なる理由で失敗することがあり、それらは混同しやすいものです。このページでは、それらを分けて、今どれを見ているのか、どの手段で直せるのかが分かるようにします。
+
+## 4 つの独立したチェック
+
+SDK の操作が動作するのは、次のすべてが成り立つときだけです。
+
+1. コンパイル対象の **SDK と、プラグインを実行する Runtime に API が存在する**。
+2. **プラグインが必要な permission を** `plugin.json` で**宣言している**。
+3. **Runtime にその操作に対応する capability provider がある**。
+4. **アクティブな Cubism バージョンとオブジェクトの世代がサポートされている**。
+
+1 つのチェックを通過しても、他については何も分かりません。permission が答えるのは「このプラグインはこのリスク境界を越えてよいか」であり、「ホストが今ここでそれを実行できるか」ではありません。
+
+| 問い | 答えるもの | 失敗の現れ方 |
+| --- | --- | --- |
+| 対象とする SDK にそのメンバーはあるか | ビルドに使用した SDK のバージョンと `turboismApi` | コンパイルエラー、または検出時の `TURBOISM_API_INCOMPATIBLE` |
+| 使ってよいか | `plugin.json` の `permissions` | 呼び出しの拒否（permission エラー） |
+| Runtime はそれを提供するか | サービスディレクトリとその背後の provider | サービスの欠落、`UnsupportedOperationException`、または `unavailable()` の結果 |
+| アクティブな Cubism バージョンはそれをサポートするか | API の `@CubismEditor` と実行時チェック | `CubismEditorApiUnavailableException`、または構造化された拒否結果 |
+
+## permission を宣言する
+
+各エントリには、既知の `id`、`application` または `user` の `scope`、空でない `reason` があります。
+
+```json
+{
+  "id": "turboism.cubism.model.read",
+  "scope": "application",
+  "reason": "Counts the parameters of the active model."
+}
+```
+
+原則:
+
+- **宣言は最小限にする。** 行う SDK 呼び出しが必要とするものだけを要求します。より大きなプラグインから長いリストをコピーしないでください。
+- **`reason` は人に向けて書く。** ユーザーとレビュアーが読みます。
+- **宣言されていないアクセスは拒否される。** 暗黙の付与はなく、インストールされたサービスが自身の permission を付与することもありません。
+- **observe と intercept は別。** `ParameterValueEvent.On` の受信には observe が、`Before` イベントでの値の書き換えには intercept が必要です。
+- **書き込みには専用の permission が必要。** 読み取りの permission が書き込みの permission を意味することはありません。
+
+Parameter Peek が最終的に持つ permission と、それぞれが制御するもの:
+
+| Permission | 制御するもの |
+| --- | --- |
+| `turboism.action.register` | `context.actions().register(...)` |
+| `turboism.ui.menu.contribute` | `context.menus().contribute(...)` |
+| `turboism.ui.status.notify` | `UiHostCapabilityService.notifyStatus(...)` |
+| `turboism.cubism.model.read` | パラメータなどのモデルオブジェクトの読み取り |
+| `turboism.cubism.model.observe` | パラメータ変更イベントの受信 |
+| `turboism.event.subscribe` | あらゆるイベントの購読 |
+| `turboism.config.plugin.read` / `.write` | 型付き configuration の読み取りと、登録または書き込み |
+
+ID の完全な一覧は [`PermissionIds`](https://turboism.dev/sdk/dev/turboism/sdk/permission/PermissionIds.html) にあります。
+
+## 利用できない場合の処理
+
+「ここでは利用できない」を通常の結果として扱い、あらかじめ計画してください。SDK にはそのための形が 3 つあります。
+
+**ディレクトリ経由のオプションサービス。** `find` は `Optional` を返し、`require` は `PluginServiceUnavailableException` をスローします。
+
+```java
+context.services().find(UiHostCapabilityService.class).ifPresent(ui -> {
+    // Use the service. Each operation still checks permission, version and generation.
+});
+```
+
+サービスが存在する場合でも、個々の操作は拒否されることがあります。サービスがあることは、バージョンによって経路が分かれるすべての呼び出しが動作するという約束ではありません。
+
+**`unavailable()` センチネル。** 多くのサービスには、自身が利用不可であると報告する default 実装があります。使用前に `isAvailable()` で確認してください。書き込み系の呼び出しで `UnsupportedOperationException` をスローするセンチネルもあれば、空または拒否の結果を返すセンチネルもあるため、例外だけでなく結果も確認してください。
+
+```java
+if (context.config().isAvailable()) {
+    // Safe to register a schema.
+}
+```
+
+**Cubism バージョンのゲート。** `@CubismEditor` が付いた API は、それを許可しないバージョンでは `CubismEditorApiUnavailableException` で fail closed になり、例外の `supportedVersions()` が対応するバージョンを教えてくれます。機能の境界でこれを捕捉し、メニュー項目を非表示にする、アクションを無効にする、またはサポートされている API にフォールバックします。バージョン文字列を自分で比較してはいけません。
+
+```java
+try {
+    // ... call a version-gated API
+} catch (CubismEditorApiUnavailableException unavailable) {
+    logger.info("Unavailable API: " + unavailable.apiId());
+}
+```
+
+リフレクション、内部クラス、生のホストオブジェクトで拒否を回避してはいけません。拒否は、システムが機能している状態です。実際の不足は[フィードバックと機能要望](/docs/report-a-bug)から報告し、[トラブルシューティング](/docs/troubleshooting#ホスト-capability-が利用できない)も参照してください。
+
+## `capabilities` とは何か
+
+記述子には `capabilities` 配列があり、Parameter Peek は空のままにしています。これは、ホストがプラグインごとに許可する機能、たとえばゲートされたいくつかのフックを宣言するためのものです。permission や `@CubismEditor` のバージョンアノテーションとは別のものです。使用する機能のドキュメントで指示されている場合にのみ、capability を宣言してください。Turboism ソースリポジトリにあるファーストパーティプラグインの README には、それぞれが宣言する capability が列挙されており、参考例として役立ちます。
+
+## 自分のコードでも fail closed にする
+
+プラグイン自身の挙動にも、同じ規律を適用してください。
+
+- 読み取りが古い、拒否された、またはタイムアウトした場合、それに基づいて何も書き込まない。
+- 書き込みを安全に行えない場合は、別の経路で再試行せず、ホストを変更しないまま、その旨を伝える。
+- `PluginLogger` を通じてコンテキストをログに残し、想定される失敗は機能の境界で処理する。
+
+[プラグインの設計](/docs/build-a-plugin/designing-plugins#permission-と-availability-を分離する)では、書き込みの安全性と Undo を含め、さらに詳しく扱っています。
+
+## 関連項目
+
+- SDK 自身の言葉による 4 つのチェックのモデルについては [SDK API ガイド](/docs/reference/sdk-api)。
+- バージョンごとの capability の境界については[互換性](/docs/use/compatibility#実行時のケイパビリティ照会)。
+- permission レコードの形式については[プラグインマニフェストとパッケージング](/docs/build-a-plugin/manifest#permission)。

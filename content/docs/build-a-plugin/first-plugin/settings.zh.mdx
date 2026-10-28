@@ -1,0 +1,253 @@
+---
+title: "第 5 步：添加设置"
+description: 添加一个类型化、可持久化并出现在“插件设置”中的设置，并让插件在服务不可用时优雅降级。
+---
+
+Parameter Peek 目前总是把报告显示在状态栏。这一步中，你要添加一个 **Show the report in the status bar** 设置。用户可以在 **Turboism → 插件设置…** 中更改它，且取值在重启后依然保留。
+
+## 1. 为数据选择合适的位置
+
+在写代码之前，先决定每类数据该放在哪里。SDK 为你提供了彼此独立的服务，每个服务都有自己的权限和归你的插件所有的目录：
+
+| 你想保存的内容 | 使用 | 说明 |
+| --- | --- | --- |
+| 用户偏好 | `context.config()` 类型化配置 | 带版本的 schema，会被验证，可显示在“插件设置”中。存放于 `config/<pluginId>/`。 |
+| 业务数据或可重建的缓存 | `context.storage()` | 独立的 DATA、STATE 和 CACHE 根目录，提供有界的异步原子访问。 |
+| 用户选择的文件 | `context.userFiles()` | 仅限用户授予的句柄。 |
+| 诊断信息 | `context.logger()` | 不要自己创建文件。 |
+
+永远不要自己拼出 Turboism home 下的路径，也不要写入 `user.home` 或工作目录。这些路径绕过了 Runtime 拥有、检查并清理的命名空间。其他服务请参见[插件接口](/docs/build-a-plugin/plugin-interfaces#配置存储和任务)。
+
+布尔偏好适合放在类型化配置中。
+
+## 2. 添加权限
+
+类型化配置需要两个配置权限：写权限用于注册 schema 和保存值，读权限用于加载值。
+
+```json
+{ "id": "turboism.config.plugin.read", "scope": "application", "reason": "Reads the plugin's own settings." },
+{ "id": "turboism.config.plugin.write", "scope": "application", "reason": "Registers and saves the plugin's own settings." }
+```
+
+## 3. 定义 schema 与编辑器
+
+**键（key）**命名一个值，给出默认值并选择编解码器。**schema** 把若干键组织成一份带版本的文档。**编辑器（editor）**让特定的键出现在“插件设置”窗口中。
+
+```java
+private static final ConfigKey<Boolean> SHOW_NOTICE =
+        new ConfigKey<>("parameterpeek.settings", "show-notice", true, ConfigCodecs.booleanValue());
+private static final ConfigSchema SCHEMA =
+        new ConfigSchema("parameterpeek.settings", "settings.json", 1, List.of(SHOW_NOTICE));
+```
+
+- 两者的第一个参数是 **config ID**，在你的插件内必须唯一。`settings.json` 是文档路径，相对于你插件的配置目录。
+- `1` 是 schema 版本。如果以后改变了文档存储的内容，请提高版本并提供迁移（见下文）。
+- 请使用由小写字母、数字、`.`、`_` 和 `-` 组成的小写键名；设置编辑器要求这种形式。
+
+在 `init` 中注册 schema，赶在任何读取之前：
+
+```java
+@Override
+public void init(final PluginContext context) throws Exception {
+    this.context = context;
+    this.logger = context.logger();
+    if (context.config().isAvailable()) {
+        context.config().registerUserEditableSchema(
+                SCHEMA,
+                List.of(),
+                new ConfigSchemaEditor(List.of(new ConfigSchemaEditor.Toggle(
+                        "show-notice",
+                        context.localization().text("parameterpeek.setting.show-notice"),
+                        OptionalInt.empty()))));
+    }
+    logger.info("Parameter Peek initialized");
+}
+```
+
+`List.of()` 是迁移链。由于这是版本 1，它为空。`Toggle` 把布尔值渲染成带有你本地化文本标签的开关；`Text` 和 `Choice` 字段则用于字符串、有界整数和枚举。把标签添加到两个目录文件中：
+
+```properties
+parameterpeek.setting.show-notice=Show the report in the status bar
+```
+
+注册带编辑器的 schema 会把该设置发布到 **Turboism → 插件设置…**，并在保存到 `config/<pluginId>/` 之前验证取值。你不需要写任何 UI 代码。如果需要更丰富的设置页，`UiHostCapabilityService.contributeSettings` 是更底层的途径；参见[插件接口](/docs/build-a-plugin/plugin-interfaces#独立插件设置settingsregistry)。
+
+### 关键机制：结果是值，而不是异常
+
+类型化配置是异步的。`read` 和 `write` 返回 `CompletionStage`，而 schema 缺失、权限被拒或修订版本过期等失败会以**值**的形式出现在结果中，而不是异常。找不到已存储值的读取仍会返回该键的**默认值**，所以 `result.value().value()` 始终可用，而 `result.error()` 会在你关心时告诉你原因。
+
+写入采用**乐观并发**：当你看到的修订版本已过期时，`write(key, value, expectedRevision)` 会被拒绝。这里由设置窗口替你处理。如果你的代码要写入，请先读取、保留修订版本，并处理冲突结果。
+
+## 4. 使用该设置
+
+添加这个辅助方法，并在 `report()` 中调用它，而不是无条件地通知：
+
+```java
+private CompletionStage<Boolean> showNotice() {
+    if (!context.config().isAvailable()) {
+        return CompletableFuture.completedFuture(SHOW_NOTICE.defaultValue());
+    }
+    return context.config().read(SHOW_NOTICE).thenApply(result -> result.value().value());
+}
+```
+
+```java
+// at the end of report(), replacing the unconditional notifyStatus call
+showNotice().thenAccept(show -> {
+    if (show) {
+        context.uiScheduler().runOnUiThread(() ->
+                context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                        ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", summary))));
+    }
+});
+```
+
+报告总是会被记录到日志。状态栏提示是用户可以关闭的部分。
+
+提示被交给 `context.uiScheduler()`，因为 `thenAccept` 回调运行在配置服务所拥有的线程上，不一定是 UI 线程。宿主 UI 属于 UI 线程；参见[线程与任务](/docs/build-a-plugin/key-mechanisms/threads-and-tasks)。
+
+### 关键机制：降级，而不是崩溃
+
+在不提供类型化配置的宿主或测试替身上，`context.config()` 可能不可用，此时调用它会抛出 `UnsupportedOperationException`。`isAvailable()` 这道守卫处理这种情形，并回退到默认值。这与第 4 步是同样的默认拒绝纪律：假定任何可选服务都可能缺失，并事先决定没有它时插件怎么做。你会在[第 6 步](/docs/build-a-plugin/first-plugin/test-and-ship)中测试这条路径。
+
+## 5. 完整的插件
+
+下面是完成第 2 到 5 步之后的完整类。
+
+```java title="ParameterPeekPlugin.java"
+package com.example.parameterpeek;
+
+import dev.turboism.sdk.action.ActionRegistry;
+import dev.turboism.sdk.config.ConfigCodecs;
+import dev.turboism.sdk.config.ConfigKey;
+import dev.turboism.sdk.config.ConfigSchema;
+import dev.turboism.sdk.config.ConfigSchemaEditor;
+import dev.turboism.sdk.cubism.CubismEditorApiUnavailableException;
+import dev.turboism.sdk.cubism.event.ParameterValueEvent;
+import dev.turboism.sdk.event.SubscribeEvent;
+import dev.turboism.sdk.menu.MenuRegistry;
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.PluginLogger;
+import dev.turboism.sdk.plugin.Registration;
+import dev.turboism.sdk.plugin.TurboismPlugin;
+import dev.turboism.sdk.ui.StatusNotification;
+import dev.turboism.sdk.ui.UiHostCapabilityService;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public final class ParameterPeekPlugin implements TurboismPlugin {
+
+    private static final ConfigKey<Boolean> SHOW_NOTICE =
+            new ConfigKey<>("parameterpeek.settings", "show-notice", true, ConfigCodecs.booleanValue());
+    private static final ConfigSchema SCHEMA =
+            new ConfigSchema("parameterpeek.settings", "settings.json", 1, List.of(SHOW_NOTICE));
+
+    private final AtomicInteger observedEdits = new AtomicInteger();
+    private PluginContext context;
+    private PluginLogger logger;
+
+    @Override
+    public void init(final PluginContext context) throws Exception {
+        this.context = context;
+        this.logger = context.logger();
+        if (context.config().isAvailable()) {
+            context.config().registerUserEditableSchema(
+                    SCHEMA,
+                    List.of(),
+                    new ConfigSchemaEditor(List.of(new ConfigSchemaEditor.Toggle(
+                            "show-notice",
+                            context.localization().text("parameterpeek.setting.show-notice"),
+                            OptionalInt.empty()))));
+        }
+        logger.info("Parameter Peek initialized");
+    }
+
+    @Override
+    public void enable() throws Exception {
+        observedEdits.set(0);
+
+        Registration action = context.actions().register(
+                "parameterpeek.report",
+                ActionRegistry.Action.of(
+                        "parameterpeek.report",
+                        context.localization().text("parameterpeek.action.report"),
+                        ignored -> report()));
+        context.disposableScope().register(action);
+
+        Registration menu = context.menus().contribute(MenuRegistry.MenuContribution.of(
+                context.localization().text("parameterpeek.menu"), "parameterpeek.report", 100));
+        context.disposableScope().register(menu);
+
+        logger.info("Parameter Peek enabled");
+    }
+
+    @SubscribeEvent
+    public void onParameterChanged(final ParameterValueEvent.On event) {
+        observedEdits.incrementAndGet();
+    }
+
+    private void report() {
+        final String summary;
+        try {
+            if (!context.cubism().hasActiveModel()) {
+                summary = context.localization().text("parameterpeek.summary.no-model");
+            } else {
+                final int count = context.cubism().model().active().parameters().all().size();
+                summary = context.localization().format("parameterpeek.summary", count, observedEdits.get());
+            }
+        } catch (CubismEditorApiUnavailableException unavailable) {
+            logger.info("Parameter reading is unavailable on this Cubism version: " + unavailable.apiId());
+            return;
+        }
+        logger.info(summary);
+
+        showNotice().thenAccept(show -> {
+            if (show) {
+                context.uiScheduler().runOnUiThread(() ->
+                        context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                                ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", summary))));
+            }
+        });
+    }
+
+    private CompletionStage<Boolean> showNotice() {
+        if (!context.config().isAvailable()) {
+            return CompletableFuture.completedFuture(SHOW_NOTICE.defaultValue());
+        }
+        return context.config().read(SHOW_NOTICE).thenApply(result -> result.value().value());
+    }
+
+    @Override
+    public void disable() throws Exception {
+        logger.info("Parameter Peek disabled");
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+        logger.info("Parameter Peek shutdown");
+        context = null;
+    }
+}
+```
+
+`plugin.json` 中的权限现在共有八个：`action.register`、`ui.menu.contribute`、`ui.status.notify`、`cubism.model.read`、`cubism.model.observe`、`event.subscribe`、`config.plugin.read` 和 `config.plugin.write`。
+
+## 6. 试一试
+
+构建、重新安装、重启，然后：
+
+1. 打开 **Turboism → 插件设置…**，选择 **Parameter Peek**，确认开关处于开启状态。
+2. 运行 **Parameter Peek: Report**。状态栏显示报告。
+3. 关闭开关并应用，再次运行命令。状态栏保持安静，但日志行仍会写入。
+4. 重启 Cubism。开关保留你设置的值。
+
+## 检查清单
+
+- 设置出现在“插件设置”中，并且重启后依然保留。
+- 关闭它只会静默状态栏提示。
+- 你能说出该值存放在哪里（你的插件在 `config/<pluginId>/` 下的目录），以及为什么不应该自己写这个文件。
+
+**下一步：**[第 6 步：测试与发布](/docs/build-a-plugin/first-plugin/test-and-ship)

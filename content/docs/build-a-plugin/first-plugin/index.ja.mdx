@@ -1,0 +1,74 @@
+---
+title: 最初のプラグインを作る
+description: 空のフォルダーから、メニューコマンド、Cubism のライブデータ、保存される設定、テストを備えたインストール済み Turboism プラグインまでを進める、6 ステップの実践チュートリアル。
+---
+
+このシリーズでは、小さいながらも完結した Turboism プラグイン **Parameter Peek** を作ります。最後まで進めると、実際のプラグインを書き、ビルドし、インストールし、テストした状態になり、何がそれを動かしているのか（仕組み）も分かります。
+
+## 作るもの
+
+Parameter Peek は Cubism Editor に **Parameter Peek: Report** コマンドを追加します。実行すると、プラグインは次のことを行います。
+
+- 開いているモデルのパラメータ数を数える。
+- 有効化されてから観測したパラメータ値の変更回数を報告する。
+- 結果を Turboism のログに書き込み、**プラグイン設定** で変更できる設定が許可している場合はステータスバーにも表示する。
+
+このプラグインは意図的に小さくしてあります。モデルを読み取るだけなので安全に試せますが、ライフサイクル、アクションとメニュー、permission、ローカライズ、Cubism データ、イベント、保存される設定、テストといった、一般的なプラグインのあらゆる要素に触れます。
+
+## 始める前に
+
+- **Java。** クラス、インターフェース、ラムダ、record に慣れている必要があります。Cubism の内部や Turboism Runtime の知識は不要です。
+- `PATH` 上の **JDK 17 以降**（`java -version` で確認します）。プラグインは Java 17 バイトコードにコンパイルされます。
+- ステップ 3 以降でプラグインを実行するための、対応する Cubism Editor と **インストール済みの Turboism**。[インストール](/docs/use/installation)と[互換性](/docs/use/compatibility)を参照してください。ステップ 1 と 2、およびステップ 6 のユニットテストは Cubism がなくても進められます。
+- Editor で開く**使い捨てのテストモデル**。Parameter Peek は読み取りしか行いませんが、プラグインは失ってもよいデータでテストしてください。
+
+このチュートリアルは **Stable 0.67.4** 向けです。プロジェクトテンプレートが対応する SDK をダウンロードし、この方法でビルドしたプラグインは SDK API 範囲 `[0.67.0,1.0.0)` を宣言します。
+
+## 6 つのステップ
+
+| ステップ | 行うこと | 出会う仕組み |
+| --- | --- | --- |
+| 1. [プロジェクトをセットアップする](/docs/build-a-plugin/first-plugin/setup) | 公式テンプレートからプロジェクトを作成し、ビルドします。 | SDK は `compileOnly`、プラグイン ID、プロジェクト構成。 |
+| 2. [Hello を表示する](/docs/build-a-plugin/first-plugin/hello-action) | メッセージをログに出力して表示するメニューコマンドを追加します。 | ライフサイクル、アクションとメニュー、宣言する permission、ローカライズ。 |
+| 3. [ビルドとインストール](/docs/build-a-plugin/first-plugin/build-and-install) | JAR を Cubism にインストールし、コマンドを実行します。 | マネージドインストールと再起動、厳格な JAR 検証、ログ。 |
+| 4. [モデルを読み取る](/docs/build-a-plugin/first-plugin/read-the-model) | パラメータを数え、変更を観測します。 | Cubism スナップショット、イベント、fail-closed な可用性、Cubism バージョンのサポート。 |
+| 5. [設定を追加する](/docs/build-a-plugin/first-plugin/settings) | 設定を保存し、プラグイン設定で公開します。 | 型付き configuration、プラグイン所有のストレージ、graceful degradation。 |
+| 6. [テストと公開](/docs/build-a-plugin/first-plugin/test-and-ship) | ユニットテストを書き、メタデータを整えて、JAR を共有します。 | ホストなしのテスト、バージョニング、配布。 |
+
+各ステップは動作するプラグインと短いチェックポイントで終わるため、どのステップの区切りでも中断して再開できます。
+
+## チュートリアルの構成
+
+各ステップは、動作するプラグインへの最短経路にとどめています。ある仕組みに 1 段落以上の説明が必要な場合は、先に進むために必要な内容を示したうえで、[主要な仕組み](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup)の独立したページへリンクします。
+
+- [ライフサイクルとクリーンアップ](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup) — Runtime が何をどの順序で呼び出し、登録がどのように取り消されるか。
+- [permission と可用性](/docs/build-a-plugin/key-mechanisms/permissions-and-availability) — 宣言した permission が、機能が動作することと同じではない理由。
+- [スレッドとタスク](/docs/build-a-plugin/key-mechanisms/threads-and-tasks) — コードがどこで実行され、バックグラウンド処理を安全に行う方法。
+- [プラグインが読み込まれない場合](/docs/build-a-plugin/key-mechanisms/load-failures) — 症状から原因を調べる診断ガイド。
+
+## 全体像
+
+```text
+Your plugin JAR
+├── META-INF/turboism/plugin.json   who you are and what you ask for
+├── your Java classes               what you do
+└── resources                       localized text, Cubism version list
+        │
+        │  Runtime validates the JAR and admits only what you declared
+        ▼
+PluginContext                       the only door to the host
+├── actions(), menus()              commands and menu entries
+├── eventBus()                      typed events
+├── cubism()                        snapshots and the Cubism object model
+├── config(), storage()             settings and plugin-owned data
+└── logger(), localization() ...    plugin-private helpers
+```
+
+プラグインが行うことはすべて `PluginContext` を通ります。Runtime は各呼び出しを、宣言した permission、ホストが提供するサービス、アクティブな Cubism バージョンに照らして確認します。このシリーズから 1 つだけ覚えるなら、この考え方にしてください。
+
+## リファレンスと代替手段
+
+- 最小限だけ知りたい場合は、簡潔な[開発者向けクイックスタート](/docs/build-a-plugin/quick-start)が同じビルド手順を 1 ページにまとめています。
+- フィールドやサービスを調べるには、[プラグインマニフェストとパッケージング](/docs/build-a-plugin/manifest)、[プラグインインターフェース](/docs/build-a-plugin/plugin-interfaces)、[SDK API ガイド](/docs/reference/sdk-api)を使ってください。
+- Java プラグインが適切な手段か分からない場合は、[GraalJS スクリプト](/docs/build-a-plugin/graaljs-scripts)と [MCP](/docs/build-a-plugin/mcp) を比較してください。
+- AI コーディングアシスタントで開発する場合は、まず [LLM を使った開発](/docs/build-a-plugin/llm-coding-context)を読んでください。結果の確認とテストはあなたの責任です。

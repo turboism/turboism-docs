@@ -1,0 +1,130 @@
+---
+title: "단계 1: 프로젝트 설정"
+description: 공식 템플릿에서 플러그인 프로젝트를 만들고, 설정 스크립트를 실행하고, 생성된 내용을 이해한 뒤 한 번 빌드합니다.
+---
+
+이 단계에서는 프로젝트를 만들고, 설정 스크립트가 SDK를 가져오게 한 뒤, 비어 있지만 유효한 플러그인 JAR를 빌드합니다. 아직 Parameter Peek에 특화된 내용은 없으며, 여기서 생성한 모든 것은 이후 모든 단계에서 재사용됩니다.
+
+## 1. 도구 확인
+
+JDK 17 이상이 필요합니다. Gradle 래퍼(Gradle 8.10.2)가 템플릿에 포함되어 있으므로 Gradle을 직접 설치할 필요는 없습니다.
+
+```bash
+java -version
+```
+
+설정 스크립트는 Linux와 macOS에서는 `curl`과 `python3`가, Windows에서는 PowerShell 5.1 이상이 추가로 필요합니다.
+
+## 2. 템플릿에서 프로젝트 생성
+
+[`turboism/turboism-plugin-template`](https://github.com/turboism/turboism-plugin-template)을 열고 **Use this template**을 선택하여 자신의 저장소를 만들거나, 직접 복제합니다:
+
+```bash
+git clone https://github.com/turboism/turboism-plugin-template.git parameter-peek
+cd parameter-peek
+```
+
+## 3. 설정 스크립트 실행
+
+스크립트는 stable 릴리스를 해석하고, SDK와 이벤트 어노테이션 프로세서를 내려받아 SHA-256 체크섬을 검증한 뒤, 템플릿을 플러그인의 정체성에 맞게 다시 작성합니다.
+
+```bash title="Linux / macOS"
+./scripts/setup.sh --channel stable \
+  --id com.example.parameterpeek \
+  --name "Parameter Peek" \
+  --package com.example.parameterpeek \
+  --class-name ParameterPeekPlugin \
+  --author "Your Name" \
+  --requires-cubism true \
+  --yes
+```
+
+```powershell title="Windows PowerShell"
+.\scripts\setup.ps1 -Channel stable `
+  -Id com.example.parameterpeek `
+  -Name "Parameter Peek" `
+  -Package com.example.parameterpeek `
+  -ClassName ParameterPeekPlugin `
+  -Author "Your Name" `
+  -RequiresCubism true `
+  -Yes
+```
+
+플래그 없이 스크립트를 실행하면 같은 값을 대화형으로 입력하라는 프롬프트가 표시됩니다. `com.example`은 직접 관리하는 역도메인 이름으로 바꾸세요.
+
+`--requires-cubism true`는 이후 단계에서 모델 데이터를 읽으므로 이 플러그인이 실행 중인 Cubism Editor를 필요로 한다는 사실을 기록합니다. Cubism을 전혀 다루지 않는 플러그인은 `false`로 두면 됩니다.
+
+스크립트는 해석된 SDK 버전과 기록한 Cubism Editor 버전을 보고합니다. Stable 0.67.4에서는 SDK `0.67.4`입니다. 스크립트를 다시 실행해도 안전합니다. 새 다운로드가 검증을 통과한 후에만 오래된 JAR를 교체합니다.
+
+### 플러그인 ID를 신중하게 선택하세요
+
+여기서는 `com.example.parameterpeek`인 플러그인 ID가 플러그인의 정체성입니다. Runtime은 이 ID로 중복을 감지하고 `config/<pluginId>/`, `data/<pluginId>/`처럼 플러그인 전용 폴더의 이름을 정합니다. 나중에 ID를 바꾸면 Runtime은 그 결과를 다른 플러그인으로 취급하므로 기존 사용자 설정이 따라가지 않습니다. ID는 점이 하나 이상 있는 역도메인 형식을 사용합니다.
+
+## 4. 생성된 프로젝트 살펴보기
+
+```text
+parameter-peek/
+├── build.gradle.kts
+├── gradle.properties                     SDK version recorded by setup
+├── settings.gradle.kts
+├── libs/
+│   ├── turboism-sdk-0.67.4.jar           compile-time SDK (not shipped)
+│   └── turboism-event-processor-0.67.4.jar
+└── src/main/
+    ├── java/com/example/parameterpeek/
+    │   └── ParameterPeekPlugin.java      your entrypoint class
+    └── resources/META-INF/turboism/
+        ├── plugin.json                   the plugin descriptor
+        ├── cubism-versions.json          supported Cubism Editor versions
+        └── i18n/
+            ├── messages.properties       base text catalog
+            └── messages_en.properties
+```
+
+| 파일 | 역할 |
+| --- | --- |
+| `ParameterPeekPlugin.java` | 진입점입니다. Runtime이 이를 생성하고 수명 주기 메서드를 호출합니다. |
+| `plugin.json` | 디스크립터입니다: 정체성, 진입점, SDK API 범위, 선언된 권한, 현지화. [플러그인 매니페스트 및 패키징](/docs/build-a-plugin/manifest)을 참고하세요. |
+| `cubism-versions.json` | 지원한다고 주장하는 정확한 Cubism Editor 버전입니다. [단계 4](/docs/build-a-plugin/first-plugin/read-the-model#4-지원하는-cubism-버전-선언)에서 검토합니다. |
+| `i18n/messages*.properties` | 키로 조회하는 사용자 가시 텍스트입니다. |
+| `libs/*.jar` | 컴파일러가 사용하는 SDK와 어노테이션 프로세서입니다. |
+
+### 핵심 메커니즘: SDK는 컴파일 전용입니다
+
+`build.gradle.kts`를 엽니다. SDK는 `compileOnly`에, 이벤트 프로세서는 `annotationProcessor`에 있습니다:
+
+```kotlin
+dependencies {
+    compileOnly(sdkJars)
+    annotationProcessor(eventProcessorJars)
+    annotationProcessor(sdkJars)
+}
+```
+
+이는 의도된 것입니다. 실행 시점에는 Turboism이 SDK를 제공하므로 JAR에 `dev/turboism/sdk/**` 클래스를 포함해서는 안 됩니다. Runtime은 SDK, Runtime 또는 Live2D 클래스를 복사한 JAR를 거부합니다. 어노테이션 프로세서는 컴파일 시점에만 실행되며, [단계 4](/docs/build-a-plugin/first-plugin/read-the-model)에서 보게 되듯 `@SubscribeEvent` 메서드를 인덱싱합니다.
+
+코드는 공개 SDK에만 의존할 수 있으며 Turboism의 그 밖의 어떤 것에도 의존해서는 안 됩니다. Runtime, Bootstrap, `com.live2d.*` 클래스, 다른 플러그인의 비공개 구현, 네이티브 핸들에 접근하지 마세요. [플러그인 설계](/docs/build-a-plugin/designing-plugins)를 참고하세요.
+
+## 5. 한 번 빌드
+
+```bash
+./gradlew build
+```
+
+처음 실행할 때는 Gradle 자체를 내려받으므로 네트워크 접근이 필요합니다. 성공하면 플러그인 JAR가 다음 위치에 생성됩니다:
+
+```text
+build/libs/parameterpeek-turboism-plugin-0.1.0.jar
+```
+
+이름은 플러그인 ID의 마지막 세그먼트와 `build.gradle.kts`의 버전에서 만들어집니다. 이 JAR가 배포하는 유일한 산출물입니다. 래퍼 아카이브도, 별도의 패키징 단계도 없습니다.
+
+## 체크포인트
+
+- `java -version`이 17 이상을 보고합니다.
+- `libs/`에 `turboism-sdk-0.67.4.jar`와 `turboism-event-processor-0.67.4.jar`가 있습니다.
+- `./gradlew build`가 성공하고 `build/libs/parameterpeek-turboism-plugin-0.1.0.jar`를 생성합니다.
+
+템플릿에는 아직 샘플 `hello` 액션과 이벤트가 남아 있습니다. 다음 단계에서 이를 직접 만든 것으로 교체합니다.
+
+**다음:** [단계 2: 인사하기](/docs/build-a-plugin/first-plugin/hello-action)

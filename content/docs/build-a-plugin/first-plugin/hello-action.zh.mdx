@@ -1,0 +1,188 @@
+---
+title: "第 2 步：打个招呼"
+description: 用你自己的插件类替换模板示例，注册一个操作和一个菜单项，并精确声明所需权限。
+---
+
+这一步中，Parameter Peek 成为一个真正的插件：它注册一条命令，把它放进菜单，并显示一句问候。它暂时还不接触 Cubism 数据。过程中你会认识插件生命周期、操作与菜单、声明式权限和本地化。
+
+## 1. 编写入口点
+
+把 `src/main/java/com/example/parameterpeek/ParameterPeekPlugin.java` 的内容替换为：
+
+```java title="ParameterPeekPlugin.java"
+package com.example.parameterpeek;
+
+import dev.turboism.sdk.action.ActionRegistry;
+import dev.turboism.sdk.menu.MenuRegistry;
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.PluginLogger;
+import dev.turboism.sdk.plugin.Registration;
+import dev.turboism.sdk.plugin.TurboismPlugin;
+import dev.turboism.sdk.ui.StatusNotification;
+import dev.turboism.sdk.ui.UiHostCapabilityService;
+
+public final class ParameterPeekPlugin implements TurboismPlugin {
+
+    private PluginContext context;
+    private PluginLogger logger;
+
+    @Override
+    public void init(final PluginContext context) throws Exception {
+        this.context = context;
+        this.logger = context.logger();
+        logger.info("Parameter Peek initialized");
+    }
+
+    @Override
+    public void enable() throws Exception {
+        Registration action = context.actions().register(
+                "parameterpeek.report",
+                ActionRegistry.Action.of(
+                        "parameterpeek.report",
+                        context.localization().text("parameterpeek.action.report"),
+                        ignored -> report()));
+        context.disposableScope().register(action);
+
+        Registration menu = context.menus().contribute(MenuRegistry.MenuContribution.of(
+                context.localization().text("parameterpeek.menu"), "parameterpeek.report", 100));
+        context.disposableScope().register(menu);
+
+        logger.info("Parameter Peek enabled");
+    }
+
+    private void report() {
+        final String message = context.localization().text("parameterpeek.hello");
+        logger.info(message);
+        context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", message)));
+    }
+
+    @Override
+    public void disable() throws Exception {
+        logger.info("Parameter Peek disabled");
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+        logger.info("Parameter Peek shutdown");
+        context = null;
+    }
+}
+```
+
+该类必须是 `public`，实现 `TurboismPlugin`（或其子接口），并带有公共无参构造函数，隐式构造函数即可满足。Runtime 会替你构造这个类，所以永远不要自己调用 `new ParameterPeekPlugin()`。
+
+### 关键机制：四个生命周期方法
+
+| 方法 | Runtime 何时调用 | 用途 |
+| --- | --- | --- |
+| `init(context)` | 一次，传入受权限限定的 `PluginContext`。 | 保存 context，准备私有状态。 |
+| `enable()` | 插件变为活动状态时。 | 注册操作、菜单、订阅及其他可见行为。 |
+| `disable()` | 插件被关闭时。 | 停止活动行为。 |
+| `shutdown()` | 禁用完成之后。 | 释放私有资源。 |
+
+如果构造、`init` 或 `enable` 抛出异常，Runtime 会回滚整个 JAR。`init` 失败会阻止 `enable` 运行。这就是为什么 `enable()` 是放置注册项的正确位置：这里是 Runtime 期望注册的地方，也是安全处理失败的地方。
+
+规则的另一半是清理。你收到的每个 `Registration` 都是 `AutoCloseable` 句柄。把它传给 `context.disposableScope().register(...)`，就意味着 Runtime 会在插件被禁用时按相反顺序关闭它。你没有写任何清理代码，命令和菜单项仍会在插件被禁用时消失。如果忘记使用作用域，注册项可能比插件存活得更久，并使 Runtime 无法安全释放插件的 ClassLoader。完整模型（包括多个入口点和热重载）请阅读[生命周期与清理](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup)。
+
+### 关键机制：操作与菜单是分开的
+
+行为与位置是分别注册的：
+
+- **操作（action）**有稳定的 ID（`parameterpeek.report`）、标签和处理器。它是行为的单位，可以绑定到快捷键、菜单、工具栏和上下文菜单。
+- **菜单贡献**把一个以斜杠分隔的菜单路径绑定到某个操作 ID，并附带排序数字。
+
+请把操作 ID 视为稳定标识并在各版本间保持不变；重命名它就等于创建了另一个操作。这里的菜单路径 `Tools/Parameter Peek` 来自本地化目录，因此菜单文字可以被翻译。工具栏、上下文菜单和设置页请参见[插件接口](/docs/build-a-plugin/plugin-interfaces)。
+
+处理器使用 `context.services().find(...)`，而不是假定状态栏服务一定存在。`find` 返回 `Optional`，所以若宿主不提供该服务，插件会安静地降级。[权限与可用性](/docs/build-a-plugin/key-mechanisms/permissions-and-availability)解释了这为什么重要。
+
+## 2. 添加文本目录
+
+用户可见的文本放在目录文件中，绝不写进 Java 字符串。把 `src/main/resources/META-INF/turboism/i18n/messages.properties` 替换为：
+
+```properties title="messages.properties"
+plugin.name=Parameter Peek
+plugin.description=Reports how many parameters the active model has and how often they change.
+parameterpeek.action.report=Parameter Peek: Report
+parameterpeek.menu=Tools/Parameter Peek
+parameterpeek.hello=Hello from Parameter Peek!
+```
+
+然后把同样的内容复制到旁边的 `messages_en.properties`。描述符声明了存在哪些目录（`"locales": ["en"]`），Runtime 要求每个声明的目录都必须存在于 JAR 中。当某个 locale 缺少某个键时，基础目录 `messages.properties` 始终是最终回退。以后要增加语言，请添加 `messages_<locale>.properties` 并列出该 locale；locale ID 请参见[插件 Manifest 与打包](/docs/build-a-plugin/manifest)。
+
+## 3. 声明权限
+
+打开 `src/main/resources/META-INF/turboism/plugin.json`。模板为自带示例声明了权限（`publish`、`subscribe`、`register`）。请替换 `description`、`category`、`permissions` 和 `lifecycle` 部分，让它们描述 Parameter Peek：
+
+```json title="plugin.json"
+{
+  "format": "turboism.plugin.meta",
+  "schemaVersion": 3,
+  "id": "com.example.parameterpeek",
+  "name": "Parameter Peek",
+  "version": "0.1.0",
+  "description": "Reports how many parameters the active model has and how often they change.",
+  "category": "analysis",
+  "tags": ["example", "parameters"],
+  "entrypoints": [
+    "com.example.parameterpeek.ParameterPeekPlugin"
+  ],
+  "turboismApi": "[0.67.0,1.0.0)",
+  "authors": [
+    { "name": "Your Name" }
+  ],
+  "license": "MIT",
+  "website": "https://example.com/parameter-peek",
+  "resources": [],
+  "i18n": {
+    "baseName": "META-INF/turboism/i18n/messages",
+    "locales": ["en"]
+  },
+  "dependencies": [],
+  "permissions": [
+    { "id": "turboism.action.register", "scope": "application", "reason": "Registers the Parameter Peek report action." },
+    { "id": "turboism.ui.menu.contribute", "scope": "application", "reason": "Adds the report command to the Tools menu." },
+    { "id": "turboism.ui.status.notify", "scope": "application", "reason": "Shows the report in the status bar." }
+  ],
+  "capabilities": [],
+  "lifecycle": {
+    "hotReload": true
+  },
+  "environment": {
+    "requiresCubism": true,
+    "ui": "none"
+  }
+}
+```
+
+请让 `authors`、`license` 和 `website` 的值对你自己的项目保持真实，它们会展示给用户。分享插件之前，请修改所有含 `example` 的内容。
+
+### 关键机制：你只能得到你声明的
+
+每个权限对应你想要跨越的一条风险边界，并带有一条供审查者阅读的 `reason`：
+
+| 权限 | 本插件为什么需要它 |
+| --- | --- |
+| `turboism.action.register` | `context.actions().register(...)` |
+| `turboism.ui.menu.contribute` | `context.menus().contribute(...)` |
+| `turboism.ui.status.notify` | `ui.notifyStatus(...)` |
+
+未声明的访问会在调用处被拒绝，而不是被悄悄放行，所以缺少权限会在你第一次运行命令时表现为错误。请声明最小集合，不要从更大的插件里复制权限。权限 ID 的目录是 SDK 的 `PermissionIds` 类，见 [SDK HTML API 参考](https://turboism.dev/sdk/dev/turboism/sdk/permission/PermissionIds.html)。另外，`category` 应是小写 kebab-case 的标记，例如 `analysis`；经审查的第一方分类见[插件 Manifest 与打包](/docs/build-a-plugin/manifest#category-与-tags)。
+
+这里 `lifecycle.hotReload` 为 `true`，因为 Parameter Peek 只使用普通 SDK 服务，并通过可处置作用域完成清理。注册字节码转换器或原生钩子的插件必须声明 `false`。
+
+## 4. 构建
+
+```bash
+./gradlew build
+```
+
+如果构建因缺少 import 而失败，请检查是否替换了整个文件（包括 import 部分）。通常的原因是残留了模板里的 `HelloEvent` 或 `hello.action.label` 引用。
+
+## 检查清单
+
+- 项目可以构建，并且存在 `build/libs/parameterpeek-turboism-plugin-0.1.0.jar`。
+- `plugin.json` 恰好声明三个权限，并且每一个都能对应到某一行使用它的代码。
+- `messages.properties` 与 `messages_en.properties` 包含相同的五个键。
+
+**下一步：**[第 3 步：构建与安装](/docs/build-a-plugin/first-plugin/build-and-install)

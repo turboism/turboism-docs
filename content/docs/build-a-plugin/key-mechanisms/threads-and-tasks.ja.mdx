@@ -1,0 +1,70 @@
+---
+title: スレッドとタスク
+description: プラグインのコードがどこで実行されるか、プラグインの状態が並行性に耐える必要がある理由、スレッドを所有せずに UI 処理とバックグラウンド処理をスケジュールする方法。
+---
+
+Parameter Peek は `AtomicInteger` を使い、「プラグインを並行処理されるものとして扱ってください」と述べました。このページでは、その助言の背後にあるルールを説明します。
+
+## コードは 1 つのスレッドでは実行されない
+
+プラグインには複数の種類の呼び出し元が到達し、それらは同じスレッドを共有しません。
+
+- **ライフサイクル呼び出し**（`init`、`enable`、`disable`、`shutdown`）は、Swing のイベントディスパッチスレッド（EDT）**ではなく**、Runtime のワーカーレーンで実行されます。連続する遷移は、異なるワーカーを使う場合があります。
+- **アクションハンドラーとその他の UI コールバック**は、ホストの UI によって呼び出され、他のすべてと並行して実行される可能性があります。
+- **通常のイベント観測**は、非同期に配信されます。
+- **バックグラウンドタスク**は、Runtime が管理するワーカーで実行されます。
+
+これらは重なり得るため、複数が触れるプラグインの状態は、並行アクセスに対して安全でなければなりません。アトミック、並行コレクション、不変スナップショット、または明示的な同期を使ってください。プラグインのスレッドが 1 つだと想定してはいけません。
+
+## 同期的な `Before` イベントは別
+
+`ParameterValueEvent.Before` のような `Before` 状態のイベントは同期的であり、購読者が値を検証または書き換えられるようにするために存在します。そのペイロードが変更可能なのは、呼び出しを開始したスレッド上のコールバック内だけです。イベントを保持したり、その変更をタスクや別のスレッドに渡したりせず、処理は短く保ってください。観測イベント（`On`、`After`）は不変かつ非同期です。
+
+## UI 処理は UI スケジューラーで行う
+
+ホストの UI はシングルスレッドです。UI の更新は `UiScheduler` を通じて明示的にスケジュールし、UI コールバックは短く保ってください。
+
+```java
+Registration pending = context.uiScheduler().runOnUiThread(() -> {
+    // Update UI state here. No blocking I/O, no waiting on futures.
+});
+context.disposableScope().register(pending);
+```
+
+EDT 上では、Future を待ったりブロッキング I/O を実行したりしてはいけません。Editor がすべての人にとってフリーズします。
+
+## バックグラウンド処理には管理されたタスクスケジューラーを使う
+
+独自のスレッド、executor、タイマーを作成してはいけません。Runtime がスケジューリングを所有しているため、処理に上限を設け、キャンセルし、クリーンアップできます。代わりに `context.tasks()`（`PluginTaskScheduler`）を使ってください。
+
+- 1 回限りの処理には `submit(PluginTaskRequest)`。
+- 繰り返しの処理には `scheduleWithFixedDelay(FixedDelayTaskRequest)`。
+
+3 つの習慣がタスクを信頼できるものにします。
+
+1. **送信結果を確認する。** 送信は拒否されることがあり（たとえばバックプレッシャー時）、結果がそれを示します。それを通常の結果として処理してください。
+2. **適切な `PluginTaskKind` を選ぶ。** これにより、計算、低頻度の更新、長時間実行の処理のいずれかが選択されます。
+3. **協調的にキャンセルする。** キャンセルはタスクに停止を求めるものであり、強制終了はしません。キャンセルトークンを監視し、速やかに戻ってください。現在のメソッドより長く存続しうるタスクハンドルは、disposable scope に登録します。
+
+他のオプションサービスと同様に、プラグインがなくても動作できる場合は `context.tasks().isAvailable()` で確認してください。
+
+## タスクワーカーはホストオブジェクトに触れてはいけない
+
+タスクワーカー上で実行しているからといって、Cubism オブジェクトの読み取りや変更が許可されるわけではありません。上限付きの非同期ホスト読み取りには `context.hostReads()`（`AsyncHostReadService`）を、書き込みには該当する編集 API が文書化しているスレッドとコールバックのスコープを使ってください。非同期処理が完了したら、UI の更新は `UiScheduler` を通じてスケジュールし直します。
+
+型付き configuration の読み取りのように、`CompletionStage` として届く結果にも同じことが当てはまります。Parameter Peek の `report()` では、`thenAccept` のコールバックは、UI スレッドとは限らない、configuration サービスが所有するスレッドで実行されます。ステータスバーの通知を直接呼び出さず、`context.uiScheduler().runOnUiThread(...)` で包んでいるのはそのためです。
+
+## チェックリスト
+
+- [ ] 共有されるプラグインの状態がスレッドセーフである。
+- [ ] プラグインのコードに `new Thread`、`Executors`、`Timer`、`parallelStream` が現れない。
+- [ ] UI コールバックでブロッキング I/O や `future.get()` を行っていない。
+- [ ] バックグラウンド処理は `context.tasks()` を使い、送信の拒否が処理され、キャンセルが監視されている。
+- [ ] 返されたすべてのハンドルがクローズされるか、disposable scope に登録されている。
+- [ ] UI に触れる非同期の結果は `UiScheduler` でスケジュールされている。
+
+## 関連項目
+
+- スコープとハンドルのルールについては[ライフサイクルとクリーンアップ](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup)。
+- `PluginContext` の `tasks()`、`hostReads()`、`uiScheduler()` については [SDK API ガイド](/docs/reference/sdk-api)。
+- `PluginTaskScheduler`、`PluginTaskKind`、およびタスクリクエストの型については [SDK HTML API リファレンス](https://turboism.dev/sdk/index.html)。

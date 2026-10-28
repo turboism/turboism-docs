@@ -1,0 +1,92 @@
+---
+title: 生命周期与清理
+description: Runtime 调用什么、按什么顺序调用，插件如何原子地启动，以及注册项如何被安全撤销。
+---
+
+本页解释[第 2 步](/docs/build-a-plugin/first-plugin/hello-action)所用的生命周期模型。当你要做的事超出一个操作，例如多个入口点、长生命周期资源或热重载时，请阅读本页。
+
+## 四个方法
+
+```java
+public interface TurboismPlugin {
+    default void init(PluginContext context) throws Exception {}
+    default void enable() throws Exception {}
+    default void disable() throws Exception {}
+    default void shutdown() throws Exception {}
+}
+```
+
+四个都是可选的默认方法。只实现你需要的。
+
+| 方法 | 目的 | 典型内容 |
+| --- | --- | --- |
+| `init` | 接收受权限限定的 `PluginContext`；构建插件私有状态。 | 保存 context，注册配置 schema。 |
+| `enable` | 启动活动行为。 | 注册操作、菜单、UI、事件订阅和任务。 |
+| `disable` | 在 Runtime 关闭插件作用域之前停止活动行为。 | 停止你自己启动的工作。 |
+| `shutdown` | 释放作用域不拥有的插件私有资源。 | 丢弃引用，关闭私有文件。 |
+
+不要假定某个方法运行在特定线程上，也不要假定两次调用运行在同一线程上。参见[线程与任务](/docs/build-a-plugin/key-mechanisms/threads-and-tasks)。
+
+## 启动是原子的
+
+一个 JAR 可以声明多个入口点。它们共享同一个插件身份、同一个描述符、同一个 ClassLoader、同一个 `PluginContext`、同一个 `DisposableScope`、同一组权限，以及同一个配置和存储命名空间。
+
+```text
+construct / init / enable:  manifest order
+disable / shutdown:         reverse manifest order
+```
+
+如果任何入口点在构造、`init` 或 `enable` 期间失败，Runtime 会回滚**整个 JAR**。`init` 失败意味着 `enable` 永远不会运行。请把 `init` 设计得快速且副作用少，把可见行为放在 `enable` 中。
+
+既然失败会让一切回滚，抛出异常就是表达“我无法启动”的正确方式。吞掉异常、半初始化地继续运行则不是。
+
+## 注册项与可处置作用域
+
+几乎每个注册表调用都会返回一个 `Registration`，它是一个 `AutoCloseable` 句柄。关闭它即撤销你所注册的内容。
+
+```java
+Registration action = context.actions().register("example.refresh", example);
+context.disposableScope().register(action);
+```
+
+当插件被禁用时，作用域会**按相反顺序**关闭你交给它的所有内容。这是最重要的一条清理规则：
+
+> 每个可能比当前方法存活更久的返回注册项或句柄，都必须显式关闭，或放入 `context.disposableScope()`。
+
+需要放入的包括操作、菜单和工具栏贡献、设置贡献、事件订阅、任务句柄，以及 SDK 以可关闭形式返回的任何其他东西。放入作用域，才能让 Runtime 安全地释放插件的 ClassLoader。
+
+### 禁用后再启用
+
+禁用会撤销你的注册项。再次启用时必须重新注册，所以请把注册放在 `enable()` 而不是 `init()` 中。这就是为什么 Parameter Peek 的 `enable()` 每次都创建操作和菜单项，而 `init()` 只保存 context 并注册配置 schema。
+
+同时，请重置不应在重新启用后保留的状态。Parameter Peek 正是出于这个原因在 `enable()` 中调用 `observedEdits.set(0)`。
+
+### 清理作用域不知道的东西
+
+作用域只关闭交给它的句柄。如果你通过其他方式启动了某些东西，就必须自己停止：持有重对象的字段、你打开的连接，或长期存在的缓存。请在 `disable()` 或 `shutdown()` 中完成。不要自己创建线程、执行器或定时器；请使用受管的[任务调度器](/docs/build-a-plugin/key-mechanisms/threads-and-tasks)，它的句柄可以放进作用域。
+
+## 热重载
+
+描述符中的 `lifecycle.hotReload: true` 声明该插件可以在不重启 Cubism 的情况下于内存中启用、禁用和更新。只有满足以下条件，这个声明才名副其实：
+
+- 插件只使用标准 SDK 服务；
+- 每个可关闭对象都通过可处置作用域或 `disable()` 释放；并且
+- 插件**没有注册字节码转换器或原生钩子**。
+
+转换宿主字节码的插件必须声明 `false`，以便 Runtime 在下次 Cubism 启动时应用其变更。声明 `true` 是一种承诺：禁用后确实什么都不会留下。请用[第 6 步](/docs/build-a-plugin/first-plugin/test-and-ship)中的第二个单元测试检验这个承诺。
+
+## 常见错误
+
+| 错误 | 后果 | 修复 |
+| --- | --- | --- |
+| 在 `init()` 中注册操作 | 禁用时被撤销，而重新启用不一定会再次运行 `init`。 | 在 `enable()` 中注册。 |
+| 忘记 `disposableScope().register(...)` | 禁用后注册项仍然存在，并可能钉住插件的 ClassLoader。 | 把每个句柄都放入作用域。 |
+| 在 `enable()` 中吞掉异常 | 插件看起来已启用，却缺少一半功能。 | 让异常传播，使 Runtime 能够回滚。 |
+| 在字段中持有 `Parameter` 或其他模型对象 | 文档切换后它会默认拒绝。 | 每次都从 `context.cubism()` 重新解析。 |
+| 自己启动线程或定时器 | 它不受 Runtime 控制，禁用后仍然存活。 | 使用 `context.tasks()` 并把句柄放入作用域。 |
+
+## 另请参阅
+
+- [插件接口](/docs/build-a-plugin/plugin-interfaces#生命周期)：生命周期代码片段和服务系列。
+- [插件 Manifest 与打包](/docs/build-a-plugin/manifest#入口点规则)：入口点规则。
+- [设计插件](/docs/build-a-plugin/designing-plugins#规划生命周期)：生命周期设计指南。

@@ -4,6 +4,8 @@
   "pages": [
     "contributing",
     "quick-start",
+    "first-plugin",
+    "key-mechanisms",
     "plugin-interfaces",
     "manifest",
     "designing-plugins",

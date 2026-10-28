@@ -1,0 +1,89 @@
+---
+title: "ステップ 3: ビルドとインストール"
+description: プラグイン管理から JAR をインストールし、Cubism を再起動してコマンドを実行し、ログ行を見つけ、編集・ビルド・インストールのループを学びます。
+---
+
+いよいよプラグインを実際に動かします。JAR を Turboism にインストールし、Cubism を再起動し、コマンドを実行して、ログに出力を見つけます。
+
+## 1. JAR を確認する
+
+```bash
+./gradlew build
+```
+
+アーカイブの内容を一覧表示して、Runtime から見える内容を確認します。
+
+```bash
+unzip -l build/libs/parameterpeek-turboism-plugin-0.1.0.jar
+```
+
+自分のクラス、`META-INF/turboism/plugin.json`、`META-INF/turboism/cubism-versions.json`、`i18n` カタログが見えるはずです。`dev/turboism/sdk/` クラスは**含まれていてはいけません**。生成される `ParameterPeekPlugin__TurboismSubscriberCatalog.class` と `META-INF/services/...GeneratedSubscriberCatalog` エントリはアノテーションプロセッサが生成するもので、あって問題ありません。
+
+## 2. JAR をインストールする
+
+1. 大切な Cubism Editor セッションを閉じるか、作業を保存します。インストールは再起動後に反映されます。
+2. Turboism ランチャーから Cubism Editor を起動し、**Turboism** メニューを開きます。
+3. **プラグイン管理…**、**JAR からインストール…** の順に選択し、`parameterpeek-turboism-plugin-0.1.0.jar` を選択します。
+4. JAR を**ローカル/未検証のソース**として示すダイアログを承認します。Turboism は自分でビルドした JAR を保証できないため、このダイアログがそのことを伝えます。
+5. 操作が**保留中**（pending）として一覧に表示されていることを確認します。
+6. Cubism を完全に終了し、**同じ** Turboism home から再び起動します。
+7. もう一度 **Turboism → プラグイン管理…** を開き、**Parameter Peek** が一覧にあり、有効になっていることを確認します。ダブルクリックすると、SDK API 範囲や宣言した Cubism バージョンを含む詳細が表示されます。
+
+インストールは即時ではなくステージングされます。Turboism はファイルを信頼できない入力として扱い、検証し、保留状態にスナップショットして、次回の起動時に適用します。置換やアンインストールを含む全体の流れは[プラグイン管理](/docs/use/plugin-management)を参照してください。
+
+### 重要な仕組み: Runtime が JAR で確認すること
+
+Runtime は JAR をステージングする前と、起動時にもう一度、次の点を検証します。
+
+- JAR が、サイズ、エントリ数、展開サイズ、圧縮比の制限内にある通常のファイルである。
+- `META-INF/turboism/plugin.json` をちょうど 1 つ含み、記述子の ID、バージョン、API 範囲が整合している。
+- 宣言したエントリポイントが存在し、public で、`TurboismPlugin` を実装し、public な引数なしコンストラクタを持つ。
+- 宣言したリソースルートと i18n カタログがすべて存在し、宣言されていない通常のリソースが含まれていない。
+- コピーされた SDK、Runtime、テスト、Live2D のクラス、ネイティブバイナリやインストーラーのペイロード、ネストした JAR が含まれていない。
+
+このため、配布するのは常に Gradle ビルドが生成した JAR です。任意の ZIP の名前を変更しても動作しません。完全な一覧は[プラグインマニフェストとパッケージング](/docs/build-a-plugin/manifest#厳格な-jar-検証)にあります。
+
+## 3. コマンドを実行する
+
+1. Editor で任意のモデルドキュメントを開きます。
+2. **Tools → Parameter Peek** の下にある **Parameter Peek: Report** を探します。このパスは、登録した `parameterpeek.menu` のテキストから決まります。
+3. 実行します。`parameterpeek.hello` の挨拶がステータスバーに表示されます。
+
+表示されない場合は、[プラグインが読み込まれない場合](/docs/build-a-plugin/key-mechanisms/load-failures)を順に確認してください。
+
+## 4. ログ行を見つける
+
+プラグインの `logger()` は Turboism 自身のログに書き込み、各行にプラグイン ID が付きます。**Turboism → ログ…** を選択してログディレクトリを開き、現在のセッションのログを開いて `com.example.parameterpeek` を検索します。次の行が見つかるはずです。
+
+```text
+Parameter Peek initialized
+Parameter Peek enabled
+Hello from Parameter Peek!
+```
+
+順序が重要です。最初に `initialized`、次に `enabled`、その後はコマンドを実行するたびにメッセージが出力されます。
+
+診断には、`System.out` や独自のログファイルではなく `context.logger()` を使ってください。この logger はプラグインのスコープを持ち、その出力はホストのログと一緒に収集されるため、ユーザーやメンテナーが最初に確認する場所に残ります。
+
+## 5. 編集、ビルド、インストールのループ
+
+通常の開発では、ループは次のとおりです。
+
+1. コードを編集する。
+2. `./gradlew build`。
+3. 新しい JAR で **プラグイン管理… → JAR からインストール…**。同じプラグイン ID の JAR は置換としてステージングされます。
+4. Cubism を再起動して再テストする。
+
+プラグインを置換する前に、大切なプラグインデータをバックアップしてください。適用に失敗した場合は以前のプラグインファイルが復元されますが、自分のデータの管理は自己責任です。
+
+より素早くローカルで反復するには、信頼できる JAR を `<turboism.home>/plugins/` のルート（サブディレクトリではありません）に直接コピーして再起動することもできます。この方法では上記のマネージドな事前チェックがスキップされるため、自分のビルドにのみ使用してください。ユーザーが目にするはずの拒否結果を正確に確認したい場合は、**JAR からインストール…** を使ってください。同じプラグイン ID の古い JAR は先に削除してください。ID が重複すると `DUPLICATE_PLUGIN_ID` で失敗します。
+
+記述子の `lifecycle.hotReload: true` は、Cubism を再起動せずに、メモリ上でプラグインを有効化、無効化、更新できることを宣言します。特定の変更を Runtime がメモリ上で適用するかどうか、またいつ適用するかは、更新経路（たとえばプラグインマーケットからのバックグラウンド更新）によって決まります。ローカルのループでは、再起動を前提にしてください。
+
+## チェックポイント
+
+- **Parameter Peek** が **Turboism → プラグイン管理…** に表示され、有効になっている。
+- **Tools → Parameter Peek** が実行でき、挨拶がステータスバーに表示される。
+- ログに `initialized`、`enabled`、およびメッセージが、プラグイン ID 付きで表示される。
+
+**次へ:** [ステップ 4: モデルを読み取る](/docs/build-a-plugin/first-plugin/read-the-model)

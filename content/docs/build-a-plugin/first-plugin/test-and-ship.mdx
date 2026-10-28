@@ -1,0 +1,210 @@
+---
+title: "Step 6: Test and ship"
+description: Unit-test lifecycle and cleanup without a Cubism host, run a real-host checklist, finish the metadata, and share your plugin JAR.
+---
+
+The plugin works. This last step makes it trustworthy: you test the contract that does not need Cubism, check the rest by hand in a real host, tidy the metadata, and hand the JAR to someone else.
+
+## 1. What to test without a host
+
+A unit test can prove your plugin registers what it should and removes it again. It cannot prove how Cubism behaves. Cover the first kind with tests, and the second with a real-host run.
+
+Worth testing without a host:
+
+- registrations made by `enable()`, and their removal when the scope closes;
+- behavior when an optional service is unavailable (here, `config()` and `localization()` on a bare context);
+- any pure logic you extract, such as parsing or formatting.
+
+Add JUnit to `build.gradle.kts`. The SDK is `compileOnly`, which does not reach the test classpath, so add it to the tests explicitly:
+
+```kotlin title="build.gradle.kts"
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    // ... existing compileOnly and annotationProcessor entries
+    testImplementation(sdkJars)
+    testImplementation(platform("org.junit:junit-bom:5.11.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+```
+
+## 2. Write a fake `PluginContext`
+
+`PluginContext` is an interface, so a test can supply its own. Implement only what the plugin touches. Optional services already default to an inert "unavailable" implementation, which is exactly what `config()` should be in this test.
+
+```java title="src/test/java/com/example/parameterpeek/ParameterPeekPluginTest.java"
+package com.example.parameterpeek;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import dev.turboism.sdk.action.ActionRegistry;
+import dev.turboism.sdk.cubism.CubismFacade;
+import dev.turboism.sdk.diagnostics.DiagnosticReport;
+import dev.turboism.sdk.event.EventBus;
+import dev.turboism.sdk.i18n.PluginLocalization;
+import dev.turboism.sdk.menu.MenuRegistry;
+import dev.turboism.sdk.permission.PluginPermission;
+import dev.turboism.sdk.plugin.DisposableScope;
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.PluginDescriptor;
+import dev.turboism.sdk.plugin.PluginLogger;
+import dev.turboism.sdk.plugin.PluginPaths;
+import dev.turboism.sdk.ui.UiScheduler;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import org.junit.jupiter.api.Test;
+
+class ParameterPeekPluginTest {
+
+    @Test
+    void enableRegistersOneActionAndOneMenuEntry() throws Exception {
+        final FakeContext context = new FakeContext();
+        final ParameterPeekPlugin plugin = new ParameterPeekPlugin();
+
+        plugin.init(context);
+        plugin.enable();
+
+        assertEquals(List.of("parameterpeek.report"), context.actionIds);
+        assertEquals(1, context.menuCount);
+    }
+
+    @Test
+    void closingTheScopeWithdrawsEveryRegistration() throws Exception {
+        final FakeContext context = new FakeContext();
+        final ParameterPeekPlugin plugin = new ParameterPeekPlugin();
+        plugin.init(context);
+        plugin.enable();
+
+        plugin.disable();
+        context.scope.close();
+
+        assertTrue(context.actionIds.isEmpty());
+        assertEquals(0, context.menuCount);
+    }
+
+    /** Implements only what the plugin touches; everything else is deliberately inert. */
+    private static final class FakeContext implements PluginContext {
+        final DisposableScope scope = new DisposableScope();
+        final List<String> actionIds = new ArrayList<>();
+        int menuCount;
+
+        @Override public ActionRegistry actions() {
+            return (id, action) -> {
+                actionIds.add(id);
+                return () -> actionIds.remove(id);
+            };
+        }
+
+        @Override public MenuRegistry menus() {
+            return contribution -> {
+                menuCount++;
+                return () -> menuCount--;
+            };
+        }
+
+        @Override public PluginLocalization localization() { return new KeyEchoLocalization(); }
+        @Override public DisposableScope disposableScope() { return scope; }
+        @Override public PluginLogger logger() { return new SilentLogger(); }
+        @Override public List<PluginPermission> permissions() { return List.of(); }
+        @Override public PluginDescriptor descriptor() { return null; }
+        @Override public PluginPaths paths() { return null; }
+        @Override public CubismFacade cubism() { return null; }
+        @Override public EventBus eventBus() { return null; }
+        @Override public UiScheduler uiScheduler() { return null; }
+        @Override public DiagnosticReport diagnostics() { return null; }
+    }
+
+    /** Returns each message key unchanged, so tests do not depend on catalog wording. */
+    private static final class KeyEchoLocalization implements PluginLocalization {
+        @Override public Locale locale() { return Locale.ENGLISH; }
+        @Override public String text(final String key) { return key; }
+        @Override public String format(final String key, final Object... arguments) { return key; }
+        @Override public boolean contains(final String key) { return true; }
+    }
+
+    private static final class SilentLogger implements PluginLogger {
+        @Override public void debug(final String message) {}
+        @Override public void info(final String message) {}
+        @Override public void warn(final String message) {}
+        @Override public void error(final String message) {}
+        @Override public void error(final String message, final Throwable throwable) {}
+    }
+}
+```
+
+Run it:
+
+```bash
+./gradlew test
+```
+
+Two things in this test are worth understanding:
+
+- The fake does not provide `config()`. The default is the unavailable sentinel, so `init` takes the `isAvailable()` branch you wrote in step 5. If `init` had called `registerUserEditableSchema` unguarded, this test would have failed with `UnsupportedOperationException`. That is a bug you find in milliseconds here and in a confused user report otherwise.
+- The second test is the one that matters for lifecycle bugs. If you forgot to put an action in `disposableScope()`, `actionIds` would not be empty. Extend this pattern to every registration you add.
+
+Only the plugin's own logic is exercised. A passing unit test does not show the plugin works on any Cubism version.
+
+## 3. Test in a real host
+
+Compilation and fakes cannot tell you how the Editor behaves, and the Editor is where users run the plugin. Before you share a build, install it in the Editor with a disposable model and walk through this checklist:
+
+- [ ] It installs, restarts, and shows as enabled in **Manage Plugins…**.
+- [ ] The command appears and runs with **no model open** without an error.
+- [ ] It reports the right counts with a model open, and after editing parameters.
+- [ ] The setting appears, applies, and survives a restart.
+- [ ] Disabling the plugin removes the menu entry; re-enabling restores it.
+- [ ] Uninstalling and restarting leaves nothing behind except data you chose to keep.
+- [ ] Each Cubism version you list in `cubism-versions.json` has actually been run. Remove the ones you have not.
+
+Record the Turboism version, Cubism version, and steps you used. If you could not run a version, say so rather than claiming it works. See [Developing with LLMs](/docs/build-a-plugin/llm-coding-context#developer-requirements) for the same standard applied to AI-assisted work.
+
+## 4. Finish the metadata
+
+Review `plugin.json` as a user would:
+
+| Field | Check |
+| --- | --- |
+| `id` | Reverse-domain, unique, and final. Changing it later creates a different plugin. |
+| `version` | Bump it for every release you distribute, and keep it equal to `version` in `build.gradle.kts` so the file name matches. |
+| `turboismApi` | The minimum should be the earliest framework API that supplies every SDK member you use. Compiling against a newer SDK does not make its additions work on an older Runtime. The `[min,max)` upper bound stays below `1.0.0`. |
+| `description`, `authors`, `license`, `website` | Real, current, and not the template's placeholder values. |
+| `permissions` | Each one is used and has a `reason` a reviewer would accept. Remove any you added while experimenting. |
+| `category`, `tags` | A reviewed category if one fits; tags are lowercase kebab-case, at most 12. |
+| `environment.requiresCubism` | `true` if you need a live Editor, as here. |
+| `lifecycle.hotReload` | `true` only if you meet the conditions in [Plugin Manifest and Packaging](/docs/build-a-plugin/manifest#lifecycle-and-hot-reload). |
+
+Also check `cubism-versions.json` (only tested versions, with `fullFeatureVersions` a subset of `supportedVersions`) and that every locale listed in `i18n.locales` has its catalog file.
+
+## 5. Share the JAR
+
+The file in `build/libs/` is the distributable. There is no installer and no wrapper archive. To give it to someone:
+
+1. Build from a clean state with `./gradlew clean build`.
+2. Send them the JAR with its version, the Turboism and Cubism versions you tested, and a short note on what permissions it requests and why.
+3. They install it with **Manage Plugins… → Install from JAR…**, confirm the local/unverified-source dialog, and restart. See [Plugin Management](/docs/use/plugin-management).
+
+Be clear that this is local installation: Turboism does not review or certify a JAR installed this way.
+
+### The Plugin Directory is curated
+
+The [Plugin Directory](https://turboism.dev/plugins) is a curated catalog maintained by the Turboism team, not a self-service marketplace. Third-party listings are not live yet, and being buildable does not qualify a plugin for it. Design with distribution in mind, and use the [Turboism GitHub organization](https://github.com/turboism) to discuss a candidate. See [Contributing](/docs/build-a-plugin/contributing) for the current status.
+
+## Where to go next
+
+You now have the whole loop: create, build, install, observe, react, persist, test, and ship. To go deeper:
+
+- Read the [Key Mechanisms](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup) pages in order. They explain what you used without understanding in steps 2 to 5.
+- Study [Designing Plugins](/docs/build-a-plugin/designing-plugins) for the design checklist, especially the write-safety rules before you modify a model.
+- Browse the first-party plugins in [First-Party Plugins](/docs/use/first-party-plugins), and the [SDK API Guide](/docs/reference/sdk-api) for the services you have not used yet: toolbars, context menus, tasks, storage, and user files.
+- Extend Parameter Peek: add a toolbar button for the same action, persist the change count in `storage()`, or add `messages_zh_Hans.properties` and a second locale.

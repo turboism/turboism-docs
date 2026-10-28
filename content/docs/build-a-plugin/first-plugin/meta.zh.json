@@ -1,0 +1,12 @@
+{
+  "title": "开发你的第一个插件",
+  "pages": [
+    "index",
+    "setup",
+    "hello-action",
+    "build-and-install",
+    "read-the-model",
+    "settings",
+    "test-and-ship"
+  ]
+}

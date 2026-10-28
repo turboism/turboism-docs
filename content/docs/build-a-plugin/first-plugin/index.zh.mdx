@@ -1,0 +1,74 @@
+---
+title: 开发你的第一个插件
+description: 六步动手教程：从空文件夹开始，做出一个带菜单命令、能读取 Cubism 数据、可保存设置并带测试的 Turboism 插件，并安装运行。
+---
+
+本系列教程带你从零构建一个小而完整的 Turboism 插件 **Parameter Peek**。完成后，你将亲手编写、构建、安装并测试一个真实的插件，也会明白是哪些机制让它运转起来。
+
+## 你将构建什么
+
+Parameter Peek 会在 Cubism Editor 中添加一条 **Parameter Peek: Report** 命令。运行它时，插件会：
+
+- 统计你当前打开的模型有多少个参数；
+- 报告自插件启用以来观察到多少次参数值变化；
+- 把结果写入 Turboism 日志；当你在**插件设置**中允许时，还会显示在状态栏。
+
+这个插件刻意保持小巧。它只读取模型，因此可以放心试验；但它涵盖了典型插件的各个环节：生命周期、操作与菜单、权限、本地化、Cubism 数据、事件、持久化设置和测试。
+
+## 开始之前
+
+- **Java。** 你需要熟悉类、接口、lambda 和 record。不需要了解 Cubism 内部或 Turboism 运行时。
+- **JDK 17 或更新版本**，并已加入 `PATH`（运行 `java -version` 检查）。插件会被编译为 Java 17 字节码。
+- **已安装 Turboism** 以及受支持的 Cubism Editor，用于运行第 3 步及之后的内容，参见[安装](/docs/use/installation)和[兼容性](/docs/use/compatibility)。第 1、2 步以及第 6 步的单元测试不需要 Cubism。
+- **一个可随意折腾的测试模型**，在 Editor 中打开。Parameter Peek 只读不写，但测试插件时仍应使用丢了也不心疼的数据。
+
+本教程针对 **Stable 0.67.4** 编写。项目模板会为你下载匹配的 SDK，按此方式构建的插件声明的 SDK API 范围为 `[0.67.0,1.0.0)`。
+
+## 六个步骤
+
+| 步骤 | 你要做的事 | 你会遇到的机制 |
+| --- | --- | --- |
+| 1. [搭建项目](/docs/build-a-plugin/first-plugin/setup) | 用官方模板创建项目并完成一次构建。 | SDK 为 `compileOnly`；插件 ID；项目结构。 |
+| 2. [打个招呼](/docs/build-a-plugin/first-plugin/hello-action) | 添加一条会写日志并显示消息的菜单命令。 | 生命周期、操作与菜单、声明式权限、本地化。 |
+| 3. [构建与安装](/docs/build-a-plugin/first-plugin/build-and-install) | 把 JAR 安装到 Cubism 并运行命令。 | 托管安装与重启、严格的 JAR 验证、日志。 |
+| 4. [读取模型](/docs/build-a-plugin/first-plugin/read-the-model) | 统计参数并观察变化。 | Cubism 快照、事件、默认拒绝的可用性、Cubism 版本支持。 |
+| 5. [添加设置](/docs/build-a-plugin/first-plugin/settings) | 保存一个偏好并在“插件设置”中展示。 | 类型化配置、插件私有存储、优雅降级。 |
+| 6. [测试与发布](/docs/build-a-plugin/first-plugin/test-and-ship) | 编写单元测试、完善元数据并分享 JAR。 | 无宿主测试、版本管理、分发。 |
+
+每一步都以一个可运行的插件和一份简短的检查清单收尾，你可以在任何步骤边界停下，之后再继续。
+
+## 教程的组织方式
+
+各步骤只走通向可运行插件的最短路径。当某个机制值得多于一段文字来讲解时，步骤只给出继续前进所需的内容，并链接到[关键机制](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup)中的独立页面：
+
+- [生命周期与清理](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup) — Runtime 调用什么、按什么顺序，以及注册项如何被撤销。
+- [权限与可用性](/docs/build-a-plugin/key-mechanisms/permissions-and-availability) — 为什么声明了权限不等于功能可用。
+- [线程与任务](/docs/build-a-plugin/key-mechanisms/threads-and-tasks) — 你的代码在哪里运行，以及如何安全地做后台工作。
+- [插件无法加载时](/docs/build-a-plugin/key-mechanisms/load-failures) — 以症状为线索的诊断指南。
+
+## 整体图景
+
+```text
+Your plugin JAR
+├── META-INF/turboism/plugin.json   who you are and what you ask for
+├── your Java classes               what you do
+└── resources                       localized text, Cubism version list
+        │
+        │  Runtime validates the JAR and admits only what you declared
+        ▼
+PluginContext                       the only door to the host
+├── actions(), menus()              commands and menu entries
+├── eventBus()                      typed events
+├── cubism()                        snapshots and the Cubism object model
+├── config(), storage()             settings and plugin-owned data
+└── logger(), localization() ...    plugin-private helpers
+```
+
+插件的一切行为都通过 `PluginContext` 完成。Runtime 会根据你声明的权限、宿主提供的服务以及当前的 Cubism 版本来检查每一次调用。如果这个系列只让你记住一件事，请记住这一点。
+
+## 参考与替代方案
+
+- 只想要最精简的流程？精简的[开发者快速入门](/docs/build-a-plugin/quick-start)用一页覆盖同样的构建路径。
+- 想查字段或服务？请使用[插件 Manifest 与打包](/docs/build-a-plugin/manifest)、[插件接口](/docs/build-a-plugin/plugin-interfaces)和 [SDK API 指南](/docs/reference/sdk-api)。
+- 不确定 Java 插件是否合适？请对比 [GraalJS 脚本](/docs/build-a-plugin/graaljs-scripts)和 [MCP](/docs/build-a-plugin/mcp)。
+- 使用 AI 编程助手？请先阅读[使用 LLM 进行开发](/docs/build-a-plugin/llm-coding-context)。审查和测试结果的责任仍在你自己。

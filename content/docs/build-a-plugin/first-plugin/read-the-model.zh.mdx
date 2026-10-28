@@ -1,0 +1,159 @@
+---
+title: "第 4 步：读取模型"
+description: 读取活动模型的参数，用类型化事件统计参数变化，处理不可用的数据，并声明你支持的 Cubism 版本。
+---
+
+Parameter Peek 目前只会打招呼。这一步中，它要从 Editor 学到两件事：打开的模型有多少个参数，以及自插件启用以来参数值变化了多少次。
+
+## 1. 添加新权限
+
+读取模型数据和观察其变化各跨越一条风险边界，而接收事件还需要第三个权限。把下面这些添加到 `plugin.json` 的 `permissions` 中：
+
+```json
+{ "id": "turboism.cubism.model.read", "scope": "application", "reason": "Counts the parameters of the active model." },
+{ "id": "turboism.cubism.model.observe", "scope": "application", "reason": "Counts parameter value changes." },
+{ "id": "turboism.event.subscribe", "scope": "application", "reason": "Receives parameter change events." }
+```
+
+`model.read` 允许你读取模型对象，`model.observe` 允许你接收描述模型变化的事件，`event.subscribe` 则允许你订阅任何事件。参数事件需要后两者同时具备。
+
+## 2. 读取活动模型
+
+替换 `report()` 并添加一个计数字段。改动处已用注释标出。
+
+```java title="ParameterPeekPlugin.java (changed parts)"
+import dev.turboism.sdk.cubism.CubismEditorApiUnavailableException;
+import dev.turboism.sdk.cubism.event.ParameterValueEvent;
+import dev.turboism.sdk.event.SubscribeEvent;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public final class ParameterPeekPlugin implements TurboismPlugin {
+
+    private final AtomicInteger observedEdits = new AtomicInteger();   // new
+    private PluginContext context;
+    private PluginLogger logger;
+
+    // init(), disable(), shutdown() unchanged
+
+    @Override
+    public void enable() throws Exception {
+        observedEdits.set(0);                                           // new
+        // ... action and menu registration unchanged
+    }
+
+    @SubscribeEvent                                                     // new
+    public void onParameterChanged(final ParameterValueEvent.On event) {
+        observedEdits.incrementAndGet();
+    }
+
+    private void report() {
+        final String summary;
+        try {
+            if (!context.cubism().hasActiveModel()) {
+                summary = context.localization().text("parameterpeek.summary.no-model");
+            } else {
+                final int count = context.cubism().model().active().parameters().all().size();
+                summary = context.localization().format("parameterpeek.summary", count, observedEdits.get());
+            }
+        } catch (CubismEditorApiUnavailableException unavailable) {
+            logger.info("Parameter reading is unavailable on this Cubism version: " + unavailable.apiId());
+            return;
+        }
+        logger.info(summary);
+        context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", summary)));
+    }
+}
+```
+
+把这两条新消息添加到**两个**目录文件中：
+
+```properties
+parameterpeek.summary=The active model has {0} parameters; {1} value changes observed since enable.
+parameterpeek.summary.no-model=Open a model document first.
+```
+
+`{0}` 和 `{1}` 是 `java.text.MessageFormat` 占位符，由 `localization().format(key, args...)` 填充。由于使用的是 `MessageFormat`，消息中的字面单引号必须写两次（`''`），数字会按当前 locale 格式化。
+
+### 关键机制：看见模型的两种方式
+
+SDK 提供两种 Cubism 视图：
+
+- **快照**，例如 `context.cubism().activeModel()`，是不可变的值对象。读取开销小且可以安全保存，但它们描述的只是某一时刻。
+- **对象模型**，通过 `context.cubism().model().active()` 获得，提供实时的 `Parameters`、`Parts`、`Drawables` 等。这些对象是**绑定代际（generation）**的：在文档切换、重新加载、删除或 provider 被替换之后，持有的引用会默认拒绝，而不是悄悄指向错误的对象。
+
+因此，不要把 `Parameter` 存进字段后再复用。每次需要时都从 `context.cubism()` 重新解析。更广泛的读取方式请参见 [SDK API 指南](/docs/reference/sdk-api#快照与查询-api)。
+
+### 关键机制：默认拒绝，并明确告知
+
+Cubism 数据并非总是存在。看看 `report()` 如何处理：
+
+1. `hasActiveModel()` 在无异常的情况下回答最常见的情形，即当前文档不是模型。
+2. `CubismEditorApiUnavailableException` 覆盖不太常见的情形：当前 Cubism 版本不接纳该调用。请在功能边界处捕获它并降级（这里是写日志），而不要让它传到用户面前。
+
+永远不要通过字符串比较 Cubism 版本号来决定行为，让 SDK 告诉你。同样的思路适用于所有服务：权限只是让你能够询问，并不保证有答案。参见[权限与可用性](/docs/build-a-plugin/key-mechanisms/permissions-and-availability)。
+
+## 3. 响应事件
+
+`ParameterValueEvent` 是一个有三种状态的密封（sealed）类型族：
+
+| 类型 | 触发时机 | 能否修改值？ |
+| --- | --- | --- |
+| `Before` | 宿主写入之前，同步触发。 | 可以，但需要另外的*拦截（intercept）*权限。 |
+| `On` | 在**确实改变了**值的写入之后。 | 不能，仅观察。 |
+| `After` | 每次成功写入之后，包括值未变化的写入。 | 不能，仅观察。 |
+
+Parameter Peek 统计的是变化，所以 `On` 是正确的类型。观察永远不需要 `Before`。
+
+`@SubscribeEvent` 是声明式风格。你在第 1 步中配置的 `turboism-event-processor` 注解处理器会在编译期读取该注解，并生成订阅者索引（即你在 JAR 中看到的 `__TurboismSubscriberCatalog` 类），因此无需手动注册或释放。监听器必须是 public 类上的 public 实例方法，返回 `void`，且恰好声明一个具体的事件参数；处理器会把其他任何写法报告为编译错误。
+
+你也可以改为手动订阅，这在没有处理器的 SDK 上同样可用。请把返回的句柄放进可处置作用域：
+
+```java
+Registration subscription = context.eventBus().subscribe(
+        ParameterValueEvent.On.class,
+        event -> observedEdits.incrementAndGet());
+context.disposableScope().register(subscription);
+```
+
+对同一个事件请只用其中一种风格，不要两者并用，否则每次变化会被计数两次。
+
+### 关键机制：事件不在你的线程上运行
+
+普通事件观察是异步投递的，生命周期方法运行在 worker 线程上且各次转换可能不同，菜单操作又运行在别处。请把你的插件视为并发的：这就是计数器是 `AtomicInteger` 而不是 `int` 的原因。保持监听器简短且不阻塞。[线程与任务](/docs/build-a-plugin/key-mechanisms/threads-and-tasks)介绍了规则，以及如何调度后台和 UI 工作。
+
+## 4. 声明你支持的 Cubism 版本
+
+打开 `src/main/resources/META-INF/turboism/cubism-versions.json`。设置脚本已根据该发布经审查的 Cubism Editor 版本填好了它：
+
+```json title="cubism-versions.json"
+{
+  "format": "turboism.plugin-cubism-versions/v1",
+  "plugin": "com.example.parameterpeek",
+  "supportedVersions": ["5.0.00", "5.0.01", "..." , "5.3.04"],
+  "fullFeatureVersions": ["5.0.00", "5.0.01", "..." , "5.3.04"]
+}
+```
+
+- `supportedVersions` 列出你的插件可用的确切 Editor 版本。
+- `fullFeatureVersions` 是**所有**功能都可用的子集，它必须是 `supportedVersions` 的子集。
+
+这个文件是你作出的声明，SDK 不会替你检查。请把两个列表都收窄到你实际测试过的版本。拿不准时宁可少声明：插件管理会把缺失或无效的声明显示为**未声明**，用户会在插件详情中看到你的列表。
+
+`@CubismEditor` 之类的 SDK 注解描述某个 SDK API 在哪些版本上可用，并不能证明你的插件在这些版本上可用。兼容性是 SDK 的声明、你自己的测试以及运行时检查三者的结合。已审查的版本集合以及各 Editor 小版本线的能力边界，请参见[兼容性](/docs/use/compatibility)。
+
+## 5. 试一试
+
+构建、重新安装（参见[第 3 步](/docs/build-a-plugin/first-plugin/build-and-install#5-修改构建安装的循环)）、重启 Cubism，然后：
+
+1. 在没有打开任何模型时运行 **Parameter Peek: Report**。你应当看到 `Open a model document first.`
+2. 打开一个模型再运行一次。你应当看到参数数量以及 `0 value changes`。
+3. 拖动几次参数滑块，再运行命令。变化次数会增加。
+
+## 检查清单
+
+- 报告显示的参数数量与你的测试模型一致。
+- 编辑参数时变化计数器会增加，没有模型的情形显示友好的提示。
+- `cubism-versions.json` 只列出你测试过的版本。
+
+**下一步：**[第 5 步：添加设置](/docs/build-a-plugin/first-plugin/settings)

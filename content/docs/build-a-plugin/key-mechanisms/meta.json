@@ -1,0 +1,9 @@
+{
+  "title": "Key Mechanisms",
+  "pages": [
+    "lifecycle-and-cleanup",
+    "permissions-and-availability",
+    "threads-and-tasks",
+    "load-failures"
+  ]
+}

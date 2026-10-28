@@ -1,0 +1,9 @@
+{
+  "title": "主要な仕組み",
+  "pages": [
+    "lifecycle-and-cleanup",
+    "permissions-and-availability",
+    "threads-and-tasks",
+    "load-failures"
+  ]
+}

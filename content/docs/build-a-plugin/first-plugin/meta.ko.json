@@ -1,0 +1,12 @@
+{
+  "title": "첫 플러그인 만들기",
+  "pages": [
+    "index",
+    "setup",
+    "hello-action",
+    "build-and-install",
+    "read-the-model",
+    "settings",
+    "test-and-ship"
+  ]
+}

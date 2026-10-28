@@ -1,0 +1,253 @@
+---
+title: "Step 5: Add a setting"
+description: Add a typed, persisted setting that appears in Plugin Settings, and make the plugin degrade gracefully when a service is unavailable.
+---
+
+Parameter Peek always shows its report in the status bar. In this step you add a **Show the report in the status bar** setting. Users can change it in **Turboism → Plugin Settings…**, and the value survives restarts.
+
+## 1. Pick the right home for data
+
+Before you write code, decide where each kind of data belongs. The SDK gives you separate services, and each has its own permission and its own folder owned by your plugin:
+
+| You want to keep | Use | Notes |
+| --- | --- | --- |
+| A user preference | `context.config()` typed configuration | Versioned schema, validated, can appear in Plugin Settings. Stored under `config/<pluginId>/`. |
+| Business data or rebuildable caches | `context.storage()` | Separate DATA, STATE, and CACHE roots, with bounded asynchronous, atomic access. |
+| A file the user chose | `context.userFiles()` | User-granted handles only. |
+| Diagnostics | `context.logger()` | Not files you create. |
+
+Never build paths under the Turboism home yourself, and never write to `user.home` or the working directory. Those paths bypass the namespaces Runtime owns, checks, and cleans up. See [Plugin Interfaces](/docs/build-a-plugin/plugin-interfaces#configuration-storage-and-tasks) for the other services.
+
+A boolean preference belongs in typed configuration.
+
+## 2. Add the permissions
+
+Typed configuration needs both configuration permissions: write to register the schema and save values, read to load them.
+
+```json
+{ "id": "turboism.config.plugin.read", "scope": "application", "reason": "Reads the plugin's own settings." },
+{ "id": "turboism.config.plugin.write", "scope": "application", "reason": "Registers and saves the plugin's own settings." }
+```
+
+## 3. Define the schema and the editor
+
+A **key** names one value, gives it a default, and chooses a codec. A **schema** groups keys into one versioned document. An **editor** opts specific keys into the Plugin Settings window.
+
+```java
+private static final ConfigKey<Boolean> SHOW_NOTICE =
+        new ConfigKey<>("parameterpeek.settings", "show-notice", true, ConfigCodecs.booleanValue());
+private static final ConfigSchema SCHEMA =
+        new ConfigSchema("parameterpeek.settings", "settings.json", 1, List.of(SHOW_NOTICE));
+```
+
+- The first argument to both is the **config ID**, which must be unique within your plugin. `settings.json` is the document path, relative to your plugin's config folder.
+- `1` is the schema version. If you later change what the document stores, raise it and supply migrations (see below).
+- Use lowercase key names made of letters, digits, `.`, `_`, and `-`; the settings editor requires that form.
+
+Register the schema in `init`, before anything reads it:
+
+```java
+@Override
+public void init(final PluginContext context) throws Exception {
+    this.context = context;
+    this.logger = context.logger();
+    if (context.config().isAvailable()) {
+        context.config().registerUserEditableSchema(
+                SCHEMA,
+                List.of(),
+                new ConfigSchemaEditor(List.of(new ConfigSchemaEditor.Toggle(
+                        "show-notice",
+                        context.localization().text("parameterpeek.setting.show-notice"),
+                        OptionalInt.empty()))));
+    }
+    logger.info("Parameter Peek initialized");
+}
+```
+
+`List.of()` is the migration chain. It is empty because this is version 1. `Toggle` renders the boolean as a switch labeled with your localized text; `Text` and `Choice` fields exist for strings, bounded integers, and enums. Add the label to both catalogs:
+
+```properties
+parameterpeek.setting.show-notice=Show the report in the status bar
+```
+
+Registering a schema with an editor publishes the setting to **Turboism → Plugin Settings…** and validates the value before it is saved to `config/<pluginId>/`. You write no UI code. If you need a richer settings page, `UiHostCapabilityService.contributeSettings` is the lower-level route; see [Plugin Interfaces](/docs/build-a-plugin/plugin-interfaces#dedicated-plugin-settings-settingsregistry).
+
+### Key mechanism: results are values, not exceptions
+
+Typed configuration is asynchronous. `read` and `write` return a `CompletionStage`, and failures such as a missing schema, a denied permission, or a stale revision arrive as **values** inside the result, not as exceptions. A read that cannot find a stored value still returns the key's **default**, so `result.value().value()` is always usable, and `result.error()` tells you why if you care.
+
+Writes use **optimistic concurrency**: `write(key, value, expectedRevision)` is rejected when the revision you saw is stale. The settings window handles that for you here. If your code writes, read first, keep the revision, and handle a conflict result.
+
+## 4. Use the setting
+
+Add this helper and call it from `report()` instead of notifying unconditionally:
+
+```java
+private CompletionStage<Boolean> showNotice() {
+    if (!context.config().isAvailable()) {
+        return CompletableFuture.completedFuture(SHOW_NOTICE.defaultValue());
+    }
+    return context.config().read(SHOW_NOTICE).thenApply(result -> result.value().value());
+}
+```
+
+```java
+// at the end of report(), replacing the unconditional notifyStatus call
+showNotice().thenAccept(show -> {
+    if (show) {
+        context.uiScheduler().runOnUiThread(() ->
+                context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                        ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", summary))));
+    }
+});
+```
+
+The report is always logged. The status-bar notice is the part the user can turn off.
+
+The notice is handed to `context.uiScheduler()` because the `thenAccept` callback runs on a thread owned by the configuration service, not necessarily the UI thread. Host UI belongs to the UI thread; see [Threads and tasks](/docs/build-a-plugin/key-mechanisms/threads-and-tasks).
+
+### Key mechanism: degrade, do not crash
+
+`context.config()` can be unavailable on a host or test double that does not provide typed configuration, and calling it then throws `UnsupportedOperationException`. The guard `isAvailable()` handles that case and falls back to the default. This is the same fail-closed discipline as in step 4: assume any optional service can be missing, and decide ahead of time what the plugin does without it. You will test this exact path in [step 6](/docs/build-a-plugin/first-plugin/test-and-ship).
+
+## 5. The complete plugin
+
+Here is the finished class after steps 2 to 5.
+
+```java title="ParameterPeekPlugin.java"
+package com.example.parameterpeek;
+
+import dev.turboism.sdk.action.ActionRegistry;
+import dev.turboism.sdk.config.ConfigCodecs;
+import dev.turboism.sdk.config.ConfigKey;
+import dev.turboism.sdk.config.ConfigSchema;
+import dev.turboism.sdk.config.ConfigSchemaEditor;
+import dev.turboism.sdk.cubism.CubismEditorApiUnavailableException;
+import dev.turboism.sdk.cubism.event.ParameterValueEvent;
+import dev.turboism.sdk.event.SubscribeEvent;
+import dev.turboism.sdk.menu.MenuRegistry;
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.PluginLogger;
+import dev.turboism.sdk.plugin.Registration;
+import dev.turboism.sdk.plugin.TurboismPlugin;
+import dev.turboism.sdk.ui.StatusNotification;
+import dev.turboism.sdk.ui.UiHostCapabilityService;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public final class ParameterPeekPlugin implements TurboismPlugin {
+
+    private static final ConfigKey<Boolean> SHOW_NOTICE =
+            new ConfigKey<>("parameterpeek.settings", "show-notice", true, ConfigCodecs.booleanValue());
+    private static final ConfigSchema SCHEMA =
+            new ConfigSchema("parameterpeek.settings", "settings.json", 1, List.of(SHOW_NOTICE));
+
+    private final AtomicInteger observedEdits = new AtomicInteger();
+    private PluginContext context;
+    private PluginLogger logger;
+
+    @Override
+    public void init(final PluginContext context) throws Exception {
+        this.context = context;
+        this.logger = context.logger();
+        if (context.config().isAvailable()) {
+            context.config().registerUserEditableSchema(
+                    SCHEMA,
+                    List.of(),
+                    new ConfigSchemaEditor(List.of(new ConfigSchemaEditor.Toggle(
+                            "show-notice",
+                            context.localization().text("parameterpeek.setting.show-notice"),
+                            OptionalInt.empty()))));
+        }
+        logger.info("Parameter Peek initialized");
+    }
+
+    @Override
+    public void enable() throws Exception {
+        observedEdits.set(0);
+
+        Registration action = context.actions().register(
+                "parameterpeek.report",
+                ActionRegistry.Action.of(
+                        "parameterpeek.report",
+                        context.localization().text("parameterpeek.action.report"),
+                        ignored -> report()));
+        context.disposableScope().register(action);
+
+        Registration menu = context.menus().contribute(MenuRegistry.MenuContribution.of(
+                context.localization().text("parameterpeek.menu"), "parameterpeek.report", 100));
+        context.disposableScope().register(menu);
+
+        logger.info("Parameter Peek enabled");
+    }
+
+    @SubscribeEvent
+    public void onParameterChanged(final ParameterValueEvent.On event) {
+        observedEdits.incrementAndGet();
+    }
+
+    private void report() {
+        final String summary;
+        try {
+            if (!context.cubism().hasActiveModel()) {
+                summary = context.localization().text("parameterpeek.summary.no-model");
+            } else {
+                final int count = context.cubism().model().active().parameters().all().size();
+                summary = context.localization().format("parameterpeek.summary", count, observedEdits.get());
+            }
+        } catch (CubismEditorApiUnavailableException unavailable) {
+            logger.info("Parameter reading is unavailable on this Cubism version: " + unavailable.apiId());
+            return;
+        }
+        logger.info(summary);
+
+        showNotice().thenAccept(show -> {
+            if (show) {
+                context.uiScheduler().runOnUiThread(() ->
+                        context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                                ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", summary))));
+            }
+        });
+    }
+
+    private CompletionStage<Boolean> showNotice() {
+        if (!context.config().isAvailable()) {
+            return CompletableFuture.completedFuture(SHOW_NOTICE.defaultValue());
+        }
+        return context.config().read(SHOW_NOTICE).thenApply(result -> result.value().value());
+    }
+
+    @Override
+    public void disable() throws Exception {
+        logger.info("Parameter Peek disabled");
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+        logger.info("Parameter Peek shutdown");
+        context = null;
+    }
+}
+```
+
+The permissions in `plugin.json` are now eight: `action.register`, `ui.menu.contribute`, `ui.status.notify`, `cubism.model.read`, `cubism.model.observe`, `event.subscribe`, `config.plugin.read`, and `config.plugin.write`.
+
+## 6. Try it
+
+Build, reinstall, restart, then:
+
+1. Open **Turboism → Plugin Settings…**, select **Parameter Peek**, and confirm the toggle is on.
+2. Run **Parameter Peek: Report**. The status bar shows the report.
+3. Turn the toggle off, apply, and run the command again. The status bar stays quiet, but the log line is still written.
+4. Restart Cubism. The toggle keeps the value you set.
+
+## Checkpoint
+
+- The setting appears in Plugin Settings and survives a restart.
+- Turning it off silences only the status-bar notice.
+- You can say where the value lives (your plugin's folder under `config/<pluginId>/`) and why you did not write the file yourself.
+
+**Next:** [Step 6: Test and ship](/docs/build-a-plugin/first-plugin/test-and-ship)

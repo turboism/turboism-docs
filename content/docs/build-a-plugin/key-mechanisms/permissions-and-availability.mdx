@@ -1,0 +1,112 @@
+---
+title: Permissions and Availability
+description: Why a declared permission is not the same as a working feature, and how to check each layer before relying on an operation.
+---
+
+A call can fail for four different reasons, and they are easy to confuse. This page separates them so you know which one you are looking at and which tool fixes it.
+
+## Four independent checks
+
+An SDK operation works only when all of these hold:
+
+1. **The API exists in the SDK** you compile against and in the Runtime that runs your plugin.
+2. **The plugin declared the required permission** in `plugin.json`.
+3. **Runtime has a matching capability provider** for the operation.
+4. **The active Cubism version and object generation are supported.**
+
+Passing one check says nothing about the others. A permission answers "may this plugin cross this risk boundary?". It does not answer "can the host do it here and now?".
+
+| Question | Answered by | Fails as |
+| --- | --- | --- |
+| Is the member in the SDK I target? | The SDK version you built against and `turboismApi` | Compile error, or `TURBOISM_API_INCOMPATIBLE` at discovery |
+| May I use it? | `permissions` in `plugin.json` | A refused call (permission error) |
+| Does Runtime provide it? | The service directory and the provider behind it | Absent service, `UnsupportedOperationException`, or an `unavailable()` result |
+| Does the active Cubism version support it? | `@CubismEditor` on the API and the runtime check | `CubismEditorApiUnavailableException`, or a structured rejected result |
+
+## Declaring permissions
+
+Each entry has a known `id`, a `scope` of `application` or `user`, and a non-empty `reason`:
+
+```json
+{
+  "id": "turboism.cubism.model.read",
+  "scope": "application",
+  "reason": "Counts the parameters of the active model."
+}
+```
+
+Principles:
+
+- **Declare the minimum.** Request only what the SDK calls you make require. Do not copy a long list from a larger plugin.
+- **Write the `reason` for a person.** Users and reviewers read it.
+- **Undeclared access is refused.** There is no implicit grant, and an installed service does not grant its own permissions.
+- **Observe and intercept are separate.** Receiving a `ParameterValueEvent.On` needs observation; rewriting a value in a `Before` event needs interception.
+- **Writes need their own permission.** Read permission never implies write permission.
+
+The permissions Parameter Peek ends with, and what each one gates:
+
+| Permission | Gates |
+| --- | --- |
+| `turboism.action.register` | `context.actions().register(...)` |
+| `turboism.ui.menu.contribute` | `context.menus().contribute(...)` |
+| `turboism.ui.status.notify` | `UiHostCapabilityService.notifyStatus(...)` |
+| `turboism.cubism.model.read` | Reading model objects such as parameters |
+| `turboism.cubism.model.observe` | Receiving parameter change events |
+| `turboism.event.subscribe` | Subscribing to any event |
+| `turboism.config.plugin.read` / `.write` | Reading and registering or writing typed configuration |
+
+The full list of IDs is in [`PermissionIds`](https://turboism.dev/sdk/dev/turboism/sdk/permission/PermissionIds.html).
+
+## Handling unavailability
+
+Treat "not available here" as a normal outcome and plan it. The SDK has three shapes for it.
+
+**An optional service, through the directory.** `find` returns an `Optional`; `require` throws `PluginServiceUnavailableException`.
+
+```java
+context.services().find(UiHostCapabilityService.class).ifPresent(ui -> {
+    // Use the service. Each operation still checks permission, version and generation.
+});
+```
+
+Even when the service is present, individual operations can still be refused. Presence is not a promise that every version-routed call works.
+
+**An `unavailable()` sentinel.** Many services have a default implementation that reports itself unavailable. Probe `isAvailable()` before use. Some sentinels throw `UnsupportedOperationException` for write-style calls, and others return empty or rejected results, so check the result as well as exceptions.
+
+```java
+if (context.config().isAvailable()) {
+    // Safe to register a schema.
+}
+```
+
+**A Cubism version gate.** An API annotated `@CubismEditor` fails closed with `CubismEditorApiUnavailableException` on a version that does not admit it, and the exception's `supportedVersions()` tells you which do. Catch it at the feature boundary and hide the menu entry, disable the action, or fall back to a supported API. Do not compare version strings yourself.
+
+```java
+try {
+    // ... call a version-gated API
+} catch (CubismEditorApiUnavailableException unavailable) {
+    logger.info("Unavailable API: " + unavailable.apiId());
+}
+```
+
+Never work around a refusal with reflection, internal classes, or raw host objects. A refusal is the system working. Report real gaps through [Report a Bug](/docs/report-a-bug) and see [Troubleshooting](/docs/troubleshooting#a-host-capability-is-unavailable).
+
+## What about `capabilities`?
+
+The descriptor has a `capabilities` array that Parameter Peek leaves empty. It is a declaration for features that the host admits per plugin, such as a few gated hooks. It is separate from permissions and from `@CubismEditor` version annotations. Declare a capability only when the documentation for the feature you use tells you to. The READMEs of the first-party plugins in the Turboism source repository list the capabilities each one declares, which makes them useful examples.
+
+## Fail closed in your own code
+
+Apply the same discipline to your plugin's own behavior:
+
+- If a read is stale, rejected, or timed out, do not write anything based on it.
+- If a write cannot be done safely, leave the host unchanged and say so, rather than retrying through another route.
+- Log context through `PluginLogger` and handle expected failures at the feature boundary.
+
+[Designing Plugins](/docs/build-a-plugin/designing-plugins#separate-permission-from-availability) develops this further, including write-safety and Undo.
+
+## See also
+
+- [SDK API Guide](/docs/reference/sdk-api) for the four-check model in the SDK's own words.
+- [Compatibility](/docs/use/compatibility#querying-availability-at-runtime) for per-version capability boundaries.
+- [Plugin Manifest and Packaging](/docs/build-a-plugin/manifest#permissions) for the permission record format.

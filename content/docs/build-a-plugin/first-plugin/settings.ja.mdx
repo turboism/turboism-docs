@@ -1,0 +1,253 @@
+---
+title: "ステップ 5: 設定を追加する"
+description: プラグイン設定に表示される、型付きで永続化される設定を追加し、サービスが利用できない場合にプラグインが graceful に縮退するようにします。
+---
+
+Parameter Peek は常にレポートをステータスバーに表示します。このステップでは、**Show the report in the status bar** という設定を追加します。ユーザーは **Turboism → プラグイン設定…** で変更でき、その値は再起動後も保持されます。
+
+## 1. データの置き場所を正しく選ぶ
+
+コードを書く前に、各種のデータをどこに置くかを決めます。SDK は別々のサービスを提供しており、それぞれに専用の permission と、プラグインが所有する専用のフォルダーがあります。
+
+| 保持したいもの | 使うもの | 備考 |
+| --- | --- | --- |
+| ユーザーの設定 | `context.config()` による型付き configuration | バージョン管理されたスキーマで検証され、プラグイン設定に表示できます。`config/<pluginId>/` の下に保存されます。 |
+| 業務データや再構築可能なキャッシュ | `context.storage()` | DATA、STATE、CACHE の各ルートが分かれており、上限付きの非同期でアトミックなアクセスが提供されます。 |
+| ユーザーが選んだファイル | `context.userFiles()` | ユーザーが許可したハンドルのみ。 |
+| 診断 | `context.logger()` | 自分で作成するファイルではありません。 |
+
+Turboism home の下のパスを自分で組み立てたり、`user.home` や作業ディレクトリに書き込んだりしてはいけません。これらのパスは、Runtime が所有し、確認し、クリーンアップする名前空間を迂回します。他のサービスについては[プラグインインターフェース](/docs/build-a-plugin/plugin-interfaces#configurationstoragetask)を参照してください。
+
+真偽値の設定は、型付き configuration に属します。
+
+## 2. permission を追加する
+
+型付き configuration には、2 つの configuration permission がどちらも必要です。スキーマの登録と値の保存には write、値の読み込みには read が必要です。
+
+```json
+{ "id": "turboism.config.plugin.read", "scope": "application", "reason": "Reads the plugin's own settings." },
+{ "id": "turboism.config.plugin.write", "scope": "application", "reason": "Registers and saves the plugin's own settings." }
+```
+
+## 3. スキーマとエディターを定義する
+
+**キー**は 1 つの値に名前を付け、既定値を与え、コーデックを選びます。**スキーマ**は、キーをバージョン管理された 1 つのドキュメントにまとめます。**エディター**は、特定のキーをプラグイン設定ウィンドウに表示するよう指定します。
+
+```java
+private static final ConfigKey<Boolean> SHOW_NOTICE =
+        new ConfigKey<>("parameterpeek.settings", "show-notice", true, ConfigCodecs.booleanValue());
+private static final ConfigSchema SCHEMA =
+        new ConfigSchema("parameterpeek.settings", "settings.json", 1, List.of(SHOW_NOTICE));
+```
+
+- どちらの最初の引数も **config ID** で、プラグイン内で一意である必要があります。`settings.json` は、プラグインの config フォルダーからの相対パスで表したドキュメントのパスです。
+- `1` はスキーマのバージョンです。後でドキュメントに保存する内容を変更する場合は、これを上げてマイグレーションを指定します（下記参照）。
+- キー名は、英字、数字、`.`、`_`、`-` からなる小文字にしてください。設定エディターはその形式を要求します。
+
+スキーマは、何かがそれを読み取る前の `init` で登録します。
+
+```java
+@Override
+public void init(final PluginContext context) throws Exception {
+    this.context = context;
+    this.logger = context.logger();
+    if (context.config().isAvailable()) {
+        context.config().registerUserEditableSchema(
+                SCHEMA,
+                List.of(),
+                new ConfigSchemaEditor(List.of(new ConfigSchemaEditor.Toggle(
+                        "show-notice",
+                        context.localization().text("parameterpeek.setting.show-notice"),
+                        OptionalInt.empty()))));
+    }
+    logger.info("Parameter Peek initialized");
+}
+```
+
+`List.of()` はマイグレーションチェーンです。これはバージョン 1 であるため空です。`Toggle` は真偽値を、ローカライズしたテキストをラベルとするスイッチとして表示します。文字列、上限付き整数、enum には `Text` と `Choice` フィールドがあります。ラベルを両方のカタログに追加します。
+
+```properties
+parameterpeek.setting.show-notice=Show the report in the status bar
+```
+
+エディター付きでスキーマを登録すると、その設定が **Turboism → プラグイン設定…** に公開され、`config/<pluginId>/` に保存される前に値が検証されます。UI のコードを書く必要はありません。より高機能な設定ページが必要な場合は、`UiHostCapabilityService.contributeSettings` がより低レベルの手段です。[プラグインインターフェース](/docs/build-a-plugin/plugin-interfaces#専用プラグイン設定settingsregistry)を参照してください。
+
+### 重要な仕組み: 結果は例外ではなく値
+
+型付き configuration は非同期です。`read` と `write` は `CompletionStage` を返し、スキーマの欠落、permission の拒否、古いリビジョンといった失敗は、例外ではなく結果の中の**値**として届きます。保存された値が見つからない読み取りでも、そのキーの**既定値**が返されるため、`result.value().value()` は常に使用でき、理由を知りたい場合は `result.error()` で分かります。
+
+書き込みは**楽観的並行性制御**を使用します。`write(key, value, expectedRevision)` は、参照したリビジョンが古い場合に拒否されます。ここでは設定ウィンドウがそれを処理します。自分のコードで書き込む場合は、先に読み取ってリビジョンを保持し、競合の結果を処理してください。
+
+## 4. 設定を使う
+
+次のヘルパーを追加し、無条件に通知する代わりに `report()` から呼び出します。
+
+```java
+private CompletionStage<Boolean> showNotice() {
+    if (!context.config().isAvailable()) {
+        return CompletableFuture.completedFuture(SHOW_NOTICE.defaultValue());
+    }
+    return context.config().read(SHOW_NOTICE).thenApply(result -> result.value().value());
+}
+```
+
+```java
+// at the end of report(), replacing the unconditional notifyStatus call
+showNotice().thenAccept(show -> {
+    if (show) {
+        context.uiScheduler().runOnUiThread(() ->
+                context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                        ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", summary))));
+    }
+});
+```
+
+レポートは常にログに出力されます。ステータスバーの通知が、ユーザーがオフにできる部分です。
+
+`thenAccept` のコールバックは、UI スレッドとは限らない、configuration サービスが所有するスレッドで実行されるため、通知は `context.uiScheduler()` に渡します。ホストの UI は UI スレッドに属します。[スレッドとタスク](/docs/build-a-plugin/key-mechanisms/threads-and-tasks)を参照してください。
+
+### 重要な仕組み: クラッシュさせず縮退する
+
+型付き configuration を提供しないホストやテスト用ダブルでは `context.config()` が利用できない場合があり、そのときに呼び出すと `UnsupportedOperationException` をスローします。`isAvailable()` のガードがそのケースを処理し、既定値にフォールバックします。これはステップ 4 と同じ fail-closed の規律です。任意のオプションサービスは存在しない可能性があると想定し、それがない場合にプラグインが何をするかを事前に決めておきます。まさにこの経路を[ステップ 6](/docs/build-a-plugin/first-plugin/test-and-ship)でテストします。
+
+## 5. 完成したプラグイン
+
+ステップ 2 から 5 を経た、完成したクラスは次のとおりです。
+
+```java title="ParameterPeekPlugin.java"
+package com.example.parameterpeek;
+
+import dev.turboism.sdk.action.ActionRegistry;
+import dev.turboism.sdk.config.ConfigCodecs;
+import dev.turboism.sdk.config.ConfigKey;
+import dev.turboism.sdk.config.ConfigSchema;
+import dev.turboism.sdk.config.ConfigSchemaEditor;
+import dev.turboism.sdk.cubism.CubismEditorApiUnavailableException;
+import dev.turboism.sdk.cubism.event.ParameterValueEvent;
+import dev.turboism.sdk.event.SubscribeEvent;
+import dev.turboism.sdk.menu.MenuRegistry;
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.PluginLogger;
+import dev.turboism.sdk.plugin.Registration;
+import dev.turboism.sdk.plugin.TurboismPlugin;
+import dev.turboism.sdk.ui.StatusNotification;
+import dev.turboism.sdk.ui.UiHostCapabilityService;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public final class ParameterPeekPlugin implements TurboismPlugin {
+
+    private static final ConfigKey<Boolean> SHOW_NOTICE =
+            new ConfigKey<>("parameterpeek.settings", "show-notice", true, ConfigCodecs.booleanValue());
+    private static final ConfigSchema SCHEMA =
+            new ConfigSchema("parameterpeek.settings", "settings.json", 1, List.of(SHOW_NOTICE));
+
+    private final AtomicInteger observedEdits = new AtomicInteger();
+    private PluginContext context;
+    private PluginLogger logger;
+
+    @Override
+    public void init(final PluginContext context) throws Exception {
+        this.context = context;
+        this.logger = context.logger();
+        if (context.config().isAvailable()) {
+            context.config().registerUserEditableSchema(
+                    SCHEMA,
+                    List.of(),
+                    new ConfigSchemaEditor(List.of(new ConfigSchemaEditor.Toggle(
+                            "show-notice",
+                            context.localization().text("parameterpeek.setting.show-notice"),
+                            OptionalInt.empty()))));
+        }
+        logger.info("Parameter Peek initialized");
+    }
+
+    @Override
+    public void enable() throws Exception {
+        observedEdits.set(0);
+
+        Registration action = context.actions().register(
+                "parameterpeek.report",
+                ActionRegistry.Action.of(
+                        "parameterpeek.report",
+                        context.localization().text("parameterpeek.action.report"),
+                        ignored -> report()));
+        context.disposableScope().register(action);
+
+        Registration menu = context.menus().contribute(MenuRegistry.MenuContribution.of(
+                context.localization().text("parameterpeek.menu"), "parameterpeek.report", 100));
+        context.disposableScope().register(menu);
+
+        logger.info("Parameter Peek enabled");
+    }
+
+    @SubscribeEvent
+    public void onParameterChanged(final ParameterValueEvent.On event) {
+        observedEdits.incrementAndGet();
+    }
+
+    private void report() {
+        final String summary;
+        try {
+            if (!context.cubism().hasActiveModel()) {
+                summary = context.localization().text("parameterpeek.summary.no-model");
+            } else {
+                final int count = context.cubism().model().active().parameters().all().size();
+                summary = context.localization().format("parameterpeek.summary", count, observedEdits.get());
+            }
+        } catch (CubismEditorApiUnavailableException unavailable) {
+            logger.info("Parameter reading is unavailable on this Cubism version: " + unavailable.apiId());
+            return;
+        }
+        logger.info(summary);
+
+        showNotice().thenAccept(show -> {
+            if (show) {
+                context.uiScheduler().runOnUiThread(() ->
+                        context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                                ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", summary))));
+            }
+        });
+    }
+
+    private CompletionStage<Boolean> showNotice() {
+        if (!context.config().isAvailable()) {
+            return CompletableFuture.completedFuture(SHOW_NOTICE.defaultValue());
+        }
+        return context.config().read(SHOW_NOTICE).thenApply(result -> result.value().value());
+    }
+
+    @Override
+    public void disable() throws Exception {
+        logger.info("Parameter Peek disabled");
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+        logger.info("Parameter Peek shutdown");
+        context = null;
+    }
+}
+```
+
+`plugin.json` の permission は現在 8 つです: `action.register`、`ui.menu.contribute`、`ui.status.notify`、`cubism.model.read`、`cubism.model.observe`、`event.subscribe`、`config.plugin.read`、`config.plugin.write`。
+
+## 6. 試す
+
+ビルドし、再インストールし、再起動してから、次を行います。
+
+1. **Turboism → プラグイン設定…** を開き、**Parameter Peek** を選択して、トグルがオンになっていることを確認します。
+2. **Parameter Peek: Report** を実行します。ステータスバーにレポートが表示されます。
+3. トグルをオフにして適用し、もう一度コマンドを実行します。ステータスバーには何も表示されませんが、ログ行は引き続き書き込まれます。
+4. Cubism を再起動します。トグルは設定した値を保持しています。
+
+## チェックポイント
+
+- 設定がプラグイン設定に表示され、再起動後も保持される。
+- オフにすると、ステータスバーの通知だけが出なくなる。
+- 値がどこに保存されるか（`config/<pluginId>/` の下にあるプラグインのフォルダー）と、自分でファイルを書かなかった理由を説明できる。
+
+**次へ:** [ステップ 6: テストと公開](/docs/build-a-plugin/first-plugin/test-and-ship)

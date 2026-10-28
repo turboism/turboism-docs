@@ -1,0 +1,89 @@
+---
+title: 插件无法加载时
+description: 以症状为线索的指南，用于诊断插件 JAR 为何被拒绝、未出现或行为不符预期。
+---
+
+从你看到的现象入手。每一节按值得检查的顺序列出最可能的原因。与插件无关的安装器、启动和宿主问题，请参见[故障排除](/docs/troubleshooting)。
+
+## 先收集证据
+
+在改动任何东西之前：
+
+1. **打开日志。**选择 **Turboism → 日志…**，查看当前会话日志，搜索你的插件 ID。失败信息会带有插件 ID。
+2. **检查“管理插件”。**打开 **Turboism → 管理插件…**。如果插件已列出，双击它可查看其 SDK API 范围和声明的 Cubism 版本。
+3. **记下版本。**记录 Turboism 版本、Cubism Editor 版本以及确切步骤。与版本相关的失败很常见。
+
+在 Turboism 运行期间，不要编辑插件、配置或待处理状态文件，也不要关闭拒绝你的 JAR 的那项验证。
+
+## 安装时 JAR 被拒绝
+
+**从 JAR 安装…** 会先检查文件。JAR 可能因以下原因被拒绝：
+
+- 符号链接或非常规文件来源，或压缩包超出原始大小、单条目大小、总展开体积、条目数或压缩比的限制；
+- 条目格式错误或重复、特殊文件，或缺少/重复 `META-INF/turboism/plugin.json`；
+- 描述符中的 ID、版本或 API 范围不一致；
+- **被复制的 SDK、Runtime、测试或 Live2D 类**：你的构建必须使用 `compileOnly`，不能把 SDK 打进去；
+- 原生二进制、安装器载荷或嵌套 JAR；
+- 入口点缺失，或存在未声明的普通资源；
+- `plugin.json` 中声明了 i18n 目录，但 JAR 中没有。
+
+请用 `./gradlew clean build` 从源码重新构建，并安装 Gradle 生成的 JAR。不要手动修改压缩包。
+
+## 已安装但没有出现
+
+请检查：
+
+- 该操作是否在 Cubism **完全重启后**应用，且两次启动使用的是**同一个 Turboism home**；
+- 如果你手动复制了 JAR，它是否位于 `<turboism.home>/plugins/` 的根目录，而不是子文件夹；
+- 是否已不存在同一插件 ID 的旧 JAR（重复会以 `DUPLICATE_PLUGIN_ID` 失败）；
+- 插件 ID 是否没有在**管理插件…**中被禁用；
+- `environment.requiresCubism` 是否与你启动的环境相符；
+- 入口点类是否存在、是 `public`、实现了 `TurboismPlugin`，并有公共无参构造函数；
+- 描述符是否使用受支持的 `schemaVersion` 并对其有效。未知字段会被拒绝而不是忽略，所以字段名拼写错误会导致加载失败。
+
+## 被标记为不兼容
+
+当插件的 `turboismApi` 范围不包含正在运行的 Turboism API 时，插件管理和插件市场会将其标记为不兼容。旧版 `[0.1.0,0.2.0)` 范围会以 `TURBOISM_API_INCOMPATIBLE` 失败。请使用 `[0.67.0,1.0.0)`，如果依赖较新的 SDK 成员，则使用更高的下限。
+
+## 已加载，但启动失败
+
+如果构造、`init` 或 `enable` 抛出异常，Runtime 会回滚整个 JAR，你的异常会连同插件 ID 出现在日志中。典型原因：
+
+- 对不可用服务的无保护调用（参见[权限与可用性](/docs/build-a-plugin/key-mechanisms/permissions-and-availability)）；
+- 缺少本地化键或目录；
+- 无效的配置 schema（例如键名不合法，或 config ID 或路径重复）；
+- 来自某个字段的 `NullPointerException`，而该字段只在之后才运行的方法中赋值。
+
+修复方式几乎总是加一道守卫（`isAvailable()`、`services().find(...)`）或更正描述符，而不是扩大权限。
+
+## 已启动，但某项功能没有反应
+
+按[权限与可用性](/docs/build-a-plugin/key-mechanisms/permissions-and-availability)中的四项检查逐一排查：
+
+1. **权限。**确切调用所需的权限是否已在 `plugin.json` 中声明？拒绝会记录在你的插件名下。
+2. **服务。**`services().find(...)` 返回了空吗？或者是 `unavailable()` 哨兵在响应？
+3. **Cubism 版本。**日志里是否出现 `CubismEditorApiUnavailableException` 或不可用的 API ID？Editor 版本可能不接纳该 API；参见[兼容性](/docs/use/compatibility)。
+4. **状态。**当前是否真的有活动的模型文档？你持有的对象是否因文档变化而过期？
+
+同时检查你是否在 `enable()` 中注册、是否把句柄放入了可处置作用域，以及插件是否处于**已启用**状态，而不仅仅是已安装。
+
+如果你想在插件内部呈现运行时报告的问题，可通过 `context.diagnostics()` 获取结构化诊断。
+
+## 菜单项或操作缺失
+
+- 菜单路径是以斜杠分隔的字符串。如果它来自目录，请确认键存在于基础目录 `messages.properties` 中。
+- `turboism.action.register` 和 `turboism.ui.menu.contribute` 都需要：一个用于操作，一个用于菜单项。
+- 菜单贡献引用的是操作的 **ID**。任何一处拼写错误，都会留下没有操作支撑的菜单项，或没有菜单的操作。
+
+## 设置没有出现或没有保存
+
+- 注册 schema 需要 `turboism.config.plugin.write`，读取需要 `turboism.config.plugin.read`。
+- 在 `init` 中、任何读取之前注册 schema，并用 `config().isAvailable()` 加以保护。
+- 编辑器字段的 `key` 必须与 schema 中声明的某个键一致，并使用小写 `[a-z0-9._-]`。
+- 写入使用修订版本。过期的修订版本会作为结果中的值被拒绝，而不是异常，所以请检查结果。
+
+## 仍然卡住
+
+- 把插件缩减到仍能复现问题的最小版本，最好是第 2 步的 hello 插件。
+- 将你的描述符与[插件 Manifest 与打包](/docs/build-a-plugin/manifest)以及某个第一方插件的 `plugin.json` 对比。
+- 通过[报告 Bug](/docs/report-a-bug)提交可复现的问题，并附上版本和日志行。请从分享的任何内容中去掉私人路径、凭据和个人数据。

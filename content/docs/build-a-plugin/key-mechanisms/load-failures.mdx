@@ -1,0 +1,89 @@
+---
+title: When a Plugin Does Not Load
+description: A symptom-driven guide to diagnosing why a plugin JAR is rejected, does not appear, or does not behave as expected.
+---
+
+Start from what you see. Each section lists the likeliest causes, in the order worth checking them. For installer, startup, and host problems that are not specific to plugins, see [Troubleshooting](/docs/troubleshooting).
+
+## First, gather evidence
+
+Before changing anything:
+
+1. **Open the logs.** Choose **Turboism → Logs…** and look at the current session log. Search for your plugin ID. Failures are reported with the plugin ID attached.
+2. **Check Manage Plugins.** Open **Turboism → Manage Plugins…**. If the plugin is listed, double-click it for its SDK API range and declared Cubism versions.
+3. **Note the versions.** Record the Turboism version, the Cubism Editor version, and the exact steps. Version-dependent failures are common.
+
+Do not edit plugin, config, or pending-state files while Turboism is running, and never disable the validation that rejected your JAR.
+
+## The JAR is rejected when you install it
+
+**Install from JAR…** inspects the file first. It can reject a JAR for:
+
+- a symbolic link or non-regular source, or an archive that exceeds the raw-size, entry-size, total-expansion, entry-count, or compression-ratio limits;
+- malformed or duplicate entries, special files, or a missing or duplicate `META-INF/turboism/plugin.json`;
+- an ID, version, or API-range mismatch in the descriptor;
+- **copied SDK, Runtime, test, or Live2D classes**: your build must use `compileOnly`, not shade the SDK;
+- native binaries, installer payloads, or nested JARs;
+- a missing entrypoint, or an undeclared ordinary resource;
+- an i18n catalog declared in `plugin.json` but absent from the JAR.
+
+Rebuild from source with `./gradlew clean build` and install the JAR that Gradle produced. Do not edit the archive by hand.
+
+## It installs but does not appear
+
+Check that:
+
+- the operation was **applied after a full restart** of Cubism, using the **same Turboism home** on both launches;
+- if you copied the JAR manually, it is directly in the root of `<turboism.home>/plugins/`, not a subfolder;
+- no older JAR with the same plugin ID remains (a duplicate fails with `DUPLICATE_PLUGIN_ID`);
+- the plugin ID is not disabled in **Manage Plugins…**;
+- `environment.requiresCubism` matches the environment you started;
+- the entrypoint class exists, is `public`, implements `TurboismPlugin`, and has a public no-argument constructor;
+- the descriptor uses a supported `schemaVersion` and is valid for it. Unknown fields are rejected rather than ignored, so a typo in a field name fails the load.
+
+## It is marked incompatible
+
+Plugin Management and the Plugin Market mark a plugin as incompatible when its `turboismApi` range does not include the running Turboism API. A legacy `[0.1.0,0.2.0)` range fails with `TURBOISM_API_INCOMPATIBLE`. Use `[0.67.0,1.0.0)` or a higher minimum if you rely on newer SDK members.
+
+## It loads, then fails to start
+
+If construction, `init`, or `enable` throws, Runtime rolls back the whole JAR, and your exception appears in the log with the plugin ID. Typical causes:
+
+- an unguarded call to an unavailable service (see [Permissions and availability](/docs/build-a-plugin/key-mechanisms/permissions-and-availability));
+- a missing localization key or catalog;
+- an invalid configuration schema (for example a bad key name, or a duplicate config ID or path);
+- a `NullPointerException` from a field you only set in a method that runs later.
+
+The fix is almost always a guard (`isAvailable()`, `services().find(...)`) or a descriptor correction, not a broader permission.
+
+## It starts, but a feature does nothing
+
+Work through the four checks in [Permissions and availability](/docs/build-a-plugin/key-mechanisms/permissions-and-availability):
+
+1. **Permission.** Is the permission for the exact call declared in `plugin.json`? A refusal is logged against your plugin.
+2. **Service.** Did `services().find(...)` come back empty, or did an `unavailable()` sentinel respond?
+3. **Cubism version.** Does the log show `CubismEditorApiUnavailableException` or an unavailable API ID? The Editor version may not admit that API; see [Compatibility](/docs/use/compatibility).
+4. **State.** Is a model document actually active? Is the object you hold stale because the document changed?
+
+Also check that you registered in `enable()`, enrolled the handle in the disposable scope, and that the plugin is **enabled**, not just installed.
+
+Structured diagnostics are available through `context.diagnostics()` if you want to surface runtime-reported problems from inside the plugin.
+
+## A menu entry or action is missing
+
+- The menu path is a slash-delimited string. If it comes from a catalog, confirm the key exists in `messages.properties`, the base catalog.
+- `turboism.action.register` and `turboism.ui.menu.contribute` are both needed: one for the action, one for the menu entry.
+- The menu contribution refers to an action **ID**. A typo in either place leaves a menu item with nothing behind it, or an action with no menu.
+
+## A setting does not appear or does not stick
+
+- `turboism.config.plugin.write` is needed to register a schema, and `turboism.config.plugin.read` to read it.
+- Register the schema in `init`, before anything reads it, and guard with `config().isAvailable()`.
+- An editor field's `key` must match a key declared in the schema, and use lowercase `[a-z0-9._-]`.
+- Writes use revisions. A stale revision is rejected as a value in the result, not an exception, so inspect the result.
+
+## Still stuck
+
+- Reduce the plugin to the smallest version that shows the problem, ideally the Step 2 hello plugin.
+- Compare your descriptor with [Plugin Manifest and Packaging](/docs/build-a-plugin/manifest) and a first-party plugin's `plugin.json`.
+- Report a reproducible problem with the versions and log lines through [Report a Bug](/docs/report-a-bug). Remove private paths, credentials, and personal data from anything you share.

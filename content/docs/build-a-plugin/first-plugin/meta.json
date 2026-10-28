@@ -1,0 +1,12 @@
+{
+  "title": "Build Your First Plugin",
+  "pages": [
+    "index",
+    "setup",
+    "hello-action",
+    "build-and-install",
+    "read-the-model",
+    "settings",
+    "test-and-ship"
+  ]
+}

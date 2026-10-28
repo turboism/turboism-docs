@@ -1,0 +1,188 @@
+---
+title: "ステップ 2: Hello を表示する"
+description: テンプレートのサンプルを、アクションとメニュー項目を登録する独自のプラグインクラスに置き換え、必要な permission だけを正確に宣言します。
+---
+
+このステップでは、Parameter Peek が実際のプラグインになります。コマンドを登録し、メニューに配置し、挨拶を表示します。まだ Cubism のデータには触れません。その過程で、プラグインのライフサイクル、アクションとメニュー、宣言する permission、ローカライズに出会います。
+
+## 1. エントリポイントを書く
+
+`src/main/java/com/example/parameterpeek/ParameterPeekPlugin.java` の内容を次のものに置き換えます。
+
+```java title="ParameterPeekPlugin.java"
+package com.example.parameterpeek;
+
+import dev.turboism.sdk.action.ActionRegistry;
+import dev.turboism.sdk.menu.MenuRegistry;
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.PluginLogger;
+import dev.turboism.sdk.plugin.Registration;
+import dev.turboism.sdk.plugin.TurboismPlugin;
+import dev.turboism.sdk.ui.StatusNotification;
+import dev.turboism.sdk.ui.UiHostCapabilityService;
+
+public final class ParameterPeekPlugin implements TurboismPlugin {
+
+    private PluginContext context;
+    private PluginLogger logger;
+
+    @Override
+    public void init(final PluginContext context) throws Exception {
+        this.context = context;
+        this.logger = context.logger();
+        logger.info("Parameter Peek initialized");
+    }
+
+    @Override
+    public void enable() throws Exception {
+        Registration action = context.actions().register(
+                "parameterpeek.report",
+                ActionRegistry.Action.of(
+                        "parameterpeek.report",
+                        context.localization().text("parameterpeek.action.report"),
+                        ignored -> report()));
+        context.disposableScope().register(action);
+
+        Registration menu = context.menus().contribute(MenuRegistry.MenuContribution.of(
+                context.localization().text("parameterpeek.menu"), "parameterpeek.report", 100));
+        context.disposableScope().register(menu);
+
+        logger.info("Parameter Peek enabled");
+    }
+
+    private void report() {
+        final String message = context.localization().text("parameterpeek.hello");
+        logger.info(message);
+        context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", message)));
+    }
+
+    @Override
+    public void disable() throws Exception {
+        logger.info("Parameter Peek disabled");
+    }
+
+    @Override
+    public void shutdown() throws Exception {
+        logger.info("Parameter Peek shutdown");
+        context = null;
+    }
+}
+```
+
+クラスは `public` であり、`TurboismPlugin`（またはそのサブインターフェース）を実装し、public な引数なしコンストラクタを持つ必要があります。暗黙のコンストラクタで十分です。クラスは Runtime が構築するため、自分で `new ParameterPeekPlugin()` を呼び出してはいけません。
+
+### 重要な仕組み: 4 つのライフサイクルメソッド
+
+| メソッド | Runtime が呼び出すタイミング | 用途 |
+| --- | --- | --- |
+| `init(context)` | 1 回だけ、permission スコープ付きの `PluginContext` とともに。 | context を保持し、プライベートな状態を準備する。 |
+| `enable()` | プラグインがアクティブになるとき。 | アクション、メニュー、購読、その他の目に見える挙動を登録する。 |
+| `disable()` | プラグインがオフにされるとき。 | アクティブな挙動を停止する。 |
+| `shutdown()` | 無効化が完了した後。 | プライベートなリソースを解放する。 |
+
+構築、`init`、`enable` のいずれかが例外をスローすると、Runtime は JAR 全体をロールバックします。`init` が失敗すると `enable` は実行されません。このため、登録には `enable()` が適した場所です。Runtime が登録を想定している場所であり、失敗が安全に処理される場所でもあるからです。
+
+ルールのもう半分はクリーンアップです。受け取る `Registration` はすべて `AutoCloseable` なハンドルです。これを `context.disposableScope().register(...)` に渡すと、プラグインが無効化されるときに Runtime が逆順でクローズします。クリーンアップのコードを書かなくても、プラグインを無効化するとコマンドとメニュー項目は消えます。scope を使い忘れると、登録がプラグインより長く残り、Runtime がプラグインの ClassLoader を安全に解放できなくなる可能性があります。複数のエントリポイントやホットリロードを含む完全なモデルについては、[ライフサイクルとクリーンアップ](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup)を読んでください。
+
+### 重要な仕組み: アクションとメニューは別物
+
+挙動と配置は別々に登録されます。
+
+- **アクション**は、安定した ID（`parameterpeek.report`）、ラベル、ハンドラーを持ちます。挙動の単位であり、キーボードショートカット、メニュー、ツールバー、コンテキストメニューに割り当てられます。
+- **メニュー contribution** は、スラッシュ区切りのメニューパスを、アクション ID と順序番号に結び付けます。
+
+アクション ID は安定した識別子として扱い、リリースをまたいで変更しないでください。名前を変えると別のアクションになります。ここでは、メニューパス `Tools/Parameter Peek` はローカライズカタログから取得されるため、メニューのテキストを翻訳できます。ツールバー、コンテキストメニュー、設定ページについては[プラグインインターフェース](/docs/build-a-plugin/plugin-interfaces)を参照してください。
+
+ハンドラーは、ステータスバーサービスが存在すると決めつけず、`context.services().find(...)` を使用します。`find` は `Optional` を返すため、ホストがそのサービスを提供しない場合でも、プラグインは静かに縮退します。これが重要な理由は、[permission と可用性](/docs/build-a-plugin/key-mechanisms/permissions-and-availability)で説明しています。
+
+## 2. テキストカタログを追加する
+
+ユーザーに表示されるテキストは Java の文字列ではなく、カタログに置きます。`src/main/resources/META-INF/turboism/i18n/messages.properties` を次のものに置き換えます。
+
+```properties title="messages.properties"
+plugin.name=Parameter Peek
+plugin.description=Reports how many parameters the active model has and how often they change.
+parameterpeek.action.report=Parameter Peek: Report
+parameterpeek.menu=Tools/Parameter Peek
+parameterpeek.hello=Hello from Parameter Peek!
+```
+
+次に、同じ内容を隣の `messages_en.properties` にコピーします。記述子は存在するカタログを宣言し（`"locales": ["en"]`）、Runtime は宣言されたすべてのカタログが JAR に含まれていることを要求します。ロケールでキーが見つからない場合、ベースの `messages.properties` が常に最後のフォールバックになります。後から言語を追加するには、`messages_<locale>.properties` を追加してそのロケールを列挙します。ロケール ID については[プラグインマニフェストとパッケージング](/docs/build-a-plugin/manifest)を参照してください。
+
+## 3. permission を宣言する
+
+`src/main/resources/META-INF/turboism/plugin.json` を開きます。テンプレートは自身のサンプル用の permission（`publish`、`subscribe`、`register`）を宣言しています。`description`、`category`、`permissions`、`lifecycle` の部分を、Parameter Peek を表すものに置き換えます。
+
+```json title="plugin.json"
+{
+  "format": "turboism.plugin.meta",
+  "schemaVersion": 3,
+  "id": "com.example.parameterpeek",
+  "name": "Parameter Peek",
+  "version": "0.1.0",
+  "description": "Reports how many parameters the active model has and how often they change.",
+  "category": "analysis",
+  "tags": ["example", "parameters"],
+  "entrypoints": [
+    "com.example.parameterpeek.ParameterPeekPlugin"
+  ],
+  "turboismApi": "[0.67.0,1.0.0)",
+  "authors": [
+    { "name": "Your Name" }
+  ],
+  "license": "MIT",
+  "website": "https://example.com/parameter-peek",
+  "resources": [],
+  "i18n": {
+    "baseName": "META-INF/turboism/i18n/messages",
+    "locales": ["en"]
+  },
+  "dependencies": [],
+  "permissions": [
+    { "id": "turboism.action.register", "scope": "application", "reason": "Registers the Parameter Peek report action." },
+    { "id": "turboism.ui.menu.contribute", "scope": "application", "reason": "Adds the report command to the Tools menu." },
+    { "id": "turboism.ui.status.notify", "scope": "application", "reason": "Shows the report in the status bar." }
+  ],
+  "capabilities": [],
+  "lifecycle": {
+    "hotReload": true
+  },
+  "environment": {
+    "requiresCubism": true,
+    "ui": "none"
+  }
+}
+```
+
+`authors`、`license`、`website` の値は、自分のプロジェクトに合わせて事実どおりにしてください。これらはユーザーに表示されます。プラグインを共有する前に、`example` を含むものはすべて変更してください。
+
+### 重要な仕組み: 宣言したものだけが使える
+
+各 permission は、越えたいリスク境界を 1 つ示し、プラグインをレビューする人に表示される `reason` を伴います。
+
+| Permission | このプラグインが必要とする理由 |
+| --- | --- |
+| `turboism.action.register` | `context.actions().register(...)` |
+| `turboism.ui.menu.contribute` | `context.menus().contribute(...)` |
+| `turboism.ui.status.notify` | `ui.notifyStatus(...)` |
+
+宣言されていないアクセスは、黙って許可されるのではなく呼び出し時に拒否されます。そのため、permission が不足していると、コマンドを初めて実行したときにエラーとして現れます。宣言するのは最小限にとどめ、より大きなプラグインから permission をコピーしないでください。permission ID の一覧は SDK の `PermissionIds` クラスにあり、[SDK HTML API リファレンス](https://turboism.dev/sdk/dev/turboism/sdk/permission/PermissionIds.html)に記載されています。また、`category` は `analysis` のような小文字の kebab-case のトークンにしてください。レビュー済みのファーストパーティカテゴリは[プラグインマニフェストとパッケージング](/docs/build-a-plugin/manifest#category-と-tags)に記載されています。
+
+ここで `lifecycle.hotReload` が `true` なのは、Parameter Peek が通常の SDK サービスしか使わず、disposable scope を通じてクリーンアップするためです。バイトコードトランスフォーマーやネイティブフックを登録するプラグインは `false` を宣言する必要があります。
+
+## 4. ビルドする
+
+```bash
+./gradlew build
+```
+
+ビルドが import の欠落で失敗する場合は、import を含めてファイル全体を置き換えたか確認してください。テンプレート由来の `HelloEvent` や `hello.action.label` への参照が残っているのが、よくある原因です。
+
+## チェックポイント
+
+- プロジェクトがビルドでき、`build/libs/parameterpeek-turboism-plugin-0.1.0.jar` が存在する。
+- `plugin.json` が宣言する permission はちょうど 3 つで、どれも使用している行を指し示せる。
+- `messages.properties` と `messages_en.properties` の両方に、同じ 5 つのキーが含まれている。
+
+**次へ:** [ステップ 3: ビルドとインストール](/docs/build-a-plugin/first-plugin/build-and-install)

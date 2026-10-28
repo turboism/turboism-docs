@@ -1,0 +1,159 @@
+---
+title: "ステップ 4: モデルを読み取る"
+description: アクティブなモデルのパラメータを読み取り、型付きイベントでパラメータの変更を数え、利用できないデータを処理し、サポートする Cubism バージョンを宣言します。
+---
+
+Parameter Peek はまだ挨拶するだけです。このステップでは、Editor から 2 つのことを学びます。開いているモデルにパラメータがいくつあるか、そしてプラグインが有効化されてからパラメータ値が何回変更されたかです。
+
+## 1. 新しい permission を追加する
+
+モデルデータの読み取りとその変更の観測は、さらに 2 つのリスク境界を越えます。イベントの受信には 3 つ目が必要です。これらを `plugin.json` の `permissions` に追加します。
+
+```json
+{ "id": "turboism.cubism.model.read", "scope": "application", "reason": "Counts the parameters of the active model." },
+{ "id": "turboism.cubism.model.observe", "scope": "application", "reason": "Counts parameter value changes." },
+{ "id": "turboism.event.subscribe", "scope": "application", "reason": "Receives parameter change events." }
+```
+
+`model.read` はモデルオブジェクトの読み取りを、`model.observe` はモデルの変更を表すイベントの受信を、`event.subscribe` はイベントを購読すること自体を許可します。パラメータイベントには、後ろの 2 つの両方が必要です。
+
+## 2. アクティブなモデルを読み取る
+
+`report()` を置き換え、カウンターのフィールドを追加します。変更箇所はコメントで示しています。
+
+```java title="ParameterPeekPlugin.java (changed parts)"
+import dev.turboism.sdk.cubism.CubismEditorApiUnavailableException;
+import dev.turboism.sdk.cubism.event.ParameterValueEvent;
+import dev.turboism.sdk.event.SubscribeEvent;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public final class ParameterPeekPlugin implements TurboismPlugin {
+
+    private final AtomicInteger observedEdits = new AtomicInteger();   // new
+    private PluginContext context;
+    private PluginLogger logger;
+
+    // init(), disable(), shutdown() unchanged
+
+    @Override
+    public void enable() throws Exception {
+        observedEdits.set(0);                                           // new
+        // ... action and menu registration unchanged
+    }
+
+    @SubscribeEvent                                                     // new
+    public void onParameterChanged(final ParameterValueEvent.On event) {
+        observedEdits.incrementAndGet();
+    }
+
+    private void report() {
+        final String summary;
+        try {
+            if (!context.cubism().hasActiveModel()) {
+                summary = context.localization().text("parameterpeek.summary.no-model");
+            } else {
+                final int count = context.cubism().model().active().parameters().all().size();
+                summary = context.localization().format("parameterpeek.summary", count, observedEdits.get());
+            }
+        } catch (CubismEditorApiUnavailableException unavailable) {
+            logger.info("Parameter reading is unavailable on this Cubism version: " + unavailable.apiId());
+            return;
+        }
+        logger.info(summary);
+        context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", summary)));
+    }
+}
+```
+
+**両方の**カタログファイルに、2 つの新しいメッセージを追加します。
+
+```properties
+parameterpeek.summary=The active model has {0} parameters; {1} value changes observed since enable.
+parameterpeek.summary.no-model=Open a model document first.
+```
+
+`{0}` と `{1}` は `java.text.MessageFormat` のプレースホルダーで、`localization().format(key, args...)` によって埋められます。`MessageFormat` であるため、メッセージ内のリテラルのアポストロフィは 2 回書く（`''`）必要があり、数値はアクティブなロケールに合わせて書式化されます。
+
+### 重要な仕組み: モデルを見る 2 つの方法
+
+SDK は Cubism を 2 通りの見方で提供します。
+
+- `context.cubism().activeModel()` のような**スナップショット**は、不変の値オブジェクトです。読み取りが軽く、保持しても安全ですが、ある時点の状態を表します。
+- `context.cubism().model().active()` から到達する**オブジェクトモデル**は、ライブの `Parameters`、`Parts`、`Drawables` などを提供します。これらのオブジェクトは**世代に束縛**されています。ドキュメントの切り替え、再読み込み、削除、Provider の置換の後に、保持していた参照は誤ったものを黙って指すのではなく、fail closed になります。
+
+このため、`Parameter` をフィールドに保存して後で再利用してはいけません。必要になるたびに `context.cubism()` から解決し直してください。より広い読み取りパターンについては、[SDK API ガイド](/docs/reference/sdk-api#スナップショットとクエリ-api)を参照してください。
+
+### 重要な仕組み: fail closed にして、そのことを伝える
+
+Cubism のデータが常にあるとは限りません。`report()` がそれをどう処理しているかを見てください。
+
+1. `hasActiveModel()` は、ドキュメントがモデルではないという一般的なケースに、例外なしで答えます。
+2. `CubismEditorApiUnavailableException` は、より稀なケース、つまりアクティブな Cubism バージョンがその呼び出しを許可していない場合を扱います。ユーザーに届かせずに、機能の境界でこれを捕捉して縮退（ここではログ出力）させます。
+
+何をするか決めるために Cubism のバージョン番号を文字列比較してはいけません。SDK に判断させてください。同じ考え方があらゆるサービスに当てはまります。permission は問い合わせを許可するだけで、答えを約束するものではありません。[permission と可用性](/docs/build-a-plugin/key-mechanisms/permissions-and-availability)を参照してください。
+
+## 3. イベントに反応する
+
+`ParameterValueEvent` は 3 つの状態を持つ sealed ファミリーです。
+
+| 型 | 発火するタイミング | 値を変更できるか |
+| --- | --- | --- |
+| `Before` | ホストの書き込みの前に同期的に。 | はい。ただし別の *intercept* permission が必要です。 |
+| `On` | 値が**実際に変化した**書き込みの後に。 | いいえ。観測のみです。 |
+| `After` | 値が変化しなかったものを含め、成功したすべての書き込みの後に。 | いいえ。観測のみです。 |
+
+Parameter Peek は変更を数えるため、`On` が適切な型です。観測に `Before` は必要ありません。
+
+`@SubscribeEvent` は宣言的なスタイルです。ステップ 1 でセットアップした `turboism-event-processor` アノテーションプロセッサが、コンパイル時にアノテーションを読み取り、購読者のインデックス（JAR で見た `__TurboismSubscriberCatalog` クラス）を生成するため、手動での登録や破棄は不要です。リスナーは、public クラスの public なインスタンスメソッドで、`void` を返し、具体的なイベントパラメータをちょうど 1 つ宣言している必要があります。それ以外はプロセッサがコンパイルエラーとして報告します。
+
+代わりに手動で購読することもでき、プロセッサのない SDK でも動作します。返されたハンドルは disposable scope に保持してください。
+
+```java
+Registration subscription = context.eventBus().subscribe(
+        ParameterValueEvent.On.class,
+        event -> observedEdits.incrementAndGet());
+context.disposableScope().register(subscription);
+```
+
+同じイベントには、どちらか一方のスタイルだけを使ってください。両方を使うと、変更が 2 回数えられます。
+
+### 重要な仕組み: イベントは自分のスレッドでは実行されない
+
+通常のイベント観測は非同期に配信され、ライフサイクルメソッドは遷移ごとに異なる可能性のあるワーカースレッドで実行され、メニューアクションはさらに別の場所で実行されます。プラグインを並行処理されるものとして扱ってください。カウンターが `int` ではなく `AtomicInteger` なのはそのためです。リスナーは短く、ブロックしないようにしてください。[スレッドとタスク](/docs/build-a-plugin/key-mechanisms/threads-and-tasks)で、ルールとバックグラウンド処理や UI 処理のスケジュール方法を説明しています。
+
+## 4. サポートする Cubism バージョンを宣言する
+
+`src/main/resources/META-INF/turboism/cubism-versions.json` を開きます。セットアップスクリプトが、リリースでレビュー済みの Cubism Editor バージョンからこれを埋めています。
+
+```json title="cubism-versions.json"
+{
+  "format": "turboism.plugin-cubism-versions/v1",
+  "plugin": "com.example.parameterpeek",
+  "supportedVersions": ["5.0.00", "5.0.01", "..." , "5.3.04"],
+  "fullFeatureVersions": ["5.0.00", "5.0.01", "..." , "5.3.04"]
+}
+```
+
+- `supportedVersions` は、プラグインが利用できる Editor の正確なバージョンを列挙します。
+- `fullFeatureVersions` は、**すべての**機能が動作するサブセットです。`supportedVersions` のサブセットである必要があります。
+
+このファイルはあなたが行う主張であり、SDK が代わりに確認してくれるものではありません。両方のリストを、実際にテストしたバージョンに絞ってください。不確かな場合は、宣言を少なめにしてください。プラグイン管理は、宣言がない、または無効な場合を **未宣言** と表示し、ユーザーはプラグインの詳細であなたのリストを確認します。
+
+`@CubismEditor` などの SDK アノテーションは、ある SDK API がどのバージョンで動作するかを示します。プラグインがそのバージョンで動作することの証明にはなりません。互換性は、SDK の宣言、自分自身のテスト、実行時チェックの組み合わせで決まります。レビュー済みのバージョンセットと Editor のマイナーラインごとのケイパビリティの境界については、[互換性](/docs/use/compatibility)を参照してください。
+
+## 5. 試す
+
+ビルドし、再インストール（[ステップ 3](/docs/build-a-plugin/first-plugin/build-and-install#5-編集ビルドインストールのループ)を参照）し、Cubism を再起動してから、次を行います。
+
+1. モデルを開かずに **Parameter Peek: Report** を実行します。`Open a model document first.` と表示されるはずです。
+2. モデルを開いて、もう一度実行します。パラメータ数と `0 value changes` が表示されるはずです。
+3. パラメータのスライダーを何度か動かしてから、もう一度コマンドを実行します。変更回数が増えます。
+
+## チェックポイント
+
+- レポートがテストモデルの正しいパラメータ数を表示する。
+- パラメータを編集すると変更カウンターが増え、モデルがない場合は分かりやすいメッセージが表示される。
+- `cubism-versions.json` にテスト済みのバージョンだけが列挙されている。
+
+**次へ:** [ステップ 5: 設定を追加する](/docs/build-a-plugin/first-plugin/settings)

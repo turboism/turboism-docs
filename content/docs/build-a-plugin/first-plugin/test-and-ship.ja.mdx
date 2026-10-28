@@ -1,0 +1,210 @@
+---
+title: "ステップ 6: テストと公開"
+description: Cubism ホストなしでライフサイクルとクリーンアップをユニットテストし、実ホストでのチェックリストを実施し、メタデータを仕上げて、プラグイン JAR を共有します。
+---
+
+プラグインは動作します。この最後のステップでは、それを信頼できるものにします。Cubism を必要としない契約をテストし、残りを実ホストで手動確認し、メタデータを整えて、JAR を他の人に渡します。
+
+## 1. ホストなしでテストすること
+
+ユニットテストは、プラグインが登録すべきものを登録し、再び取り除くことを証明できます。Cubism がどう動作するかは証明できません。前者はテストで、後者は実ホストでの実行でカバーしてください。
+
+ホストなしでテストする価値があるもの:
+
+- `enable()` による登録と、スコープがクローズされたときのその削除。
+- オプションのサービスが利用できない場合の挙動（ここでは、何も用意していない context の `config()` と `localization()`）。
+- 解析や書式化など、取り出した純粋なロジック。
+
+`build.gradle.kts` に JUnit を追加します。SDK は `compileOnly` でありテストのクラスパスには届かないため、テストには明示的に追加します。
+
+```kotlin title="build.gradle.kts"
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    // ... existing compileOnly and annotationProcessor entries
+    testImplementation(sdkJars)
+    testImplementation(platform("org.junit:junit-bom:5.11.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+```
+
+## 2. 偽の `PluginContext` を書く
+
+`PluginContext` はインターフェースなので、テストは独自のものを渡せます。プラグインが触れるものだけを実装してください。オプションのサービスは、すでに何もしない「利用不可」の実装が既定になっており、このテストでの `config()` はまさにそれであるべきです。
+
+```java title="src/test/java/com/example/parameterpeek/ParameterPeekPluginTest.java"
+package com.example.parameterpeek;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import dev.turboism.sdk.action.ActionRegistry;
+import dev.turboism.sdk.cubism.CubismFacade;
+import dev.turboism.sdk.diagnostics.DiagnosticReport;
+import dev.turboism.sdk.event.EventBus;
+import dev.turboism.sdk.i18n.PluginLocalization;
+import dev.turboism.sdk.menu.MenuRegistry;
+import dev.turboism.sdk.permission.PluginPermission;
+import dev.turboism.sdk.plugin.DisposableScope;
+import dev.turboism.sdk.plugin.PluginContext;
+import dev.turboism.sdk.plugin.PluginDescriptor;
+import dev.turboism.sdk.plugin.PluginLogger;
+import dev.turboism.sdk.plugin.PluginPaths;
+import dev.turboism.sdk.ui.UiScheduler;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import org.junit.jupiter.api.Test;
+
+class ParameterPeekPluginTest {
+
+    @Test
+    void enableRegistersOneActionAndOneMenuEntry() throws Exception {
+        final FakeContext context = new FakeContext();
+        final ParameterPeekPlugin plugin = new ParameterPeekPlugin();
+
+        plugin.init(context);
+        plugin.enable();
+
+        assertEquals(List.of("parameterpeek.report"), context.actionIds);
+        assertEquals(1, context.menuCount);
+    }
+
+    @Test
+    void closingTheScopeWithdrawsEveryRegistration() throws Exception {
+        final FakeContext context = new FakeContext();
+        final ParameterPeekPlugin plugin = new ParameterPeekPlugin();
+        plugin.init(context);
+        plugin.enable();
+
+        plugin.disable();
+        context.scope.close();
+
+        assertTrue(context.actionIds.isEmpty());
+        assertEquals(0, context.menuCount);
+    }
+
+    /** Implements only what the plugin touches; everything else is deliberately inert. */
+    private static final class FakeContext implements PluginContext {
+        final DisposableScope scope = new DisposableScope();
+        final List<String> actionIds = new ArrayList<>();
+        int menuCount;
+
+        @Override public ActionRegistry actions() {
+            return (id, action) -> {
+                actionIds.add(id);
+                return () -> actionIds.remove(id);
+            };
+        }
+
+        @Override public MenuRegistry menus() {
+            return contribution -> {
+                menuCount++;
+                return () -> menuCount--;
+            };
+        }
+
+        @Override public PluginLocalization localization() { return new KeyEchoLocalization(); }
+        @Override public DisposableScope disposableScope() { return scope; }
+        @Override public PluginLogger logger() { return new SilentLogger(); }
+        @Override public List<PluginPermission> permissions() { return List.of(); }
+        @Override public PluginDescriptor descriptor() { return null; }
+        @Override public PluginPaths paths() { return null; }
+        @Override public CubismFacade cubism() { return null; }
+        @Override public EventBus eventBus() { return null; }
+        @Override public UiScheduler uiScheduler() { return null; }
+        @Override public DiagnosticReport diagnostics() { return null; }
+    }
+
+    /** Returns each message key unchanged, so tests do not depend on catalog wording. */
+    private static final class KeyEchoLocalization implements PluginLocalization {
+        @Override public Locale locale() { return Locale.ENGLISH; }
+        @Override public String text(final String key) { return key; }
+        @Override public String format(final String key, final Object... arguments) { return key; }
+        @Override public boolean contains(final String key) { return true; }
+    }
+
+    private static final class SilentLogger implements PluginLogger {
+        @Override public void debug(final String message) {}
+        @Override public void info(final String message) {}
+        @Override public void warn(final String message) {}
+        @Override public void error(final String message) {}
+        @Override public void error(final String message, final Throwable throwable) {}
+    }
+}
+```
+
+実行します。
+
+```bash
+./gradlew test
+```
+
+このテストで理解しておく価値のある点が 2 つあります。
+
+- フェイクは `config()` を提供しません。既定は「利用不可」のセンチネルなので、`init` はステップ 5 で書いた `isAvailable()` の分岐を通ります。`init` がガードなしで `registerUserEditableSchema` を呼んでいたら、このテストは `UnsupportedOperationException` で失敗していたでしょう。ここならミリ秒で見つかるバグが、そうでなければ混乱したユーザーからの報告として現れます。
+- 2 つ目のテストが、ライフサイクルのバグに関して重要なものです。アクションを `disposableScope()` に入れ忘れていたら、`actionIds` は空になりません。追加するすべての登録に、このパターンを広げてください。
+
+実行されるのはプラグイン自身のロジックだけです。ユニットテストに合格しても、プラグインがいずれかの Cubism バージョンで動作することは示されません。
+
+## 3. 実ホストでテストする
+
+コンパイルとフェイクでは Editor の挙動は分からず、ユーザーがプラグインを実行するのは Editor です。ビルドを共有する前に、使い捨てのモデルを使って Editor にインストールし、次のチェックリストを確認してください。
+
+- [ ] インストールして再起動すると、**プラグイン管理…** で有効として表示される。
+- [ ] **モデルを開いていない**状態でも、コマンドが表示され、エラーなく実行できる。
+- [ ] モデルを開いた状態と、パラメータを編集した後に、正しい数が報告される。
+- [ ] 設定が表示され、適用され、再起動後も保持される。
+- [ ] プラグインを無効化するとメニュー項目が消え、再び有効化すると復元される。
+- [ ] アンインストールして再起動すると、保持を選んだデータ以外は何も残らない。
+- [ ] `cubism-versions.json` に列挙した各 Cubism バージョンで、実際に実行した。実行していないものは削除する。
+
+使用した Turboism バージョン、Cubism バージョン、手順を記録してください。実行できなかったバージョンについては、動作すると主張せず、その旨を明記してください。AI 支援による作業に同じ基準を適用する方法については、[LLM を使った開発](/docs/build-a-plugin/llm-coding-context#開発者の要件)を参照してください。
+
+## 4. メタデータを仕上げる
+
+`plugin.json` を、ユーザーの目で見直します。
+
+| フィールド | 確認事項 |
+| --- | --- |
+| `id` | 逆ドメイン形式で、一意で、確定していること。後から変更すると別のプラグインになります。 |
+| `version` | 配布するリリースごとに上げ、ファイル名が一致するよう `build.gradle.kts` の `version` と同じにしておきます。 |
+| `turboismApi` | 最小値は、使用するすべての SDK メンバーを提供する最も古いフレームワーク API にします。新しい SDK に対してコンパイルしても、その追加機能が古い Runtime で動作するようにはなりません。`[min,max)` の上限は `1.0.0` 未満のままにします。 |
+| `description`、`authors`、`license`、`website` | 実在する最新の内容で、テンプレートのプレースホルダー値ではないこと。 |
+| `permissions` | それぞれが使用されており、レビュアーが受け入れられる `reason` があること。試行中に追加したものは削除します。 |
+| `category`、`tags` | 当てはまるものがあればレビュー済みのカテゴリ。タグは小文字の kebab-case で、最大 12 個です。 |
+| `environment.requiresCubism` | ここのように、ライブの Editor が必要なら `true`。 |
+| `lifecycle.hotReload` | [プラグインマニフェストとパッケージング](/docs/build-a-plugin/manifest#lifecycle-とホットリロード)の条件を満たす場合のみ `true`。 |
+
+また、`cubism-versions.json`（テスト済みバージョンのみで、`fullFeatureVersions` が `supportedVersions` のサブセットであること）と、`i18n.locales` に列挙したすべてのロケールにカタログファイルがあることも確認してください。
+
+## 5. JAR を共有する
+
+`build/libs/` にあるファイルが配布物です。インストーラーも、ラッパーアーカイブもありません。誰かに渡すには、次のようにします。
+
+1. `./gradlew clean build` でクリーンな状態からビルドします。
+2. JAR に、そのバージョン、テストした Turboism と Cubism のバージョン、要求する permission とその理由の短いメモを添えて送ります。
+3. 受け取った人は **プラグイン管理… → JAR からインストール…** でインストールし、ローカル/未検証ソースのダイアログを承認して、再起動します。[プラグイン管理](/docs/use/plugin-management)を参照してください。
+
+これはローカルインストールであることを明確に伝えてください。この方法でインストールされた JAR を Turboism がレビューしたり認証したりすることはありません。
+
+### プラグインディレクトリはキュレーションされている
+
+[プラグインディレクトリ](https://turboism.dev/plugins)は、セルフサービスのマーケットプレイスではなく、Turboism チームが管理するキュレーション済みのカタログです。サードパーティの掲載はまだ公開されておらず、ビルドできるというだけでは掲載の対象になりません。配布を念頭に置いて設計し、候補については [Turboism GitHub organization](https://github.com/turboism) で相談してください。現在の状況は[コントリビューション](/docs/build-a-plugin/contributing)を参照してください。
+
+## 次のステップ
+
+これで、作成、ビルド、インストール、観測、反応、永続化、テスト、公開という一連のループをひととおり経験しました。さらに深く学ぶには、次のようにします。
+
+- [主要な仕組み](/docs/build-a-plugin/key-mechanisms/lifecycle-and-cleanup)のページを順に読んでください。ステップ 2 から 5 で理解しないまま使ったものを説明しています。
+- 設計チェックリストについては[プラグインの設計](/docs/build-a-plugin/designing-plugins)を、特にモデルを変更する前の書き込み安全性のルールを学んでください。
+- [ファーストパーティプラグイン](/docs/use/first-party-plugins)で公式のプラグインを見てください。まだ使っていないサービス（ツールバー、コンテキストメニュー、タスク、ストレージ、ユーザーファイル）については [SDK API ガイド](/docs/reference/sdk-api)を参照してください。
+- Parameter Peek を拡張してみてください。同じアクションにツールバーボタンを追加する、変更回数を `storage()` に永続化する、または `messages_zh_Hans.properties` を追加して 2 つ目のロケールを加える、といったことができます。

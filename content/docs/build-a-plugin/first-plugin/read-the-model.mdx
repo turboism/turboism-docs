@@ -1,0 +1,159 @@
+---
+title: "Step 4: Read the model"
+description: Read the active model's parameters, count parameter changes with a typed event, handle unavailable data, and declare the Cubism versions you support.
+---
+
+Parameter Peek still only says hello. In this step it learns two things from the Editor: how many parameters the open model has, and how many times a parameter value has changed since the plugin was enabled.
+
+## 1. Add the new permissions
+
+Reading model data and observing its changes cross two more risk boundaries, and receiving events needs a third. Add these to `permissions` in `plugin.json`:
+
+```json
+{ "id": "turboism.cubism.model.read", "scope": "application", "reason": "Counts the parameters of the active model." },
+{ "id": "turboism.cubism.model.observe", "scope": "application", "reason": "Counts parameter value changes." },
+{ "id": "turboism.event.subscribe", "scope": "application", "reason": "Receives parameter change events." }
+```
+
+`model.read` lets you read model objects, `model.observe` lets you receive events that describe model changes, and `event.subscribe` lets you subscribe to events at all. A parameter event needs both of the last two.
+
+## 2. Read the active model
+
+Replace `report()` and add a counter field. The changes are marked with comments.
+
+```java title="ParameterPeekPlugin.java (changed parts)"
+import dev.turboism.sdk.cubism.CubismEditorApiUnavailableException;
+import dev.turboism.sdk.cubism.event.ParameterValueEvent;
+import dev.turboism.sdk.event.SubscribeEvent;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public final class ParameterPeekPlugin implements TurboismPlugin {
+
+    private final AtomicInteger observedEdits = new AtomicInteger();   // new
+    private PluginContext context;
+    private PluginLogger logger;
+
+    // init(), disable(), shutdown() unchanged
+
+    @Override
+    public void enable() throws Exception {
+        observedEdits.set(0);                                           // new
+        // ... action and menu registration unchanged
+    }
+
+    @SubscribeEvent                                                     // new
+    public void onParameterChanged(final ParameterValueEvent.On event) {
+        observedEdits.incrementAndGet();
+    }
+
+    private void report() {
+        final String summary;
+        try {
+            if (!context.cubism().hasActiveModel()) {
+                summary = context.localization().text("parameterpeek.summary.no-model");
+            } else {
+                final int count = context.cubism().model().active().parameters().all().size();
+                summary = context.localization().format("parameterpeek.summary", count, observedEdits.get());
+            }
+        } catch (CubismEditorApiUnavailableException unavailable) {
+            logger.info("Parameter reading is unavailable on this Cubism version: " + unavailable.apiId());
+            return;
+        }
+        logger.info(summary);
+        context.services().find(UiHostCapabilityService.class).ifPresent(ui ->
+                ui.notifyStatus(new StatusNotification("parameterpeek.report", "INFO", summary)));
+    }
+}
+```
+
+Add the two new messages to **both** catalog files:
+
+```properties
+parameterpeek.summary=The active model has {0} parameters; {1} value changes observed since enable.
+parameterpeek.summary.no-model=Open a model document first.
+```
+
+`{0}` and `{1}` are `java.text.MessageFormat` placeholders, filled by `localization().format(key, args...)`. Because it is `MessageFormat`, a literal apostrophe in a message must be written twice (`''`), and numbers are formatted for the active locale.
+
+### Key mechanism: two ways to see the model
+
+The SDK gives you two views of Cubism:
+
+- **Snapshots** such as `context.cubism().activeModel()` are immutable value objects. They are cheap to read and safe to keep, but they describe a moment in time.
+- **The object model**, reached through `context.cubism().model().active()`, gives live `Parameters`, `Parts`, `Drawables`, and so on. These objects are **generation-bound**: after a document switch, reload, deletion, or provider replacement, a held reference fails closed instead of quietly pointing at the wrong thing.
+
+For that reason, do not store a `Parameter` in a field and reuse it later. Re-resolve it from `context.cubism()` each time you need it. For wider read patterns see the [SDK API Guide](/docs/reference/sdk-api#snapshot-and-query-apis).
+
+### Key mechanism: fail closed, and say so
+
+Cubism data is not always there. Look at how `report()` handles it:
+
+1. `hasActiveModel()` answers the common case, a document that is not a model, without an exception.
+2. `CubismEditorApiUnavailableException` covers the less common case: the active Cubism version does not admit the call. Catch it at the feature boundary and degrade (here, log it) rather than letting it reach the user.
+
+Never string-compare Cubism version numbers to decide what to do. Let the SDK tell you. The same idea applies to every service: a permission only lets you ask, it does not promise the answer. See [Permissions and availability](/docs/build-a-plugin/key-mechanisms/permissions-and-availability).
+
+## 3. React to events
+
+`ParameterValueEvent` is a sealed family with three states:
+
+| Type | When it fires | Can you change the value? |
+| --- | --- | --- |
+| `Before` | Synchronously, before the host write. | Yes, but it needs the separate *intercept* permission. |
+| `On` | After a write that **actually changed** the value. | No, observe only. |
+| `After` | After every successful write, including unchanged ones. | No, observe only. |
+
+Parameter Peek counts changes, so `On` is the right type. Observation never needs `Before`.
+
+`@SubscribeEvent` is the declarative style. The `turboism-event-processor` annotation processor you set up in step 1 reads the annotation at compile time and generates a subscriber index (the `__TurboismSubscriberCatalog` class you saw in the JAR), so there is no manual registration or disposal. A listener must be a public instance method that returns `void` and declares exactly one concrete event parameter, on a public class; the processor reports anything else as a compile error.
+
+You can subscribe by hand instead, which also works on SDKs without the processor. Keep the returned handle in the disposable scope:
+
+```java
+Registration subscription = context.eventBus().subscribe(
+        ParameterValueEvent.On.class,
+        event -> observedEdits.incrementAndGet());
+context.disposableScope().register(subscription);
+```
+
+Use one style or the other for a given event, not both, or you will count each change twice.
+
+### Key mechanism: events do not run on your thread
+
+Ordinary event observations are delivered asynchronously, lifecycle methods run on worker threads that can differ between transitions, and menu actions run elsewhere again. Treat your plugin as concurrent: that is why the counter is an `AtomicInteger` and not an `int`. Keep listeners short and non-blocking. [Threads and tasks](/docs/build-a-plugin/key-mechanisms/threads-and-tasks) covers the rules and how to schedule background and UI work.
+
+## 4. Declare the Cubism versions you support
+
+Open `src/main/resources/META-INF/turboism/cubism-versions.json`. The setup script filled it from the release's reviewed Cubism Editor versions:
+
+```json title="cubism-versions.json"
+{
+  "format": "turboism.plugin-cubism-versions/v1",
+  "plugin": "com.example.parameterpeek",
+  "supportedVersions": ["5.0.00", "5.0.01", "..." , "5.3.04"],
+  "fullFeatureVersions": ["5.0.00", "5.0.01", "..." , "5.3.04"]
+}
+```
+
+- `supportedVersions` lists the exact Editor versions where your plugin is usable.
+- `fullFeatureVersions` is the subset where **every** feature works. It must be a subset of `supportedVersions`.
+
+The file is a claim you make, not something the SDK checks for you. Narrow both lists to the versions you have actually tested. If you are unsure, declare fewer: Plugin Management shows missing or invalid declarations as **Not declared**, and users see your lists in the plugin's details.
+
+SDK annotations such as `@CubismEditor` describe which versions an SDK API works on. They do not prove your plugin works on those versions. Compatibility is the combination of the SDK's declaration, your own testing, and the runtime check. See [Compatibility](/docs/use/compatibility) for the reviewed version set and the capability boundaries per Editor minor line.
+
+## 5. Try it
+
+Build, reinstall (see [step 3](/docs/build-a-plugin/first-plugin/build-and-install#5-the-edit-build-install-loop)), restart Cubism, then:
+
+1. Run **Parameter Peek: Report** with no model open. You should see `Open a model document first.`
+2. Open a model and run it again. You should see the parameter count and `0 value changes`.
+3. Move a parameter slider a few times, then run the command again. The change count goes up.
+
+## Checkpoint
+
+- The report shows the right parameter count for your test model.
+- The change counter increases when you edit a parameter, and the no-model case shows a friendly message.
+- `cubism-versions.json` lists only versions you have tested.
+
+**Next:** [Step 5: Add a setting](/docs/build-a-plugin/first-plugin/settings)

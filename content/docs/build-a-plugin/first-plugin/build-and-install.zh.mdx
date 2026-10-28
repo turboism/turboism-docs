@@ -1,0 +1,89 @@
+---
+title: "第 3 步：构建与安装"
+description: 通过插件管理安装你的插件 JAR，重启 Cubism，运行命令，找到你的日志行，并掌握“修改—构建—安装”的循环。
+---
+
+现在让插件真正跑起来。你要把 JAR 安装到 Turboism，重启 Cubism，运行命令，并在日志中找到你的输出。
+
+## 1. 检查 JAR
+
+```bash
+./gradlew build
+```
+
+列出压缩包内容，确认 Runtime 将看到什么：
+
+```bash
+unzip -l build/libs/parameterpeek-turboism-plugin-0.1.0.jar
+```
+
+你应当看到自己的类、`META-INF/turboism/plugin.json`、`META-INF/turboism/cubism-versions.json` 以及 `i18n` 目录。你**不应**看到任何 `dev/turboism/sdk/` 类。由注解处理器生成的 `ParameterPeekPlugin__TurboismSubscriberCatalog.class` 和 `META-INF/services/...GeneratedSubscriberCatalog` 条目是正常的。
+
+## 2. 安装 JAR
+
+1. 关闭你在意的 Cubism Editor 会话，或先保存工作。安装在重启后才生效。
+2. 通过 Turboism 启动器启动 Cubism Editor，打开 **Turboism** 菜单。
+3. 选择 **管理插件…**，然后选择 **从 JAR 安装…**（Install from JAR…），选中 `parameterpeek-turboism-plugin-0.1.0.jar`。
+4. 确认把该 JAR 标记为**本地/未验证来源**的对话框。Turboism 无法为你自己构建的 JAR 背书，这个对话框会如实告知。
+5. 确认该操作被列为**待处理（pending）**。
+6. 完全关闭 Cubism，再通过**同一个** Turboism home 重新启动。
+7. 再次打开 **Turboism → 管理插件…**，检查 **Parameter Peek** 已列出且已启用。双击它可查看详情，包括 SDK API 范围和它声明的 Cubism 版本。
+
+安装是分阶段的，而不是立即生效：Turboism 把该文件视为不受信任的输入，先验证，再快照为待处理状态，并在下次启动时应用。完整流程（包括替换和卸载）请参见[插件管理](/docs/use/plugin-management)。
+
+### 关键机制：Runtime 会检查 JAR 的哪些方面
+
+在暂存 JAR 之前，以及启动时再次，Runtime 会验证：
+
+- JAR 是常规文件，且在大小、条目数、展开体积和压缩比的限制之内；
+- 它恰好包含一个 `META-INF/turboism/plugin.json`，并且描述符的 ID、版本和 API 范围一致；
+- 你声明的入口点存在、是 public、实现 `TurboismPlugin`，并有公共无参构造函数；
+- 每个声明的资源根目录和 i18n 目录都存在，且没有未声明的普通资源；
+- 不含被复制的 SDK、Runtime、测试或 Live2D 类，不含原生二进制或安装器载荷，也不含嵌套 JAR。
+
+这就是为什么你始终应分发由 Gradle 构建出的 JAR。把任意 ZIP 改名是行不通的。完整列表见[插件 Manifest 与打包](/docs/build-a-plugin/manifest#严格的-jar-验证)。
+
+## 3. 运行命令
+
+1. 在 Editor 中打开任意模型文档。
+2. 在 **Tools → Parameter Peek** 下找到 **Parameter Peek: Report**。该路径来自你注册的 `parameterpeek.menu` 文本。
+3. 运行它。`parameterpeek.hello` 的问候语会出现在状态栏。
+
+如果看不到它，请按[插件无法加载时](/docs/build-a-plugin/key-mechanisms/load-failures)逐项排查。
+
+## 4. 找到你的日志行
+
+插件的 `logger()` 会写入 Turboism 自己的日志，每一行都带有插件 ID。选择 **Turboism → 日志…** 打开日志目录，打开当前会话日志，搜索 `com.example.parameterpeek`。你应当找到：
+
+```text
+Parameter Peek initialized
+Parameter Peek enabled
+Hello from Parameter Peek!
+```
+
+顺序很重要：先是 `initialized`，然后是 `enabled`，之后每次运行命令都会出现你的消息。
+
+请用 `context.logger()` 做诊断，而不要用 `System.out` 或自己的日志文件。该 logger 限定在插件范围内，其输出会与宿主日志一起收集，用户或维护者首先会去那里查看。
+
+## 5. “修改—构建—安装”的循环
+
+日常开发的循环是：
+
+1. 修改代码。
+2. `./gradlew build`。
+3. 用新 JAR 执行 **管理插件… → 从 JAR 安装…**。同一插件 ID 的 JAR 会暂存为替换。
+4. 重启 Cubism 并重新测试。
+
+替换插件之前，请备份你在意的插件数据；应用失败时会恢复之前的插件文件，但你自己的数据要由你负责。
+
+为了更快地本地迭代，你也可以把受信任的 JAR 直接复制到 `<turboism.home>/plugins/` 的根目录（不是子目录）并重启。这会跳过上述托管预检，所以只用于你自己的构建；当你想看到用户会遇到的确切拒绝信息时，请优先使用 **从 JAR 安装…**。请先移除同一插件 ID 的旧 JAR：重复 ID 会以 `DUPLICATE_PLUGIN_ID` 失败。
+
+描述符中的 `lifecycle.hotReload: true` 声明该插件可以在不重启 Cubism 的情况下于内存中启用、禁用和更新。Runtime 是否以及何时在内存中应用某个具体变更，由更新路径决定（例如来自插件市场的后台更新）；在你的本地循环中，请按需要重启来规划。
+
+## 检查清单
+
+- **Parameter Peek** 出现在 **Turboism → 管理插件…** 中且已启用。
+- **Tools → Parameter Peek** 可以运行，问候语出现在状态栏。
+- 日志显示 `initialized`、`enabled` 以及你的消息，并带有你的插件 ID。
+
+**下一步：**[第 4 步：读取模型](/docs/build-a-plugin/first-plugin/read-the-model)
