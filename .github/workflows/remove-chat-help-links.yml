@@ -65,6 +65,7 @@ jobs:
           git push origin HEAD:refs/heads/ops/remove-chat-help-links
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
+        continue-on-error: true
         with:
           name: retired-help-links-checks
           path: artifacts/brand
