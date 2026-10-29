@@ -17,6 +17,12 @@ a:link,a:visited{color:var(--tb-violet)}.top-nav a:link,.top-nav a:visited{color
 `;
 await writeFile(path.join(root, 'turboism-nav.js'), staticHeaderScript);
 await writeFile(path.join(root, 'turboism-brand.css'), brand + adapter);
+// Javadoc focuses the search box as soon as the page is ready. That steals focus from whatever the visitor has just
+// opened (the QQ panel closes on focusout), so drop only this autofocus call; the reset button still focuses it.
+const searchScript = path.join(root, 'search.js');
+const searchAutofocus = /^[ \t]*search\.focus\(\)\[0\]\.setSelectionRange\(0, 0\);\r?\n/m;
+const searchOriginal = await readFile(searchScript, 'utf8').catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+if (searchOriginal !== null) { const searchStyled = searchOriginal.replace(searchAutofocus, ''); if (searchStyled !== searchOriginal) await writeFile(searchScript, searchStyled); }
 let count = 0;
 async function visit(directory) {
  for (const entry of await readdir(directory, {withFileTypes:true})) {

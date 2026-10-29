@@ -117,7 +117,6 @@ $(function() {
     reset.click(function() {
         search.val('').focus();
     });
-    search.focus()[0].setSelectionRange(0, 0);
 });
 $.widget("custom.catcomplete", $.ui.autocomplete, {
     _create: function() {

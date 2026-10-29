@@ -21,3 +21,17 @@ test('SDK styling is repeatable and preserves nested API links, anchors and text
   assert.equal((first.match(/data-turboism-nav/g)||[]).length,1);
  } finally {rmSync(fixture,{recursive:true,force:true});}
 });
+test('SDK styling removes only the Javadoc search autofocus, repeatably', () => {
+ const fixture = mkdtempSync(path.join(tmpdir(), 'turboism-sdk-search-'));
+ try {
+  const search = path.join(fixture, 'search.js');
+  const source = "$(function() {\n    reset.click(function() {\n        search.val('').focus();\n    });\n    search.focus()[0].setSelectionRange(0, 0);\n});\n";
+  writeFileSync(search, source);
+  const run = () => spawnSync(process.execPath, [script, fixture], {cwd:site,encoding:'utf8'});
+  assert.equal(run().status, 0);
+  const styled = readFileSync(search, 'utf8');
+  assert.equal(styled, source.replace("    search.focus()[0].setSelectionRange(0, 0);\n", ''));
+  assert.ok(styled.includes("search.val('').focus();"));
+  assert.equal(run().status, 0); assert.equal(readFileSync(search, 'utf8'), styled);
+ } finally {rmSync(fixture,{recursive:true,force:true});}
+});
