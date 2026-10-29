@@ -65,15 +65,17 @@ jobs:
             npm run release:build -- --token="$VERCEL_TOKEN"
           fi
 
+      # --archive=tgz uploads one archive instead of thousands of files (the generated SDK alone is >1000 pages);
+      # per-file uploads exhaust Vercel's daily upload limit (api-upload-free).
       - name: Deploy release
         id: deploy
         shell: bash
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
-            deployment_url="$(vercel deploy --prebuilt --prod --yes --no-color --token="$VERCEL_TOKEN")"
+            deployment_url="$(vercel deploy --prebuilt --archive=tgz --prod --yes --no-color --token="$VERCEL_TOKEN")"
           else
-            deployment_url="$(vercel deploy --prebuilt --yes --no-color --token="$VERCEL_TOKEN")"
+            deployment_url="$(vercel deploy --prebuilt --archive=tgz --yes --no-color --token="$VERCEL_TOKEN")"
           fi
           printf 'url=%s\n' "$deployment_url" >> "$GITHUB_OUTPUT"
           printf '### Vercel deployment\n\n%s\n' "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
