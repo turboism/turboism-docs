@@ -25,3 +25,6 @@ test('upstream fetch failure aborts the still-unhandled request', async () => {
   await forward(route({ fetch: async () => { throw new Error('ECONNREFUSED'); }, abort: async () => { aborted++; } }));
   assert.equal(aborted, 1);
 });
+test('a fetch response disposed by navigation after fulfillment begins is not an error', async () => {
+  await forward(route({ fulfill: async () => { throw new Error('route.fulfill: Fetch response has been disposed'); } }));
+});

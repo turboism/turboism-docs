@@ -1,6 +1,6 @@
 /** Forward a production-origin request to the local build during browser QA. */
 function navigationEnded(error) {
-  return /Target (?:page, context or browser|page|context|browser) has been closed|Request context disposed|Request has been disposed/i.test(error.message);
+  return /Target (?:page, context or browser|page|context|browser) has been closed|Request context disposed|(?:Request|Fetch response) has been disposed/i.test(error.message);
 }
 
 export async function forwardLocalRequest(route, local, origin) {
