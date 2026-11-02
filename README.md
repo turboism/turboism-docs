@@ -59,6 +59,23 @@ protected environment, never in the repository.
 
 ## SDK Javadoc update workflow
 
+The deployment workflow now generates SDK Javadoc from the latest **stable
+release tag**, resolved to its immutable source commit, on every deployment and
+daily at 05:00 Asia/Shanghai. It never generates the hosted reference from a
+moving main branch or a Beta/Nightly release. The deployed
+`/sdk/publication.json` records the tag, version and source revision.
+
+`sdk-publication.json` binds the three explicit publication approvals to one
+reviewed source SHA and version. Its initial approval is the already published
+Stable 0.67.4 reference documented in the four generated API guides. A new stable
+release or a retargeted tag stops deployment until its generated public surface,
+Preview surface and exact known exceptions have been reviewed. After review,
+update the pinned version/SHA and all four localized guides in the same change.
+Do not pre-approve a future version or widen the exception list. Generation,
+link/content validation, branding, lint, type checking and the production build
+must all pass before the Vercel production alias is updated. The existing manual
+generation and review commands below remain available.
+
 SDK Javadoc is part of the documentation update workflow whenever the public SDK,
 its documentation, or its version changes. The hosted files live under
 `public/api/sdk/` and must be generated from the matching Turboism source tree.
