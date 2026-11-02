@@ -6,9 +6,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const targetFile = join(root, "build", "sdk-publication-target.json");
 
-/** Approval applies to one immutable release, never to a moving branch. */
+/** Standing approval covers published Stable releases, never a moving branch. */
 export function publicationTarget(policy, release, sourceRevision) {
-  if (policy.repository !== "turboism/Turboism" || policy.channel !== "stable") {
+  if (policy.repository !== "turboism/Turboism" || policy.channel !== "stable" ||
+      policy.approvalScope !== "published-stable-releases") {
     throw new Error("SDK publication must use the Turboism stable release feed.");
   }
   if (release.draft !== false || release.prerelease !== false ||
@@ -19,16 +20,30 @@ export function publicationTarget(policy, release, sourceRevision) {
     throw new Error("The release tag must resolve to a full source commit SHA.");
   }
   const version = release.tag_name.slice(1);
-  if (policy.approvedSourceRevision !== sourceRevision || policy.approvedVersion !== version) {
-    throw new Error(
-      `Stable ${release.tag_name} (${sourceRevision}) needs SDK review. ` +
-      "Update sdk-publication.json and the four localized API guides after reviewing this exact source.",
-    );
-  }
   for (const key of ["approvedPublicSurface", "approvedPreviewSurface", "approvedKnownExceptions"]) {
     if (policy[key] !== true) throw new Error(`SDK publication requires explicit ${key} approval.`);
   }
   return { repository: policy.repository, tag: release.tag_name, version, sourceRevision };
+}
+
+/** Only a completed production deployment advances the observed release. */
+export function needsPublication(target, published) {
+  if (published === null) return true;
+  if (published.repository !== target.repository ||
+      !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(published.version) ||
+      published.tag !== `v${published.version}` || !/^[a-f0-9]{40}$/.test(published.sourceRevision)) {
+    throw new Error("Invalid production SDK publication identity.");
+  }
+  const current = published.version.split(".").map(BigInt);
+  const wanted = target.version.split(".").map(BigInt);
+  for (let index = 0; index < 3; index++) {
+    if (wanted[index] > current[index]) return true;
+    if (wanted[index] < current[index]) throw new Error("Refusing to downgrade the published stable SDK reference.");
+  }
+  if (target.sourceRevision !== published.sourceRevision) {
+    throw new Error("Published Stable tag moved to a different source commit.");
+  }
+  return false;
 }
 
 function github(endpoint) {
@@ -50,6 +65,29 @@ function resolveTarget() {
     appendFileSync(process.env.GITHUB_OUTPUT, `source_sha=${target.sourceRevision}\nversion=${target.version}\n`);
   }
   console.log(JSON.stringify(target));
+  return target;
+}
+
+async function publishedTarget() {
+  const response = await fetch("https://turboism.dev/sdk/publication.json", {
+    headers: { Accept: "application/json", "Cache-Control": "no-cache" },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`Cannot read production SDK identity: HTTP ${response.status}`);
+  return response.json();
+}
+
+async function checkRelease() {
+  const target = resolveTarget();
+  const changed = needsPublication(target, await publishedTarget());
+  if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `changed=${changed}\n`);
+  console.log(changed ? `New Stable SDK: ${target.tag}` : `SDK ${target.tag} is already deployed; skipping.`);
+}
+
+async function validatePublication() {
+  const target = JSON.parse(readFileSync(targetFile, "utf8"));
+  needsPublication(target, await publishedTarget());
 }
 
 function syncTarget(sourceArgument) {
@@ -73,6 +111,8 @@ function syncTarget(sourceArgument) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const [command, source, ...extra] = process.argv.slice(2);
   if (command === "resolve" && !source) resolveTarget();
+  else if (command === "check" && !source) await checkRelease();
+  else if (command === "validate" && !source) await validatePublication();
   else if (command === "sync" && source && extra.length === 0) syncTarget(source);
-  else throw new Error("Usage: node scripts/publish-sdk-api.mjs resolve | sync <source-directory>");
+  else throw new Error("Usage: node scripts/publish-sdk-api.mjs resolve | check | validate | sync <source-directory>");
 }

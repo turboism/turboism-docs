@@ -59,22 +59,25 @@ protected environment, never in the repository.
 
 ## SDK Javadoc update workflow
 
-The deployment workflow now generates SDK Javadoc from the latest **stable
-release tag**, resolved to its immutable source commit, on every deployment and
-daily at 05:00 Asia/Shanghai. It never generates the hosted reference from a
-moving main branch or a Beta/Nightly release. The deployed
-`/sdk/publication.json` records the tag, version and source revision.
+The deployment workflow generates SDK Javadoc from the latest **published Stable
+release tag**, resolved to its immutable source commit, on every deployment.
+A lightweight scheduled check runs every 15 minutes and deploys only when the
+production SDK does not yet match the latest Stable. GitHub scheduling is best
+effort; it is not an immediate release webhook. This needs no cross-repository
+token. A failed generation/build/deployment leaves the previous production SDK
+in place and is retried on a later check. The deployed `/sdk/publication.json`
+records the actual tag, version and source revision; unchanged versions are
+skipped, while downgrades and changes to an already published tag are rejected.
 
-`sdk-publication.json` binds the three explicit publication approvals to one
-reviewed source SHA and version. Its initial approval is the already published
-Stable 0.67.4 reference documented in the four generated API guides. A new stable
-release or a retargeted tag stops deployment until its generated public surface,
-Preview surface and exact known exceptions have been reviewed. After review,
-update the pinned version/SHA and all four localized guides in the same change.
-Do not pre-approve a future version or widen the exception list. Generation,
-link/content validation, branding, lint, type checking and the production build
-must all pass before the Vercel production alias is updated. The existing manual
-generation and review commands below remain available.
+The owner has authorized this as a standing publication policy for new Stable
+releases. `sdk-publication.json` records the scope and the three explicit
+public/Preview/known-exception approvals; no per-version approval-pin change is
+needed. Drafts, Beta/Nightly, snapshots and moving main are excluded. The existing
+private-content, local-link and exact known-exception checks remain mandatory:
+the policy does not approve new exception patterns. Generation, branding, lint,
+type checking and the production build must all pass before the Vercel production
+alias is updated. The existing manual generation and review commands below remain
+available for unpublished source and changes to the publication policy.
 
 SDK Javadoc is part of the documentation update workflow whenever the public SDK,
 its documentation, or its version changes. The hosted files live under

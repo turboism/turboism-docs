@@ -3,9 +3,9 @@ title: 生成的 API 参考
 description: 当前托管的 SDK Javadoc 版本、生成方式，以及适用的审查例外。
 ---
 
-SDK Javadoc 必须从对应的 Turboism 源码生成，并在完成审查后才托管到 SDK 文档站点。
+线上 SDK Javadoc 会自动跟随最新正式 Stable，并从该发行版的精确源码提交生成。[发布元数据](https://turboism.dev/sdk/publication.json) 记录线上版本和源码。下方保留的基线快照用于说明指定版本的示例和已审查例外。
 
-## 当前托管版本
+## 文档基线：Stable 0.67.4
 
 | 项目 | 值 |
 | --- | --- |
@@ -16,7 +16,7 @@ SDK Javadoc 必须从对应的 Turboism 源码生成，并在完成审查后才�
 | 托管地址 | [turboism.dev/sdk/index.html](https://turboism.dev/sdk/index.html) |
 
 
-本参考页由 [Stable `0.67.4`](https://github.com/turboism/Turboism/releases/tag/v0.67.4) 发布标签生成。示例请使用该发行版的 `turboism-sdk-0.67.4.jar` 和 `turboism-event-processor-0.67.4.jar` 编译。模板设置脚本默认使用 stable 渠道；请核对 `gradle.properties` 和文件名，确认实际编译版本。
+此文档快照由 [Stable `0.67.4`](https://github.com/turboism/Turboism/releases/tag/v0.67.4) 发布标签生成。示例请使用该发行版的 `turboism-sdk-0.67.4.jar` 和 `turboism-event-processor-0.67.4.jar` 编译。模板设置脚本默认使用 stable 渠道；请核对 `gradle.properties` 和文件名，确认实际编译版本。
 
 ## 相对 0.67.0 参考页的变更
 
@@ -45,7 +45,7 @@ SDK Javadoc 必须从对应的 Turboism 源码生成，并在完成审查后才�
 
 ## 已审查的发布例外
 
-当前托管内容反映 `5e0f8b02c` 已编译的公共面，因此其中包含两项被审查认定为例外、而非隐藏问题的内容。每次同步都会重新检查这两项；不在此列表中的任何阻塞项仍会导致同步失败。
+文档基线反映 `5e0f8b02c` 已编译的公共面，因此其中包含两项被审查认定为例外、而非隐藏问题的内容。每次同步都会重新检查这两项；不在此列表中的任何阻塞项仍会导致同步失败。
 
 ### `ActiveReadProjections` 是 public，但不是契约
 

@@ -3,9 +3,9 @@ title: Generated API Reference
 description: The hosted SDK Javadoc version, how it is generated, and which review exceptions apply.
 ---
 
-The SDK Javadoc is generated from the matching Turboism source tree and hosted under the SDK documentation site only after review.
+The hosted SDK Javadoc automatically follows the latest published Stable release and is generated from that release’s exact source commit. [Publication metadata](https://turboism.dev/sdk/publication.json) records the live version and source. The baseline snapshot below remains documented for the versioned examples and reviewed exceptions.
 
-## Hosted version
+## Documented baseline: Stable 0.67.4
 
 | Item | Value |
 | --- | --- |
@@ -16,7 +16,7 @@ The SDK Javadoc is generated from the matching Turboism source tree and hosted u
 | Hosted at | [turboism.dev/sdk/index.html](https://turboism.dev/sdk/index.html) |
 
 
-The reference is generated from the [Stable `0.67.4`](https://github.com/turboism/Turboism/releases/tag/v0.67.4) release tag. Use that release’s `turboism-sdk-0.67.4.jar` and `turboism-event-processor-0.67.4.jar` with these examples. The template setup script defaults to the stable channel; check `gradle.properties` and the filenames to confirm the version you are compiling against.
+This documented snapshot is generated from the [Stable `0.67.4`](https://github.com/turboism/Turboism/releases/tag/v0.67.4) release tag. Use that release’s `turboism-sdk-0.67.4.jar` and `turboism-event-processor-0.67.4.jar` with these examples. The template setup script defaults to the stable channel; check `gradle.properties` and the filenames to confirm the version you are compiling against.
 
 ## Changes since the 0.67.0 reference
 
@@ -45,7 +45,7 @@ Successful generation alone does not approve publication.
 
 ## Reviewed publication exceptions
 
-The published reference reproduces the compiled public surface of `5e0f8b02c`, so it documents two conditions that review classified as exceptions rather than as hidden problems. Both are re-checked on every synchronisation, and any blocker outside this list still fails the run.
+The documented baseline reproduces the compiled public surface of `5e0f8b02c`, so it documents two conditions that review classified as exceptions rather than as hidden problems. Both are re-checked on every synchronisation, and any blocker outside this list still fails the run.
 
 ### `ActiveReadProjections` is public but not a contract
 
