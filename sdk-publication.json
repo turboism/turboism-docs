@@ -1,0 +1,8 @@
+{
+  "repository": "turboism/Turboism",
+  "channel": "stable",
+  "approvalScope": "published-stable-releases",
+  "approvedPublicSurface": true,
+  "approvedPreviewSurface": true,
+  "approvedKnownExceptions": true
+}

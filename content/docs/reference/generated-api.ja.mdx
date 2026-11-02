@@ -3,9 +3,9 @@ title: 生成された API リファレンス
 description: 現在ホストしている SDK Javadoc のバージョン、生成方法、および適用されるレビュー例外。
 ---
 
-SDK Javadoc は対応する Turboism ソースツリーから生成し、レビューを終えたものだけを SDK ドキュメントサイトでホストします。
+公開 SDK Javadoc は最新の正式 Stable リリースに自動追従し、そのリリースの正確なソースコミットから生成します。[公開メタデータ](https://turboism.dev/sdk/publication.json) に現在のバージョンとソースを記録します。以下の基準スナップショットは、特定バージョンの例とレビュー済み例外の説明として保持します。
 
-## 現在ホストしているバージョン
+## 文書化した基準：Stable 0.67.4
 
 | 項目 | 値 |
 | --- | --- |
@@ -16,7 +16,7 @@ SDK Javadoc は対応する Turboism ソースツリーから生成し、レビ�
 | ホスト先 | [turboism.dev/sdk/index.html](https://turboism.dev/sdk/index.html) |
 
 
-このリファレンスは [Stable `0.67.4`](https://github.com/turboism/Turboism/releases/tag/v0.67.4) のリリースタグから生成されています。例のコンパイルには同リリースの `turboism-sdk-0.67.4.jar` と `turboism-event-processor-0.67.4.jar` を使用してください。テンプレートのセットアップスクリプトは既定で stable チャネルを使用します。`gradle.properties` とファイル名で実際にコンパイルするバージョンを確認してください。
+この文書スナップショットは [Stable `0.67.4`](https://github.com/turboism/Turboism/releases/tag/v0.67.4) のリリースタグから生成されています。例のコンパイルには同リリースの `turboism-sdk-0.67.4.jar` と `turboism-event-processor-0.67.4.jar` を使用してください。テンプレートのセットアップスクリプトは既定で stable チャネルを使用します。`gradle.properties` とファイル名で実際にコンパイルするバージョンを確認してください。
 
 ## 0.67.0 リファレンスからの変更
 
@@ -45,7 +45,7 @@ SDK Javadoc は対応する Turboism ソースツリーから生成し、レビ�
 
 ## レビュー済みの公開例外
 
-公開中のリファレンスは `5e0f8b02c` のコンパイル済み公開面をそのまま反映しているため、レビューが「隠れた問題」ではなく例外と判定した 2 件を含みます。どちらも同期のたびに再検査され、この一覧にない阻害要因は引き続き実行を失敗させます。
+文書化した基準は `5e0f8b02c` のコンパイル済み公開面をそのまま反映しているため、レビューが「隠れた問題」ではなく例外と判定した 2 件を含みます。どちらも同期のたびに再検査され、この一覧にない阻害要因は引き続き実行を失敗させます。
 
 ### `ActiveReadProjections` は public だが契約ではない
 

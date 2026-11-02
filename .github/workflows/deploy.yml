@@ -3,13 +3,15 @@ name: Deploy to Vercel
 on:
   push:
   workflow_dispatch:
+  schedule:
+    - cron: '7,22,37,52 * * * *' # Detect new Stable releases without cross-repository credentials.
 
 permissions:
   contents: read
 
 concurrency:
   group: vercel-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -17,8 +19,28 @@ env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
+  check-sdk-release:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    outputs:
+      changed: ${{ steps.sdk.outputs.changed }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Compare the latest published Stable with the production SDK
+        id: sdk
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/publish-sdk-api.mjs check
+
   deploy:
-    if: github.event_name == 'workflow_dispatch' || !github.event.deleted
+    needs: check-sdk-release
+    if: ${{ !cancelled() && !github.event.deleted && (github.event_name != 'schedule' || needs.check-sdk-release.outputs.changed == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -31,6 +53,34 @@ jobs:
         with:
           node-version: 22
           cache: npm
+
+      - name: Test SDK publication identity and approval gates
+        run: node --test tests/sdk-publication.test.mjs
+
+      - name: Resolve the reviewed stable SDK source
+        id: sdk
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/publish-sdk-api.mjs resolve
+
+      - name: Check out immutable SDK source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: turboism/Turboism
+          ref: ${{ steps.sdk.outputs.source_sha }}
+          path: .sdk-source
+          persist-credentials: false
+
+      - name: Set up SDK Javadoc toolchain
+        uses: actions/setup-java@d2bb5a81bf6132351ee9adcc0bba8261a8d34d48
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Generate and validate the approved SDK reference
+        env:
+          TURBOISM_WORKTREE_ID: docs-sdk-api
+        run: node scripts/publish-sdk-api.mjs sync .sdk-source
 
       - name: Validate deployment configuration
         shell: bash
@@ -67,6 +117,10 @@ jobs:
 
       # --archive=tgz uploads one archive instead of thousands of files (the generated SDK alone is >1000 pages);
       # per-file uploads exhaust Vercel's daily upload limit (api-upload-free).
+      - name: Recheck production identity before promotion
+        if: github.ref == 'refs/heads/main'
+        run: node scripts/publish-sdk-api.mjs validate
+
       - name: Deploy release
         id: deploy
         shell: bash

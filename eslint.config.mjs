@@ -8,6 +8,7 @@ export default defineConfig([
   globalIgnores([
     ".next/**",
     ".source/**",
+    ".sdk-source/**",
     ".vercel/**",
     "out/**",
     "build/**",
