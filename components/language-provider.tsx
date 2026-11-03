@@ -28,14 +28,14 @@ type Copy = {
 };
 
 const copy: Record<Language, Copy> = {
-  ko: {"language":"한국어","nav":{"home":"홈","docs":"문서","download":"다운로드","plugins":"플러그인","learn":"튜토리얼","chat":"채팅","github":"GitHub","contact":"문의"},"home":{"eyebrow":"Turboism / 문서","title":"더 명확한 경계 위에서 개발하세요.","description":"Turboism의 기본 사용법과 개발 문서입니다.","useTurboismTitle":"기본 사용법","useTurboismDescription":"Turboism 설치와 사용, 플러그인 관리, 업데이트, 복구 및 제거 방법을 알아보세요.","buildPluginTitle":"개발","buildPluginDescription":"Turboism에 기여하거나 Java 플러그인, GraalJS 및 MCP로 개발하세요.","learnMore":"자세히 보기"}},
+  ko: {"language":"한국어","nav":{"home":"홈","docs":"문서","download":"다운로드","plugins":"플러그인","learn":"튜토리얼","chat":"채팅","github":"GitHub","contact":"문의"},"home":{"eyebrow":"Turboism / 문서","title":"더 명확한 경계 위에서 개발하세요","description":"Turboism의 기본 사용법과 개발 문서입니다.","useTurboismTitle":"기본 사용법","useTurboismDescription":"Turboism 설치와 사용, 플러그인 관리, 업데이트, 복구 및 제거 방법을 알아보세요.","buildPluginTitle":"개발","buildPluginDescription":"Turboism에 기여하거나 Java 플러그인, GraalJS 및 MCP로 개발하세요.","learnMore":"자세히 보기"}},
 
   en: {
     language: "English",
     nav: { home: "Home", docs: "Docs", download: "Download", plugins: "Plugins", learn: "Learn", chat: "Chat", github: "GitHub", contact: "Contact" },
     home: {
       eyebrow: "Turboism / Documentation",
-      title: "Build with a clearer boundary.",
+      title: "Build with a clearer boundary",
       description:
         "Turboism documentation for basic use and development.",
       useTurboismTitle: "Basics",
@@ -50,7 +50,7 @@ const copy: Record<Language, Copy> = {
     nav: { home: "首页", docs: "文档", download: "下载", plugins: "插件", learn: "学习", chat: "聊天", github: "GitHub", contact: "联系我们" },
     home: {
       eyebrow: "Turboism / 文档",
-      title: "在更清晰的边界上构建。",
+      title: "在更清晰的边界上构建",
       description: "Turboism 的基本使用与开发文档。",
       useTurboismTitle: "基本",
       useTurboismDescription: "安装和使用 Turboism，管理插件，并完成更新、恢复或卸载。",
@@ -64,7 +64,7 @@ const copy: Record<Language, Copy> = {
     nav: { home: "ホーム", docs: "ドキュメント", download: "ダウンロード", plugins: "プラグイン", learn: "学ぶ", chat: "チャット", github: "GitHub", contact: "お問い合わせ" },
     home: {
       eyebrow: "Turboism / ドキュメント",
-      title: "より明確な境界で構築する。",
+      title: "より明確な境界で構築する",
       description:
         "Turboism の基本利用と開発に関するドキュメントです。",
       useTurboismTitle: "基本",
